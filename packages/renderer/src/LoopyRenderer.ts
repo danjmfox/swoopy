@@ -6,6 +6,8 @@ const BOW = 28 // px perpendicular offset for parallel edge pairs
 export interface RendererStore {
   graph: Graph
   sim: SimState
+  simRunning: boolean
+  simSpeed: number
   tickSim: (dt: number) => void
 }
 
@@ -96,7 +98,7 @@ export class LoopyRenderer {
     this.lastTime = time
 
     const state = this.getState()
-    state.tickSim(dt)
+    if (state.simRunning) state.tickSim(dt * state.simSpeed)
     this.draw(this.getState())
 
     this.rafId = requestAnimationFrame(this.tick)

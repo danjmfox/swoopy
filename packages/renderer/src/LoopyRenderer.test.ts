@@ -13,6 +13,8 @@ function makeCanvas(): HTMLCanvasElement {
 function makeStore(tickSim = vi.fn()): () => RendererStore {
   return () => ({
     tickSim,
+    simRunning: true,
+    simSpeed: 1,
     graph: { nodes: [], edges: [] },
     sim: { signals: [], pending: [], nodeValues: new Map(), prevNodeValues: new Map(), tick: 0 },
   })
