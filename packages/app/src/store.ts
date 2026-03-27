@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Graph, SimState, NodeId } from '@swoopy/engine'
-import { makeInitialSim, makeNodeId, makeEdgeId, step, serialize } from '@swoopy/engine'
+import { makeInitialSim, makeNodeId, makeEdgeId, step, serialize, deserialize } from '@swoopy/engine'
 import { seedGraph } from './seed.ts'
 
 const LS_KEY = 'swoopy_graph'
@@ -25,6 +25,9 @@ interface StoreState {
   deleteNode: (id: NodeId) => void
   undo: () => void
   redo: () => void
+
+  // Persistence
+  loadPersistedGraph: () => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -90,5 +93,15 @@ export const useStore = create<StoreState>((set, get) => ({
     const next = future[0]
     set({ graph: next, past: [...past, graph], future: future.slice(1) })
     persist(next)
+  },
+  loadPersistedGraph: () => {
+    const raw = localStorage.getItem(LS_KEY)
+    if (!raw) return
+    try {
+      const graph = deserialize(JSON.parse(raw))
+      set({ graph, past: [], future: [] })
+    } catch {
+      // corrupted storage — leave current graph intact
+    }
   },
 }))
