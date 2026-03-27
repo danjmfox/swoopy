@@ -27,3 +27,4 @@ export {
 } from './constants.ts'
 
 export { makeInitialSim, step, inject } from './sim.ts'
+export { serialize, deserialize } from './serialisation.ts'
