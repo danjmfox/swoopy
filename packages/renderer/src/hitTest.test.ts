@@ -18,4 +18,12 @@ describe('hitTest', () => {
   it('returns the node when point is on the boundary', () => {
     expect(hitTest(graph, 150, 100)).toEqual({ kind: 'node', id })
   })
+
+  it('returns null when point is outside the radius', () => {
+    expect(hitTest(graph, 151, 100)).toBeNull()
+  })
+
+  it('returns null for an empty graph', () => {
+    expect(hitTest({ nodes: [], edges: [] }, 100, 100)).toBeNull()
+  })
 })
