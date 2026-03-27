@@ -1,5 +1,5 @@
 import type { Graph, SimState, NodeId, Signal, PendingSignal, CausalEdge, ConstraintEdge, Node } from './types.ts'
-import { EMIT_THRESHOLD, SIGNAL_SPEED, DECAY, DELAY_TICKS_SHORT, DELAY_TICKS_MEDIUM, DELAY_TICKS_LONG } from './constants.ts'
+import { EMIT_THRESHOLD, SIGNAL_SPEED, DECAY, MAX_SIGNALS, DELAY_TICKS_SHORT, DELAY_TICKS_MEDIUM, DELAY_TICKS_LONG } from './constants.ts'
 
 const DELAY_TICKS: Record<string, number> = {
   short: DELAY_TICKS_SHORT,
@@ -29,12 +29,11 @@ function resolveConstraints(
   constraintEdges: ConstraintEdge[],
 ): void {
   for (const node of nodes) {
-    const incoming = constraintEdges.filter((e) => e.to === node.id)
-    if (incoming.length === 0) continue
-
+    // Start with designed bounds; constraint edges tighten them.
     let effectiveMax = node.max
     let effectiveMin = node.min
-    for (const ce of incoming) {
+    for (const ce of constraintEdges) {
+      if (ce.to !== node.id) continue
       const sourceVal = nodeValues.get(ce.from) ?? 0
       if (ce.constraintKind === 'ceiling') {
         effectiveMax = Math.min(effectiveMax, sourceVal)
@@ -124,9 +123,13 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     }
   }
 
+  // §7.2 step 11 — cap total signals at MAX_SIGNALS, preferring highest progress
+  const allTravelling = [...stillTravelling, ...newSignals].sort((a, b) => b.progress - a.progress)
+  const cappedTravelling = allTravelling.slice(0, MAX_SIGNALS)
+
   return {
     ...sim,
-    signals: [...stillTravelling, ...newSignals],
+    signals: cappedTravelling,
     pending: stillPending,
     nodeValues,
     prevNodeValues: new Map(nodeValues),
