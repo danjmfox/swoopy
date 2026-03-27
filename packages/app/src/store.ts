@@ -14,6 +14,8 @@ interface StoreState {
   graph: Graph
   past: Graph[]
   future: Graph[]
+  simRunning: boolean
+  simSpeed: number
 
   // simSlice — RAF reads via getState() each frame; React does NOT subscribe
   sim: SimState
@@ -26,6 +28,12 @@ interface StoreState {
   undo: () => void
   redo: () => void
 
+  // Simulation controls
+  pauseSim: () => void
+  resumeSim: () => void
+  resetSim: () => void
+  setSimSpeed: (speed: number) => void
+
   // Persistence
   loadPersistedGraph: () => void
   shareGraph: () => Promise<void>
@@ -36,6 +44,8 @@ export const useStore = create<StoreState>((set, get) => ({
   graph: seedGraph,
   past: [],
   future: [],
+  simRunning: true,
+  simSpeed: 1,
   sim: makeInitialSim(seedGraph),
   tickSim: (dt: number) => {
     const { graph, sim } = get()
@@ -98,6 +108,13 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ graph: next, past: [...past, graph], future: future.slice(1) })
     persist(next)
   },
+  pauseSim: () => set({ simRunning: false }),
+  resumeSim: () => set({ simRunning: true }),
+  resetSim: () => {
+    const { graph } = get()
+    set({ sim: makeInitialSim(graph) })
+  },
+  setSimSpeed: (speed: number) => set({ simSpeed: speed }),
   shareGraph: async () => {
     const { graph } = get()
     const encoded = btoa(JSON.stringify(serialize(graph)))

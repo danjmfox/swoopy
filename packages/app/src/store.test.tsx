@@ -200,6 +200,44 @@ describe('GE-10: duplicate edge prevention', () => {
   })
 })
 
+describe('SI-09 pauseSim / resumeSim', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, sim: { signals: [], pending: [], nodeValues: new Map(), prevNodeValues: new Map(), tick: 0 } })
+  })
+
+  it('pauseSim sets simRunning to false', () => {
+    useStore.getState().pauseSim()
+    expect(useStore.getState().simRunning).toBe(false)
+  })
+
+  it('resumeSim sets simRunning to true', () => {
+    useStore.getState().pauseSim()
+    useStore.getState().resumeSim()
+    expect(useStore.getState().simRunning).toBe(true)
+  })
+})
+
+describe('SI-10 resetSim', () => {
+  it('restores all node values to initial without clearing graph', () => {
+    const { graph } = useStore.getState()
+    // Mutate sim values by ticking
+    useStore.getState().tickSim(1 / 60)
+    useStore.getState().resetSim()
+    const { sim } = useStore.getState()
+    for (const node of graph.nodes) {
+      expect(sim.nodeValues.get(node.id)).toBe(node.initial)
+    }
+    expect(useStore.getState().graph.nodes).toHaveLength(graph.nodes.length)
+  })
+})
+
+describe('SI-17 setSimSpeed', () => {
+  it('stores the speed multiplier', () => {
+    useStore.getState().setSimSpeed(2)
+    expect(useStore.getState().simSpeed).toBe(2)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
