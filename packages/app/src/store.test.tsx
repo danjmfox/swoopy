@@ -178,6 +178,27 @@ describe('SE-03: loadFromUrl', () => {
   })
 })
 
+describe('GE-10: duplicate edge prevention', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('does not add a duplicate causal edge between the same node pair', () => {
+    const { graph } = useStore.getState()
+    const from = graph.nodes[0].id
+    const to = graph.nodes[1].id
+
+    // Remove all edges first, then add one fresh causal edge
+    useStore.setState({ graph: { ...graph, edges: [] } })
+    useStore.getState().addEdge(from, to)
+    useStore.getState().addEdge(from, to) // duplicate — should be ignored
+
+    const updated = useStore.getState().graph
+    const between = updated.edges.filter((e) => e.from === from && e.to === to)
+    expect(between).toHaveLength(1)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
