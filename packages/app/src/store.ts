@@ -29,6 +29,7 @@ interface StoreState {
   // Persistence
   loadPersistedGraph: () => void
   shareGraph: () => Promise<void>
+  loadFromUrl: (search: string) => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -101,6 +102,16 @@ export const useStore = create<StoreState>((set, get) => ({
     const url = new URL(window.location.href)
     url.searchParams.set('g', encoded)
     await navigator.clipboard.writeText(url.toString())
+  },
+  loadFromUrl: (search: string) => {
+    const encoded = new URLSearchParams(search).get('g')
+    if (!encoded) return
+    try {
+      const graph = deserialize(JSON.parse(atob(encoded)))
+      set({ graph, past: [], future: [] })
+    } catch {
+      // malformed param — leave current graph intact
+    }
   },
   loadPersistedGraph: () => {
     const raw = localStorage.getItem(LS_KEY)
