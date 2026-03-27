@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { Graph, SimState } from '@swoopy/engine'
-import { makeInitialSim, makeNodeId, step } from '@swoopy/engine'
+import type { Graph, SimState, NodeId } from '@swoopy/engine'
+import { makeInitialSim, makeNodeId, makeEdgeId, step } from '@swoopy/engine'
 import { seedGraph } from './seed.ts'
 
 interface StoreState {
@@ -13,6 +13,7 @@ interface StoreState {
 
   // Edit actions
   addNode: (x: number, y: number) => void
+  addEdge: (from: NodeId, to: NodeId) => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -35,5 +36,19 @@ export const useStore = create<StoreState>((set, get) => ({
       initial: 5,
     }
     set({ graph: { ...graph, nodes: [...graph.nodes, node] } })
+  },
+  addEdge: (from: NodeId, to: NodeId) => {
+    const { graph } = get()
+    const edge = {
+      kind: 'causal' as const,
+      id: makeEdgeId(crypto.randomUUID()),
+      from,
+      to,
+      polarity: 1 as const,
+      weight: 1.0,
+      delay: 'none' as const,
+      transferFn: 'linear' as const,
+    }
+    set({ graph: { ...graph, edges: [...graph.edges, edge] } })
   },
 }))
