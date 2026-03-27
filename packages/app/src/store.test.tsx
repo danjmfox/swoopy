@@ -200,6 +200,42 @@ describe('GE-10: duplicate edge prevention', () => {
   })
 })
 
+describe('GE-18 updateNode', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('updates label, min, max, initial on the target node', () => {
+    const { graph } = useStore.getState()
+    const id = graph.nodes[0].id
+    useStore.getState().updateNode(id, { label: 'Renamed', min: 1, max: 9, initial: 3 })
+    const updated = useStore.getState().graph.nodes.find((n) => n.id === id)!
+    expect(updated.label).toBe('Renamed')
+    expect(updated.min).toBe(1)
+    expect(updated.max).toBe(9)
+    expect(updated.initial).toBe(3)
+  })
+
+  it('clamps initial to [min, max] if violated (PRD §7.1 invariant)', () => {
+    const { graph } = useStore.getState()
+    const id = graph.nodes[0].id
+    useStore.getState().updateNode(id, { min: 2, max: 8, initial: 12 }) // initial > max
+    const updated = useStore.getState().graph.nodes.find((n) => n.id === id)!
+    expect(updated.initial).toBeLessThanOrEqual(updated.max)
+    expect(updated.initial).toBeGreaterThanOrEqual(updated.min)
+  })
+
+  it('updateNode is undoable', () => {
+    const { graph } = useStore.getState()
+    const id = graph.nodes[0].id
+    const originalLabel = graph.nodes[0].label
+    useStore.getState().updateNode(id, { label: 'Changed' })
+    useStore.getState().undo()
+    const restored = useStore.getState().graph.nodes.find((n) => n.id === id)!
+    expect(restored.label).toBe(originalLabel)
+  })
+})
+
 describe('SI-09 pauseSim / resumeSim', () => {
   beforeEach(() => {
     useStore.setState({ graph: seedGraph, sim: { signals: [], pending: [], nodeValues: new Map(), prevNodeValues: new Map(), tick: 0 } })
