@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { LoopyRenderer } from '@swoopy/renderer'
+import { LoopyRenderer, hitTest } from '@swoopy/renderer'
 import { inject, INJECT_STRENGTH } from '@swoopy/engine'
 import { useStore } from './store.ts'
 import { popId } from './seed.ts'
@@ -16,13 +16,32 @@ export function Canvas() {
 
     const renderer = new LoopyRenderer(canvas, useStore.getState)
     renderer.start()
-    return () => renderer.stop()
+
+    // Pointer events → hit test → inject (SI-02, SI-03)
+    // Operates in CSS pixels; no DPR scaling needed (DR--20260327--renderer--dpr-css-pixel-geometry)
+    function onPointerDown(e: PointerEvent) {
+      const rect = canvas.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      const { graph } = useStore.getState()
+      const hit = hitTest(graph, x, y)
+      if (hit?.kind === 'node') {
+        const strength = e.shiftKey ? -INJECT_STRENGTH : INJECT_STRENGTH
+        useStore.setState((s) => ({ sim: inject(s.sim, hit.id, strength) }))
+      }
+    }
+
+    canvas.addEventListener('pointerdown', onPointerDown)
+    return () => {
+      renderer.stop()
+      canvas.removeEventListener('pointerdown', onPointerDown)
+    }
   }, [])
 
   return (
     <canvas
       ref={ref}
-      style={{ display: 'block', width: '100%', height: '100%' }}
+      style={{ display: 'block', width: '100%', height: '100%', cursor: 'crosshair' }}
     />
   )
 }
