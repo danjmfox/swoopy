@@ -4,6 +4,7 @@ export function serialize(graph: Graph): unknown {
   return { version: 1, graph }
 }
 
-export function deserialize(_blob: unknown): Graph {
-  throw new Error('not implemented')
+export function deserialize(blob: unknown): Graph {
+  const { graph } = blob as { version: number; graph: Graph }
+  return graph
 }
