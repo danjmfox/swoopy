@@ -10,11 +10,15 @@ describe('serialize', () => {
   })
 })
 
-// SE-03
+// SE-03, SE-05
 describe('deserialize', () => {
   it('round-trips: deserialize(serialize(graph)) restores the graph exactly', () => {
     const restored = deserialize(serialize(seedGraph))
     expect(restored.nodes).toEqual(seedGraph.nodes)
     expect(restored.edges).toEqual(seedGraph.edges)
+  })
+
+  it('throws a descriptive error for an unknown version (SE-05)', () => {
+    expect(() => deserialize({ version: 99, graph: seedGraph })).toThrow(/version 99/)
   })
 })
