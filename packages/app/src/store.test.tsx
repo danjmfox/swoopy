@@ -120,6 +120,19 @@ describe('SE-07: localStorage auto-save', () => {
     const parsed = JSON.parse(raw!)
     expect(parsed.graph.nodes).toHaveLength(1)
   })
+
+  it('restores graph from localStorage when loadPersistedGraph is called and no URL param is present', () => {
+    useStore.getState().addNode(42, 99)
+    const saved = useStore.getState().graph
+
+    useStore.setState({ graph: { nodes: [], edges: [] } })
+    useStore.getState().loadPersistedGraph()
+
+    const restored = useStore.getState().graph
+    expect(restored.nodes).toHaveLength(saved.nodes.length)
+    expect(restored.nodes[0].x).toBe(42)
+    expect(restored.nodes[0].y).toBe(99)
+  })
 })
 
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
