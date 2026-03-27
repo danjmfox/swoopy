@@ -1,4 +1,4 @@
-import type { Graph, SimState, NodeId, Signal, CausalEdge } from './types.ts'
+import type { Graph, SimState, NodeId, Signal, CausalEdge, ConstraintEdge, Node } from './types.ts'
 import { EMIT_THRESHOLD, SIGNAL_SPEED, DECAY } from './constants.ts'
 
 let signalSeq = 0
@@ -17,20 +17,55 @@ export function makeInitialSim(graph: Graph): SimState {
   }
 }
 
+function resolveConstraints(
+  nodeValues: Map<NodeId, number>,
+  nodes: ReadonlyArray<Node>,
+  constraintEdges: ConstraintEdge[],
+): void {
+  for (const node of nodes) {
+    const incoming = constraintEdges.filter((e) => e.to === node.id)
+    if (incoming.length === 0) continue
+
+    let effectiveMax = node.max
+    let effectiveMin = node.min
+    for (const ce of incoming) {
+      const sourceVal = nodeValues.get(ce.from) ?? 0
+      if (ce.constraintKind === 'ceiling') {
+        effectiveMax = Math.min(effectiveMax, sourceVal)
+      } else {
+        effectiveMin = Math.max(effectiveMin, sourceVal)
+      }
+    }
+
+    const current = nodeValues.get(node.id) ?? node.initial
+    if (effectiveMin > effectiveMax) {
+      nodeValues.set(node.id, effectiveMin)
+    } else {
+      nodeValues.set(node.id, Math.min(effectiveMax, Math.max(effectiveMin, current)))
+    }
+  }
+}
+
 export function step(graph: Graph, sim: SimState, dt: number): SimState {
   const nodeValues = new Map(sim.nodeValues)
 
   const edgeById = new Map(graph.edges.map((e) => [e.id, e]))
   const causalEdgesFrom = new Map<string, CausalEdge[]>()
+  const constraintEdges: ConstraintEdge[] = []
   for (const e of graph.edges) {
     if (e.kind === 'causal') {
       const list = causalEdgesFrom.get(e.from) ?? []
       list.push(e)
       causalEdgesFrom.set(e.from, list)
+    } else {
+      constraintEdges.push(e)
     }
   }
 
-  // 1. Advance travelling signals and apply those that have arrived
+  // §7.2 step 1 — pre-clamp: resolve constraints before propagation
+  resolveConstraints(nodeValues, graph.nodes, constraintEdges)
+
+  // §7.2 steps 2–4 — advance signals, collect arrivals, apply to destination nodes
   const stillTravelling: Signal[] = []
   for (const s of sim.signals) {
     const advanced = { ...s, progress: s.progress + SIGNAL_SPEED * dt }
@@ -45,15 +80,18 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     }
   }
 
-  // 2. Decay each node toward its initial value (frame-rate independent)
+  // §7.2 step 5 — decay each node toward its initial value (frame-rate independent)
   for (const node of graph.nodes) {
     const curr = nodeValues.get(node.id) ?? node.initial
     nodeValues.set(node.id, node.initial + (curr - node.initial) * Math.pow(1 - DECAY, dt))
   }
 
-  // 3. Emit new signals for nodes where |end - prev| >= EMIT_THRESHOLD.
-  //    prevNodeValues is the end of the previous step, so inject() deltas
-  //    (which update nodeValues but not prevNodeValues) are captured here.
+  // §7.2 step 6 — post-clamp: re-clamp after arrivals and decay
+  resolveConstraints(nodeValues, graph.nodes, constraintEdges)
+
+  // §7.2 steps 8–9 — emit signals for nodes where |delta| >= EMIT_THRESHOLD.
+  //    prevNodeValues captures end-of-last-step, so inject() deltas (nodeValues only)
+  //    are included in the delta comparison here.
   const newSignals: Signal[] = []
   for (const node of graph.nodes) {
     const delta = (nodeValues.get(node.id) ?? node.initial) - (sim.prevNodeValues.get(node.id) ?? node.initial)

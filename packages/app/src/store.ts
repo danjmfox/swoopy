@@ -1,7 +1,13 @@
 import { create } from 'zustand'
 import type { Graph, SimState, NodeId } from '@swoopy/engine'
-import { makeInitialSim, makeNodeId, makeEdgeId, step } from '@swoopy/engine'
+import { makeInitialSim, makeNodeId, makeEdgeId, step, serialize, deserialize } from '@swoopy/engine'
 import { seedGraph } from './seed.ts'
+
+const LS_KEY = 'swoopy_graph'
+
+function persist(graph: Graph) {
+  localStorage.setItem(LS_KEY, JSON.stringify(serialize(graph)))
+}
 
 interface StoreState {
   // graphSlice — React components subscribe to this
@@ -19,6 +25,11 @@ interface StoreState {
   deleteNode: (id: NodeId) => void
   undo: () => void
   redo: () => void
+
+  // Persistence
+  loadPersistedGraph: () => void
+  shareGraph: () => Promise<void>
+  loadFromUrl: (search: string) => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -42,7 +53,9 @@ export const useStore = create<StoreState>((set, get) => ({
       max: 10,
       initial: 5,
     }
-    set({ past: [...past, graph], future: [], graph: { ...graph, nodes: [...graph.nodes, node] } })
+    const next = { ...graph, nodes: [...graph.nodes, node] }
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
   },
   addEdge: (from: NodeId, to: NodeId) => {
     const { graph, past } = get()
@@ -56,29 +69,58 @@ export const useStore = create<StoreState>((set, get) => ({
       delay: 'none' as const,
       transferFn: 'linear' as const,
     }
-    set({ past: [...past, graph], future: [], graph: { ...graph, edges: [...graph.edges, edge] } })
+    const next = { ...graph, edges: [...graph.edges, edge] }
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
   },
   deleteNode: (id: NodeId) => {
     const { graph, past } = get()
-    set({
-      past: [...past, graph],
-      future: [],
-      graph: {
-        nodes: graph.nodes.filter((n) => n.id !== id),
-        edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
-      },
-    })
+    const next = {
+      nodes: graph.nodes.filter((n) => n.id !== id),
+      edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
+    }
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
   },
   undo: () => {
     const { graph, past, future } = get()
     if (past.length === 0) return
     const previous = past[past.length - 1]
     set({ graph: previous, past: past.slice(0, -1), future: [graph, ...future] })
+    persist(previous)
   },
   redo: () => {
     const { graph, past, future } = get()
     if (future.length === 0) return
     const next = future[0]
     set({ graph: next, past: [...past, graph], future: future.slice(1) })
+    persist(next)
+  },
+  shareGraph: async () => {
+    const { graph } = get()
+    const encoded = btoa(JSON.stringify(serialize(graph)))
+    const url = new URL(window.location.href)
+    url.searchParams.set('g', encoded)
+    await navigator.clipboard.writeText(url.toString())
+  },
+  loadFromUrl: (search: string) => {
+    const encoded = new URLSearchParams(search).get('g')
+    if (!encoded) return
+    try {
+      const graph = deserialize(JSON.parse(atob(encoded)))
+      set({ graph, past: [], future: [] })
+    } catch {
+      // malformed param — leave current graph intact
+    }
+  },
+  loadPersistedGraph: () => {
+    const raw = localStorage.getItem(LS_KEY)
+    if (!raw) return
+    try {
+      const graph = deserialize(JSON.parse(raw))
+      set({ graph, past: [], future: [] })
+    } catch {
+      // corrupted storage — leave current graph intact
+    }
   },
 }))

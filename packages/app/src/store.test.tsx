@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { useStore } from './store.ts'
 import { seedGraph } from './seed.ts'
@@ -104,6 +104,77 @@ describe('GE-22: redo', () => {
     useStore.getState().undo()
     useStore.getState().redo()
     expect(useStore.getState().graph.nodes).toHaveLength(1)
+  })
+})
+
+describe('SE-07: localStorage auto-save', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    useStore.setState({ graph: { nodes: [], edges: [] }, past: [], future: [] })
+  })
+
+  it('saves the graph to localStorage under "swoopy_graph" after each mutation', () => {
+    useStore.getState().addNode(100, 200)
+    const raw = localStorage.getItem('swoopy_graph')
+    expect(raw).not.toBeNull()
+    const parsed = JSON.parse(raw!)
+    expect(parsed.graph.nodes).toHaveLength(1)
+  })
+
+  it('restores graph from localStorage when loadPersistedGraph is called and no URL param is present', () => {
+    useStore.getState().addNode(42, 99)
+    const saved = useStore.getState().graph
+
+    useStore.setState({ graph: { nodes: [], edges: [] } })
+    useStore.getState().loadPersistedGraph()
+
+    const restored = useStore.getState().graph
+    expect(restored.nodes).toHaveLength(saved.nodes.length)
+    expect(restored.nodes[0].x).toBe(42)
+    expect(restored.nodes[0].y).toBe(99)
+  })
+})
+
+describe('SE-02 / SE-06: shareGraph', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: { nodes: [], edges: [] }, past: [], future: [] })
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      writable: true,
+    })
+  })
+
+  it('encodes the current graph as base64 in a URL query param and writes it to the clipboard', async () => {
+    useStore.getState().addNode(10, 20)
+    await useStore.getState().shareGraph()
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledOnce()
+    const url = new URL((navigator.clipboard.writeText as ReturnType<typeof vi.fn>).mock.calls[0][0])
+    const encoded = url.searchParams.get('g')
+    expect(encoded).not.toBeNull()
+    const decoded = JSON.parse(atob(encoded!))
+    expect(decoded.graph.nodes).toHaveLength(1)
+    expect(decoded.graph.nodes[0].x).toBe(10)
+  })
+})
+
+describe('SE-03: loadFromUrl', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: { nodes: [], edges: [] }, past: [], future: [] })
+  })
+
+  it('restores graph from base64 ?g= param when present', () => {
+    useStore.getState().addNode(77, 88)
+    const graph = useStore.getState().graph
+    const encoded = btoa(JSON.stringify({ version: 1, graph }))
+
+    useStore.setState({ graph: { nodes: [], edges: [] } })
+    useStore.getState().loadFromUrl(`?g=${encoded}`)
+
+    const restored = useStore.getState().graph
+    expect(restored.nodes).toHaveLength(1)
+    expect(restored.nodes[0].x).toBe(77)
+    expect(restored.nodes[0].y).toBe(88)
   })
 })
 
