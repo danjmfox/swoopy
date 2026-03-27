@@ -40,6 +40,31 @@ describe('GE-01: addNode', () => {
   })
 })
 
+describe('GE-04 / GE-06 / GE-07: addEdge', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph })
+  })
+
+  it('adds a directed edge between two existing nodes with default reinforcing polarity', () => {
+    const { graph } = useStore.getState()
+    const from = graph.nodes[0].id
+    const to = graph.nodes[1].id
+    const edgesBefore = graph.edges.length
+
+    useStore.getState().addEdge(from, to)
+
+    const updated = useStore.getState().graph
+    expect(updated.edges).toHaveLength(edgesBefore + 1)
+    const edge = updated.edges[updated.edges.length - 1]
+    expect(edge.kind).toBe('causal')
+    if (edge.kind === 'causal') {
+      expect(edge.from).toBe(from)
+      expect(edge.to).toBe(to)
+      expect(edge.polarity).toBe(1)
+    }
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
