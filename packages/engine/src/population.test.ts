@@ -62,6 +62,16 @@ describe('step', () => {
     expect(sim2.signals.length).toBeGreaterThan(0)
   })
 
+  it('inverts signal polarity on a balancing (−) edge (SI-05)', () => {
+    // Inject into Deaths; its signal to Population has polarity -1
+    // Population should fall below its initial value (5)
+    const sim0 = makeInitialSim(seedGraph)
+    const sim1 = inject(sim0, deathsId, INJECT_STRENGTH)
+    let sim = sim1
+    for (let i = 0; i < 120; i++) sim = step(seedGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(popId)).toBeLessThan(5)
+  })
+
   it('applies arrived signals to destination node values', () => {
     // Run long enough for Population→Births signal to arrive (progress reaches 1)
     // At SIGNAL_SPEED=0.65, takes 1/0.65 ≈ 1.54s = ~92 frames at 60fps
