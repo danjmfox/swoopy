@@ -200,6 +200,55 @@ describe('GE-10: duplicate edge prevention', () => {
   })
 })
 
+describe('GE-08 togglePolarity', () => {
+  beforeEach(() => { useStore.setState({ graph: seedGraph, past: [], future: [] }) })
+
+  it('flips polarity from 1 to -1', () => {
+    const edge = seedGraph.edges.find((e) => e.kind === 'causal')!
+    useStore.getState().togglePolarity(edge.id)
+    const updated = useStore.getState().graph.edges.find((e) => e.id === edge.id)!
+    expect(updated.kind === 'causal' && updated.polarity).toBe(-1)
+  })
+
+  it('togglePolarity is undoable', () => {
+    const edge = seedGraph.edges.find((e) => e.kind === 'causal')!
+    const original = (edge as import('@swoopy/engine').CausalEdge).polarity
+    useStore.getState().togglePolarity(edge.id)
+    useStore.getState().undo()
+    const restored = useStore.getState().graph.edges.find((e) => e.id === edge.id)!
+    expect(restored.kind === 'causal' && restored.polarity).toBe(original)
+  })
+})
+
+describe('GE-14/16 cycleDelay', () => {
+  beforeEach(() => { useStore.setState({ graph: seedGraph, past: [], future: [] }) })
+
+  it('cycles delay: none → short → medium → long → none', () => {
+    const edge = seedGraph.edges.find((e) => e.kind === 'causal')!
+    const id = edge.id
+    const getDelay = () => {
+      const e = useStore.getState().graph.edges.find((x) => x.id === id)!
+      return e.kind === 'causal' ? e.delay : null
+    }
+    expect(getDelay()).toBe('none')
+    useStore.getState().cycleDelay(id); expect(getDelay()).toBe('short')
+    useStore.getState().cycleDelay(id); expect(getDelay()).toBe('medium')
+    useStore.getState().cycleDelay(id); expect(getDelay()).toBe('long')
+    useStore.getState().cycleDelay(id); expect(getDelay()).toBe('none')
+  })
+})
+
+describe('GE-13/19 setEdgeWeight', () => {
+  beforeEach(() => { useStore.setState({ graph: seedGraph, past: [], future: [] }) })
+
+  it('sets weight and clamps to 0–1', () => {
+    const edge = seedGraph.edges.find((e) => e.kind === 'causal')!
+    useStore.getState().setEdgeWeight(edge.id, 0.5)
+    const updated = useStore.getState().graph.edges.find((e) => e.id === edge.id)!
+    expect(updated.kind === 'causal' && updated.weight).toBe(0.5)
+  })
+})
+
 describe('GE-18 updateNode', () => {
   beforeEach(() => {
     useStore.setState({ graph: seedGraph, past: [], future: [] })
@@ -264,6 +313,25 @@ describe('SI-10 resetSim', () => {
       expect(sim.nodeValues.get(node.id)).toBe(node.initial)
     }
     expect(useStore.getState().graph.nodes).toHaveLength(graph.nodes.length)
+  })
+})
+
+describe('GE-13/19 openEdgeWeightEditor / closeEdgeWeightEditor', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [], editingEdgeId: null })
+  })
+
+  it('sets editingEdgeId to the given EdgeId when openEdgeWeightEditor is called', () => {
+    const edgeId = seedGraph.edges.find((e) => e.kind === 'causal')!.id
+    useStore.getState().openEdgeWeightEditor(edgeId)
+    expect(useStore.getState().editingEdgeId).toBe(edgeId)
+  })
+
+  it('sets editingEdgeId back to null when closeEdgeWeightEditor is called', () => {
+    const edgeId = seedGraph.edges.find((e) => e.kind === 'causal')!.id
+    useStore.getState().openEdgeWeightEditor(edgeId)
+    useStore.getState().closeEdgeWeightEditor()
+    expect(useStore.getState().editingEdgeId).toBeNull()
   })
 })
 

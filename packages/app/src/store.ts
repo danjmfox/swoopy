@@ -1,6 +1,8 @@
 import { create } from 'zustand'
-import type { Graph, SimState, NodeId, Node } from '@swoopy/engine'
+import type { Graph, SimState, NodeId, EdgeId, Node, DelayLevel } from '@swoopy/engine'
 import { makeInitialSim, makeNodeId, makeEdgeId, step, serialize, deserialize } from '@swoopy/engine'
+
+const DELAY_CYCLE: DelayLevel[] = ['none', 'short', 'medium', 'long']
 import { seedGraph } from './seed.ts'
 
 const LS_KEY = 'swoopy_graph'
@@ -26,6 +28,9 @@ interface StoreState {
   addEdge: (from: NodeId, to: NodeId) => void
   deleteNode: (id: NodeId) => void
   updateNode: (id: NodeId, patch: Partial<Pick<Node, 'label' | 'min' | 'max' | 'initial'>>) => void
+  togglePolarity: (edgeId: EdgeId) => void
+  cycleDelay: (edgeId: EdgeId) => void
+  setEdgeWeight: (edgeId: EdgeId, weight: number) => void
   undo: () => void
   redo: () => void
 
@@ -33,6 +38,9 @@ interface StoreState {
   editingNodeId: NodeId | null
   openNodeEditor: (id: NodeId) => void
   closeNodeEditor: () => void
+  editingEdgeId: EdgeId | null
+  openEdgeWeightEditor: (id: EdgeId) => void
+  closeEdgeWeightEditor: () => void
 
   // Simulation controls
   pauseSim: () => void
@@ -55,6 +63,9 @@ export const useStore = create<StoreState>((set, get) => ({
   editingNodeId: null,
   openNodeEditor: (id) => set({ editingNodeId: id }),
   closeNodeEditor: () => set({ editingNodeId: null }),
+  editingEdgeId: null as EdgeId | null,
+  openEdgeWeightEditor: (id) => set({ editingEdgeId: id }),
+  closeEdgeWeightEditor: () => set({ editingEdgeId: null }),
   sim: makeInitialSim(seedGraph),
   tickSim: (dt: number) => {
     const { graph, sim } = get()
@@ -91,6 +102,33 @@ export const useStore = create<StoreState>((set, get) => ({
       transferFn: 'linear' as const,
     }
     const next = { ...graph, edges: [...graph.edges, edge] }
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
+  },
+  togglePolarity: (edgeId) => {
+    const { graph, past } = get()
+    const next = { ...graph, edges: graph.edges.map((e) =>
+      e.id === edgeId && e.kind === 'causal' ? { ...e, polarity: (e.polarity === 1 ? -1 : 1) as 1 | -1 } : e
+    )}
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
+  },
+  cycleDelay: (edgeId) => {
+    const { graph, past } = get()
+    const next = { ...graph, edges: graph.edges.map((e) => {
+      if (e.id !== edgeId || e.kind !== 'causal') return e
+      const idx = DELAY_CYCLE.indexOf(e.delay)
+      return { ...e, delay: DELAY_CYCLE[(idx + 1) % DELAY_CYCLE.length] }
+    })}
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
+  },
+  setEdgeWeight: (edgeId, weight) => {
+    const { graph, past } = get()
+    const clamped = Math.min(1, Math.max(0, weight))
+    const next = { ...graph, edges: graph.edges.map((e) =>
+      e.id === edgeId && e.kind === 'causal' ? { ...e, weight: clamped } : e
+    )}
     set({ past: [...past, graph], future: [], graph: next })
     persist(next)
   },

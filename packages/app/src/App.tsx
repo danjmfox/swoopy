@@ -1,6 +1,7 @@
 import { Canvas } from './Canvas.tsx'
 import { Toolbar } from './Toolbar.tsx'
 import { NodePopover } from './NodePopover.tsx'
+import { EdgeWeightPopover } from './EdgeWeightPopover.tsx'
 
 export function App() {
   return (
@@ -8,6 +9,7 @@ export function App() {
       <Canvas />
       <Toolbar />
       <NodePopover />
+      <EdgeWeightPopover />
     </div>
   )
 }
