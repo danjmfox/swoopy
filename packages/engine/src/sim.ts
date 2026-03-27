@@ -1,4 +1,4 @@
-import type { Graph, SimState, NodeId, Signal, CausalEdge } from './types.ts'
+import type { Graph, SimState, NodeId, Signal, CausalEdge, ConstraintEdge, Node } from './types.ts'
 import { EMIT_THRESHOLD, SIGNAL_SPEED, DECAY } from './constants.ts'
 
 let signalSeq = 0
@@ -17,18 +17,53 @@ export function makeInitialSim(graph: Graph): SimState {
   }
 }
 
+function resolveConstraints(
+  nodeValues: Map<NodeId, number>,
+  nodes: ReadonlyArray<Node>,
+  constraintEdges: ConstraintEdge[],
+): void {
+  for (const node of nodes) {
+    const incoming = constraintEdges.filter((e) => e.to === node.id)
+    if (incoming.length === 0) continue
+
+    let effectiveMax = node.max
+    let effectiveMin = node.min
+    for (const ce of incoming) {
+      const sourceVal = nodeValues.get(ce.from) ?? 0
+      if (ce.constraintKind === 'ceiling') {
+        effectiveMax = Math.min(effectiveMax, sourceVal)
+      } else {
+        effectiveMin = Math.max(effectiveMin, sourceVal)
+      }
+    }
+
+    const current = nodeValues.get(node.id) ?? node.initial
+    if (effectiveMin > effectiveMax) {
+      nodeValues.set(node.id, effectiveMin)
+    } else {
+      nodeValues.set(node.id, Math.min(effectiveMax, Math.max(effectiveMin, current)))
+    }
+  }
+}
+
 export function step(graph: Graph, sim: SimState, dt: number): SimState {
   const nodeValues = new Map(sim.nodeValues)
 
   const edgeById = new Map(graph.edges.map((e) => [e.id, e]))
   const causalEdgesFrom = new Map<string, CausalEdge[]>()
+  const constraintEdges: ConstraintEdge[] = []
   for (const e of graph.edges) {
     if (e.kind === 'causal') {
       const list = causalEdgesFrom.get(e.from) ?? []
       list.push(e)
       causalEdgesFrom.set(e.from, list)
+    } else {
+      constraintEdges.push(e)
     }
   }
+
+  // PRD §7.2 step 1: resolve constraint edges — pre-clamp before propagation
+  resolveConstraints(nodeValues, graph.nodes, constraintEdges)
 
   // 1. Advance travelling signals and apply those that have arrived
   const stillTravelling: Signal[] = []
@@ -50,6 +85,9 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     const curr = nodeValues.get(node.id) ?? node.initial
     nodeValues.set(node.id, node.initial + (curr - node.initial) * Math.pow(1 - DECAY, dt))
   }
+
+  // PRD §7.2 step 6: re-clamp after arrivals and decay
+  resolveConstraints(nodeValues, graph.nodes, constraintEdges)
 
   // 3. Emit new signals for nodes where |end - prev| >= EMIT_THRESHOLD.
   //    prevNodeValues is the end of the previous step, so inject() deltas
