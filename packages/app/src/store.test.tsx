@@ -1,12 +1,29 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { useStore } from './store.ts'
+import { seedGraph } from './seed.ts'
 
 // Component subscribing to graphSlice only — must never re-render from sim ticks
 function GraphView() {
   const nodeCount = useStore((s) => s.graph.nodes.length)
   return <span data-testid="count">{nodeCount}</span>
 }
+
+// SI-07 prerequisite
+describe('store initialisation', () => {
+  it('loads the seed graph with all three nodes', () => {
+    const { graph } = useStore.getState()
+    expect(graph.nodes).toHaveLength(3)
+    expect(graph.nodes.map((n) => n.label)).toContain('Population')
+  })
+
+  it('initialises sim node values from graph.initial fields', () => {
+    const { sim, graph } = useStore.getState()
+    for (const node of graph.nodes) {
+      expect(sim.nodeValues.get(node.id)).toBe(node.initial)
+    }
+  })
+})
 
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
