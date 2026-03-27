@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { makeNodeId, makeEdgeId, makeInitialSim } from './index.ts'
+import { makeNodeId, makeEdgeId, makeInitialSim, inject, INJECT_STRENGTH } from './index.ts'
 import type { Graph, Node, CausalEdge } from './types.ts'
 
 const popId = makeNodeId('population')
@@ -41,5 +41,14 @@ describe('makeInitialSim', () => {
     expect(sim.nodeValues.get(popId)).toBe(5)
     expect(sim.nodeValues.get(birthsId)).toBe(0)
     expect(sim.nodeValues.get(deathsId)).toBe(0)
+  })
+})
+
+// SI-02, SI-03
+describe('inject', () => {
+  it('increments the target node value by strength', () => {
+    const sim = makeInitialSim(seedGraph)
+    const next = inject(sim, popId, INJECT_STRENGTH)
+    expect(next.nodeValues.get(popId)).toBe(5 + INJECT_STRENGTH)
   })
 })
