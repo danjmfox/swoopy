@@ -31,10 +31,23 @@ export function Canvas() {
       }
     }
 
+    function onDblClick(e: MouseEvent) {
+      const rect = canvas.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      const { graph } = useStore.getState()
+      const hit = hitTest(graph, x, y)
+      if (hit?.kind === 'node') {
+        useStore.getState().openNodeEditor(hit.id)
+      }
+    }
+
     canvas.addEventListener('pointerdown', onPointerDown)
+    canvas.addEventListener('dblclick', onDblClick)
     return () => {
       renderer.stop()
       canvas.removeEventListener('pointerdown', onPointerDown)
+      canvas.removeEventListener('dblclick', onDblClick)
     }
   }, [])
 

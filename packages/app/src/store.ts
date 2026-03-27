@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Graph, SimState, NodeId } from '@swoopy/engine'
+import type { Graph, SimState, NodeId, Node } from '@swoopy/engine'
 import { makeInitialSim, makeNodeId, makeEdgeId, step, serialize, deserialize } from '@swoopy/engine'
 import { seedGraph } from './seed.ts'
 
@@ -25,8 +25,14 @@ interface StoreState {
   addNode: (x: number, y: number) => void
   addEdge: (from: NodeId, to: NodeId) => void
   deleteNode: (id: NodeId) => void
+  updateNode: (id: NodeId, patch: Partial<Pick<Node, 'label' | 'min' | 'max' | 'initial'>>) => void
   undo: () => void
   redo: () => void
+
+  // Editor UI state
+  editingNodeId: NodeId | null
+  openNodeEditor: (id: NodeId) => void
+  closeNodeEditor: () => void
 
   // Simulation controls
   pauseSim: () => void
@@ -46,6 +52,9 @@ export const useStore = create<StoreState>((set, get) => ({
   future: [],
   simRunning: true,
   simSpeed: 1,
+  editingNodeId: null,
+  openNodeEditor: (id) => set({ editingNodeId: id }),
+  closeNodeEditor: () => set({ editingNodeId: null }),
   sim: makeInitialSim(seedGraph),
   tickSim: (dt: number) => {
     const { graph, sim } = get()
@@ -82,6 +91,21 @@ export const useStore = create<StoreState>((set, get) => ({
       transferFn: 'linear' as const,
     }
     const next = { ...graph, edges: [...graph.edges, edge] }
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
+  },
+  updateNode: (id: NodeId, patch) => {
+    const { graph, past } = get()
+    const next = {
+      ...graph,
+      nodes: graph.nodes.map((n) => {
+        if (n.id !== id) return n
+        const min = patch.min ?? n.min
+        const max = patch.max ?? n.max
+        const initial = Math.min(max, Math.max(min, patch.initial ?? n.initial))
+        return { ...n, ...patch, min, max, initial }
+      }),
+    }
     set({ past: [...past, graph], future: [], graph: next })
     persist(next)
   },
