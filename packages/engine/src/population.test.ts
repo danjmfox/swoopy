@@ -72,6 +72,16 @@ describe('step', () => {
     expect(sim.nodeValues.get(popId)).toBeLessThan(5)
   })
 
+  it('decays node values toward initial over time without further input (SI-06)', () => {
+    // Inject into Births (initial=0), run long enough for decay to dominate
+    const sim0 = makeInitialSim(seedGraph)
+    const sim1 = inject(sim0, birthsId, INJECT_STRENGTH)
+    let sim = sim1
+    for (let i = 0; i < 1200; i++) sim = step(seedGraph, sim, 1 / 60)
+    // ~20s of sim time; Births should be close to its initial value (0)
+    expect(sim.nodeValues.get(birthsId)).toBeLessThan(0.1)
+  })
+
   it('applies arrived signals to destination node values', () => {
     // Run long enough for Population→Births signal to arrive (progress reaches 1)
     // At SIGNAL_SPEED=0.65, takes 1/0.65 ≈ 1.54s = ~92 frames at 60fps
