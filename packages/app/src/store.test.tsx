@@ -25,6 +25,21 @@ describe('store initialisation', () => {
   })
 })
 
+describe('GE-01: addNode', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: { nodes: [], edges: [] } })
+  })
+
+  it('adds a node at the given coordinates to graph.nodes', () => {
+    useStore.getState().addNode(200, 300)
+    const { graph } = useStore.getState()
+    expect(graph.nodes).toHaveLength(1)
+    expect(graph.nodes[0].x).toBe(200)
+    expect(graph.nodes[0].y).toBe(300)
+    expect(graph.nodes[0].label).toBeTruthy()
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
