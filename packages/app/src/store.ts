@@ -14,6 +14,7 @@ interface StoreState {
   // Edit actions
   addNode: (x: number, y: number) => void
   addEdge: (from: NodeId, to: NodeId) => void
+  deleteNode: (id: NodeId) => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -50,5 +51,14 @@ export const useStore = create<StoreState>((set, get) => ({
       transferFn: 'linear' as const,
     }
     set({ graph: { ...graph, edges: [...graph.edges, edge] } })
+  },
+  deleteNode: (id: NodeId) => {
+    const { graph } = get()
+    set({
+      graph: {
+        nodes: graph.nodes.filter((n) => n.id !== id),
+        edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
+      },
+    })
   },
 }))
