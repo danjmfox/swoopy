@@ -47,8 +47,9 @@ describe('GE-04 / GE-06 / GE-07: addEdge', () => {
 
   it('adds a directed edge between two existing nodes with default reinforcing polarity', () => {
     const { graph } = useStore.getState()
-    const from = graph.nodes[0].id
-    const to = graph.nodes[1].id
+    // Births→Deaths does not exist in seedGraph — safe to add without hitting duplicate guard
+    const from = graph.nodes[1].id // Births
+    const to = graph.nodes[2].id   // Deaths
     const edgesBefore = graph.edges.length
 
     useStore.getState().addEdge(from, to)

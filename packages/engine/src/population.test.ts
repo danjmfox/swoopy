@@ -125,3 +125,45 @@ describe('step', () => {
     expect(sim.nodeValues.get(birthsId)).toBeGreaterThan(0)
   })
 })
+
+// GE-13: edge weight scales signal strength
+describe('GE-13 edge weight', () => {
+  it('weight 0.5 halves the signal reaching the destination vs weight 1.0', () => {
+    // Two identical graphs except one has weight=0.5 on pop→births
+    const makeGraph = (weight: number) => ({
+      ...seedGraph,
+      edges: seedGraph.edges.map((e) => {
+        if (e.kind === 'causal' && e.from === popId && e.to === birthsId) {
+          return { ...e, weight }
+        }
+        return e
+      }),
+    })
+    const run = (g: typeof seedGraph) => {
+      let sim = makeInitialSim(g)
+      sim = inject(sim, popId, INJECT_STRENGTH)
+      for (let i = 0; i < 120; i++) sim = step(g, sim, 1 / 60)
+      return sim.nodeValues.get(birthsId) ?? 0
+    }
+    const full = run(makeGraph(1.0))
+    const half = run(makeGraph(0.5))
+    expect(half).toBeLessThan(full)
+  })
+
+  it('weight 0.0 prevents signal reaching the destination', () => {
+    const noWeightGraph = {
+      ...seedGraph,
+      edges: seedGraph.edges.map((e) => {
+        if (e.kind === 'causal' && e.from === popId && e.to === birthsId) {
+          return { ...e, weight: 0 }
+        }
+        return e
+      }),
+    }
+    let sim = makeInitialSim(noWeightGraph)
+    sim = inject(sim, popId, INJECT_STRENGTH)
+    for (let i = 0; i < 120; i++) sim = step(noWeightGraph, sim, 1 / 60)
+    // Births should stay at or near 0 (only decay-driven, no signal arriving)
+    expect(sim.nodeValues.get(birthsId)).toBeLessThan(0.1)
+  })
+})
