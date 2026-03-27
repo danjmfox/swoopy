@@ -53,6 +53,11 @@ export interface SimState {
   readonly signals: ReadonlyArray<Signal>
   readonly pending: ReadonlyArray<PendingSignal>
   readonly nodeValues: ReadonlyMap<NodeId, number>
+  // Snapshot of nodeValues at the end of the previous step, used by the next
+  // step() call to compute emit deltas — captures inject() changes that happen
+  // between steps. inject() updates nodeValues only; prevNodeValues stays fixed
+  // until the next step() settles it.
+  readonly prevNodeValues: ReadonlyMap<NodeId, number>
   readonly tick: number
 }
 
