@@ -47,8 +47,9 @@ describe('GE-04 / GE-06 / GE-07: addEdge', () => {
 
   it('adds a directed edge between two existing nodes with default reinforcing polarity', () => {
     const { graph } = useStore.getState()
-    const from = graph.nodes[0].id
-    const to = graph.nodes[1].id
+    // Births→Deaths does not exist in seedGraph — safe to add without hitting duplicate guard
+    const from = graph.nodes[1].id // Births
+    const to = graph.nodes[2].id   // Deaths
     const edgesBefore = graph.edges.length
 
     useStore.getState().addEdge(from, to)
@@ -175,6 +176,27 @@ describe('SE-03: loadFromUrl', () => {
     expect(restored.nodes).toHaveLength(1)
     expect(restored.nodes[0].x).toBe(77)
     expect(restored.nodes[0].y).toBe(88)
+  })
+})
+
+describe('GE-10: duplicate edge prevention', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('does not add a duplicate causal edge between the same node pair', () => {
+    const { graph } = useStore.getState()
+    const from = graph.nodes[0].id
+    const to = graph.nodes[1].id
+
+    // Remove all edges first, then add one fresh causal edge
+    useStore.setState({ graph: { ...graph, edges: [] } })
+    useStore.getState().addEdge(from, to)
+    useStore.getState().addEdge(from, to) // duplicate — should be ignored
+
+    const updated = useStore.getState().graph
+    const between = updated.edges.filter((e) => e.from === from && e.to === to)
+    expect(between).toHaveLength(1)
   })
 })
 

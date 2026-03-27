@@ -59,6 +59,8 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   addEdge: (from: NodeId, to: NodeId) => {
     const { graph, past } = get()
+    const duplicate = graph.edges.some((e) => e.kind === 'causal' && e.from === from && e.to === to)
+    if (duplicate) return
     const edge = {
       kind: 'causal' as const,
       id: makeEdgeId(crypto.randomUUID()),
