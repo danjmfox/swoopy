@@ -82,6 +82,38 @@ describe('step', () => {
     expect(sim.nodeValues.get(birthsId)).toBeLessThan(0.1)
   })
 
+  it('positive injection: balancing loop prevents Population diverging to max (Appendix A)', () => {
+    const sim0 = makeInitialSim(seedGraph)
+    const sim1 = inject(sim0, popId, INJECT_STRENGTH)
+    let sim = sim1
+    for (let i = 0; i < 600; i++) sim = step(seedGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(popId)).toBeLessThan(10)
+  })
+
+  it('positive injection: reinforcing loop raises Population above initial (Appendix A)', () => {
+    const sim0 = makeInitialSim(seedGraph)
+    const sim1 = inject(sim0, popId, INJECT_STRENGTH)
+    let sim = sim1
+    for (let i = 0; i < 300; i++) sim = step(seedGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(popId)).toBeGreaterThan(5.1)
+  })
+
+  it('negative injection: reinforcing loop amplifies the drop below initial (Appendix A)', () => {
+    const sim0 = makeInitialSim(seedGraph)
+    const sim1 = inject(sim0, popId, -INJECT_STRENGTH)
+    let sim = sim1
+    for (let i = 0; i < 300; i++) sim = step(seedGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(popId)).toBeLessThan(4.9)
+  })
+
+  it('negative injection: system stabilises above min — balancing limits collapse (Appendix A)', () => {
+    const sim0 = makeInitialSim(seedGraph)
+    const sim1 = inject(sim0, popId, -INJECT_STRENGTH)
+    let sim = sim1
+    for (let i = 0; i < 600; i++) sim = step(seedGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(popId)).toBeGreaterThan(0)
+  })
+
   it('applies arrived signals to destination node values', () => {
     // Run long enough for Population→Births signal to arrive (progress reaches 1)
     // At SIGNAL_SPEED=0.65, takes 1/0.65 ≈ 1.54s = ~92 frames at 60fps
