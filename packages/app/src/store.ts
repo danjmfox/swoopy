@@ -6,6 +6,7 @@ import { seedGraph } from './seed.ts'
 interface StoreState {
   // graphSlice — React components subscribe to this
   graph: Graph
+  past: Graph[]
 
   // simSlice — RAF reads via getState() each frame; React does NOT subscribe
   sim: SimState
@@ -15,17 +16,19 @@ interface StoreState {
   addNode: (x: number, y: number) => void
   addEdge: (from: NodeId, to: NodeId) => void
   deleteNode: (id: NodeId) => void
+  undo: () => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
   graph: seedGraph,
+  past: [],
   sim: makeInitialSim(seedGraph),
   tickSim: (dt: number) => {
     const { graph, sim } = get()
     set({ sim: step(graph, sim, dt) })
   },
   addNode: (x: number, y: number) => {
-    const { graph } = get()
+    const { graph, past } = get()
     const node = {
       id: makeNodeId(crypto.randomUUID()),
       label: 'New Node',
@@ -36,10 +39,10 @@ export const useStore = create<StoreState>((set, get) => ({
       max: 10,
       initial: 5,
     }
-    set({ graph: { ...graph, nodes: [...graph.nodes, node] } })
+    set({ past: [...past, graph], graph: { ...graph, nodes: [...graph.nodes, node] } })
   },
   addEdge: (from: NodeId, to: NodeId) => {
-    const { graph } = get()
+    const { graph, past } = get()
     const edge = {
       kind: 'causal' as const,
       id: makeEdgeId(crypto.randomUUID()),
@@ -50,15 +53,22 @@ export const useStore = create<StoreState>((set, get) => ({
       delay: 'none' as const,
       transferFn: 'linear' as const,
     }
-    set({ graph: { ...graph, edges: [...graph.edges, edge] } })
+    set({ past: [...past, graph], graph: { ...graph, edges: [...graph.edges, edge] } })
   },
   deleteNode: (id: NodeId) => {
-    const { graph } = get()
+    const { graph, past } = get()
     set({
+      past: [...past, graph],
       graph: {
         nodes: graph.nodes.filter((n) => n.id !== id),
         edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
       },
     })
+  },
+  undo: () => {
+    const { past } = get()
+    if (past.length === 0) return
+    const previous = past[past.length - 1]
+    set({ graph: previous, past: past.slice(0, -1) })
   },
 }))
