@@ -13,6 +13,8 @@ export function step(_graph: Graph, _sim: SimState, _dt: number): SimState {
   throw new Error('not implemented')
 }
 
-export function inject(_sim: SimState, _nodeId: NodeId, _strength: number): SimState {
-  throw new Error('not implemented')
+export function inject(sim: SimState, nodeId: NodeId, strength: number): SimState {
+  const nodeValues = new Map(sim.nodeValues)
+  nodeValues.set(nodeId, (nodeValues.get(nodeId) ?? 0) + strength)
+  return { ...sim, nodeValues }
 }
