@@ -28,6 +28,7 @@ interface StoreState {
 
   // Persistence
   loadPersistedGraph: () => void
+  shareGraph: () => Promise<void>
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -93,6 +94,13 @@ export const useStore = create<StoreState>((set, get) => ({
     const next = future[0]
     set({ graph: next, past: [...past, graph], future: future.slice(1) })
     persist(next)
+  },
+  shareGraph: async () => {
+    const { graph } = get()
+    const encoded = btoa(JSON.stringify(serialize(graph)))
+    const url = new URL(window.location.href)
+    url.searchParams.set('g', encoded)
+    await navigator.clipboard.writeText(url.toString())
   },
   loadPersistedGraph: () => {
     const raw = localStorage.getItem(LS_KEY)
