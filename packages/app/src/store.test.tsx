@@ -94,6 +94,19 @@ describe('GE-21: undo', () => {
   })
 })
 
+describe('GE-22: redo', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: { nodes: [], edges: [] } })
+  })
+
+  it('reapplies the last undone mutation', () => {
+    useStore.getState().addNode(100, 100)
+    useStore.getState().undo()
+    useStore.getState().redo()
+    expect(useStore.getState().graph.nodes).toHaveLength(1)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
