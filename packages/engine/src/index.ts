@@ -25,3 +25,5 @@ export {
   DELAY_TICKS_MEDIUM,
   DELAY_TICKS_LONG,
 } from './constants.ts'
+
+export { makeInitialSim, step, inject } from './sim.ts'
