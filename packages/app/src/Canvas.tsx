@@ -35,11 +35,12 @@ export function Canvas() {
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      const { graph } = useStore.getState()
+      const { graph, togglePolarity, cycleDelay, openNodeEditor, openEdgeWeightEditor } = useStore.getState()
       const hit = hitTest(graph, x, y)
-      if (hit?.kind === 'node') {
-        useStore.getState().openNodeEditor(hit.id)
-      }
+      if (hit?.kind === 'node') openNodeEditor(hit.id)
+      else if (hit?.kind === 'edge-polarity') togglePolarity(hit.edgeId)
+      else if (hit?.kind === 'edge-delay') cycleDelay(hit.edgeId)
+      else if (hit?.kind === 'edge-weight') openEdgeWeightEditor(hit.edgeId)
     }
 
     canvas.addEventListener('pointerdown', onPointerDown)

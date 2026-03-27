@@ -1,7 +1,8 @@
 import type { Graph, SimState, CausalEdge } from '@swoopy/engine'
+import { bezierPoint, controlPoint, BOW, T_DELAY, T_POLARITY, T_WEIGHT } from './geometry.ts'
 
 const MAX_DT = 0.05
-const BOW = 28 // px perpendicular offset for parallel edge pairs
+const DELAY_MARKS: Record<string, number> = { none: 0, short: 2, medium: 4, long: 6 }
 
 export interface RendererStore {
   graph: Graph
@@ -19,33 +20,14 @@ function activationColour(value: number, min: number, max: number): string {
   return `rgb(${r},${g},${b})`
 }
 
-// Quadratic bezier point at t
-function bezierPoint(x1: number, y1: number, cx: number, cy: number, x2: number, y2: number, t: number) {
-  const mt = 1 - t
-  return {
-    x: mt * mt * x1 + 2 * mt * t * cx + t * t * x2,
-    y: mt * mt * y1 + 2 * mt * t * cy + t * t * y2,
-  }
-}
-
-// Control point for a bowed edge. bow > 0 = bow right relative to travel direction.
-function controlPoint(x1: number, y1: number, x2: number, y2: number, bow: number) {
-  const len = Math.hypot(x2 - x1, y2 - y1)
-  if (len < 1) return { cx: (x1 + x2) / 2, cy: (y1 + y2) / 2 }
-  // Right perpendicular: rotate (dx,dy) 90° clockwise → (dy, -dx)
-  const px = (y2 - y1) / len
-  const py = -(x2 - x1) / len
-  return { cx: (x1 + x2) / 2 + px * bow, cy: (y1 + y2) / 2 + py * bow }
-}
-
 function drawCurvedArrow(
   ctx: CanvasRenderingContext2D,
   x1: number, y1: number,
   x2: number, y2: number,
-  polarity: 1 | -1,
+  edge: CausalEdge,
   bow: number,
 ) {
-  const colour = polarity === 1 ? '#38bdf8' : '#f87171'
+  const colour = edge.polarity === 1 ? '#38bdf8' : '#f87171'
   const { cx, cy } = controlPoint(x1, y1, x2, y2, bow)
 
   ctx.beginPath()
@@ -55,7 +37,7 @@ function drawCurvedArrow(
   ctx.lineWidth = 1.5
   ctx.stroke()
 
-  // Arrowhead tangent = direction from control point to end point
+  // Arrowhead
   const tlen = Math.hypot(x2 - cx, y2 - cy)
   const ux = (x2 - cx) / tlen
   const uy = (y2 - cy) / tlen
@@ -68,6 +50,46 @@ function drawCurvedArrow(
   ctx.closePath()
   ctx.fillStyle = colour
   ctx.fill()
+
+  // Polarity badge at t=0.5
+  const mid = bezierPoint(x1, y1, cx, cy, x2, y2, T_POLARITY)
+  ctx.beginPath()
+  ctx.arc(mid.x, mid.y, 9, 0, Math.PI * 2)
+  ctx.fillStyle = '#0f172a'
+  ctx.fill()
+  ctx.strokeStyle = colour
+  ctx.lineWidth = 1.2
+  ctx.stroke()
+  ctx.fillStyle = colour
+  ctx.font = 'bold 11px system-ui'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(edge.polarity === 1 ? '+' : '−', mid.x, mid.y)
+
+  // Delay bars at t=0.2
+  const marks = DELAY_MARKS[edge.delay] ?? 0
+  if (marks > 0) {
+    const dp = bezierPoint(x1, y1, cx, cy, x2, y2, T_DELAY)
+    ctx.strokeStyle = colour
+    ctx.lineWidth = 1.5
+    for (let i = 0; i < marks; i++) {
+      const ox = (i - (marks - 1) / 2) * 4
+      ctx.beginPath()
+      ctx.moveTo(dp.x + ox, dp.y - 5)
+      ctx.lineTo(dp.x + ox, dp.y + 5)
+      ctx.stroke()
+    }
+  }
+
+  // Weight indicator at t=0.8 — show as dim number if < 1.0
+  if (edge.weight < 1.0) {
+    const wp = bezierPoint(x1, y1, cx, cy, x2, y2, T_WEIGHT)
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = '10px system-ui'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(edge.weight.toFixed(2), wp.x, wp.y - 8)
+  }
 }
 
 export class LoopyRenderer {
@@ -120,7 +142,6 @@ export class LoopyRenderer {
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]))
     const causalEdges = graph.edges.filter((e): e is CausalEdge => e.kind === 'causal')
 
-    // Detect which edges have a parallel reverse — those get bowed apart
     const hasReverse = new Set(
       causalEdges
         .filter((e) => causalEdges.some((r) => r.from === e.to && r.to === e.from))
@@ -145,12 +166,12 @@ export class LoopyRenderer {
         from.y + uy * from.radius,
         to.x - ux * to.radius,
         to.y - uy * to.radius,
-        edge.polarity,
+        edge,
         hasReverse.has(edge.id) ? BOW : 0,
       )
     }
 
-    // Signal particles — position along the bowed curve
+    // Signal particles
     for (const signal of sim.signals) {
       const edge = causalEdges.find((e) => e.id === signal.edgeId)
       if (!edge) continue
