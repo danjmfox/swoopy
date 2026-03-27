@@ -107,6 +107,21 @@ describe('GE-22: redo', () => {
   })
 })
 
+describe('SE-07: localStorage auto-save', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    useStore.setState({ graph: { nodes: [], edges: [] }, past: [], future: [] })
+  })
+
+  it('saves the graph to localStorage under "swoopy_graph" after each mutation', () => {
+    useStore.getState().addNode(100, 200)
+    const raw = localStorage.getItem('swoopy_graph')
+    expect(raw).not.toBeNull()
+    const parsed = JSON.parse(raw!)
+    expect(parsed.graph.nodes).toHaveLength(1)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
