@@ -1,5 +1,11 @@
-import type { Graph, SimState, NodeId, Signal, CausalEdge, ConstraintEdge, Node } from './types.ts'
-import { EMIT_THRESHOLD, SIGNAL_SPEED, DECAY } from './constants.ts'
+import type { Graph, SimState, NodeId, Signal, PendingSignal, CausalEdge, ConstraintEdge, Node } from './types.ts'
+import { EMIT_THRESHOLD, SIGNAL_SPEED, DECAY, DELAY_TICKS_SHORT, DELAY_TICKS_MEDIUM, DELAY_TICKS_LONG } from './constants.ts'
+
+const DELAY_TICKS: Record<string, number> = {
+  short: DELAY_TICKS_SHORT,
+  medium: DELAY_TICKS_MEDIUM,
+  long: DELAY_TICKS_LONG,
+}
 
 let signalSeq = 0
 function nextSignalId(): string {
@@ -93,18 +99,35 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
   //    prevNodeValues captures end-of-last-step, so inject() deltas (nodeValues only)
   //    are included in the delta comparison here.
   const newSignals: Signal[] = []
+  const newPending: PendingSignal[] = []
   for (const node of graph.nodes) {
     const delta = (nodeValues.get(node.id) ?? node.initial) - (sim.prevNodeValues.get(node.id) ?? node.initial)
     if (Math.abs(delta) < EMIT_THRESHOLD) continue
     for (const edge of causalEdgesFrom.get(node.id) ?? []) {
-      if (edge.delay !== 'none') continue
-      newSignals.push({ id: nextSignalId(), edgeId: edge.id, progress: 0, strength: delta * edge.weight })
+      const signal: Signal = { id: nextSignalId(), edgeId: edge.id, progress: 0, strength: delta * edge.weight }
+      if (edge.delay === 'none') {
+        newSignals.push(signal)
+      } else {
+        newPending.push({ signal, ticksRemaining: DELAY_TICKS[edge.delay] })
+      }
+    }
+  }
+
+  // §7.2 step 10 — decrement pending counters; release those at 0 into travelling
+  const stillPending: PendingSignal[] = []
+  for (const p of [...sim.pending, ...newPending]) {
+    const decremented = p.ticksRemaining - 1
+    if (decremented <= 0) {
+      newSignals.push(p.signal)
+    } else {
+      stillPending.push({ ...p, ticksRemaining: decremented })
     }
   }
 
   return {
     ...sim,
     signals: [...stillTravelling, ...newSignals],
+    pending: stillPending,
     nodeValues,
     prevNodeValues: new Map(nodeValues),
     tick: sim.tick + 1,
