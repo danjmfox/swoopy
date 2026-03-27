@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
+    "paths": {
+      "@swoopy/engine": ["../engine/src/index.ts"],
+      "@swoopy/renderer": ["../renderer/src/index.ts"]
+    }
+  },
+  "references": [
+    { "path": "../engine" },
+    { "path": "../renderer" }
+  ],
+  "include": ["src", "vite.config.ts"]
+}
