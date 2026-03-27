@@ -61,4 +61,15 @@ describe('step', () => {
     const sim2 = step(seedGraph, sim1, 1 / 60)
     expect(sim2.signals.length).toBeGreaterThan(0)
   })
+
+  it('applies arrived signals to destination node values', () => {
+    // Run long enough for Population→Births signal to arrive (progress reaches 1)
+    // At SIGNAL_SPEED=0.65, takes 1/0.65 ≈ 1.54s = ~92 frames at 60fps
+    const sim0 = makeInitialSim(seedGraph)
+    const sim1 = inject(sim0, popId, INJECT_STRENGTH)
+    let sim = sim1
+    for (let i = 0; i < 120; i++) sim = step(seedGraph, sim, 1 / 60)
+    // Births should have risen above its initial value (0)
+    expect(sim.nodeValues.get(birthsId)).toBeGreaterThan(0)
+  })
 })
