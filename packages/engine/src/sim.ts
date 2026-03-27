@@ -62,10 +62,10 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     }
   }
 
-  // PRD §7.2 step 1: resolve constraint edges — pre-clamp before propagation
+  // §7.2 step 1 — pre-clamp: resolve constraints before propagation
   resolveConstraints(nodeValues, graph.nodes, constraintEdges)
 
-  // 1. Advance travelling signals and apply those that have arrived
+  // §7.2 steps 2–4 — advance signals, collect arrivals, apply to destination nodes
   const stillTravelling: Signal[] = []
   for (const s of sim.signals) {
     const advanced = { ...s, progress: s.progress + SIGNAL_SPEED * dt }
@@ -80,18 +80,18 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     }
   }
 
-  // 2. Decay each node toward its initial value (frame-rate independent)
+  // §7.2 step 5 — decay each node toward its initial value (frame-rate independent)
   for (const node of graph.nodes) {
     const curr = nodeValues.get(node.id) ?? node.initial
     nodeValues.set(node.id, node.initial + (curr - node.initial) * Math.pow(1 - DECAY, dt))
   }
 
-  // PRD §7.2 step 6: re-clamp after arrivals and decay
+  // §7.2 step 6 — post-clamp: re-clamp after arrivals and decay
   resolveConstraints(nodeValues, graph.nodes, constraintEdges)
 
-  // 3. Emit new signals for nodes where |end - prev| >= EMIT_THRESHOLD.
-  //    prevNodeValues is the end of the previous step, so inject() deltas
-  //    (which update nodeValues but not prevNodeValues) are captured here.
+  // §7.2 steps 8–9 — emit signals for nodes where |delta| >= EMIT_THRESHOLD.
+  //    prevNodeValues captures end-of-last-step, so inject() deltas (nodeValues only)
+  //    are included in the delta comparison here.
   const newSignals: Signal[] = []
   for (const node of graph.nodes) {
     const delta = (nodeValues.get(node.id) ?? node.initial) - (sim.prevNodeValues.get(node.id) ?? node.initial)
