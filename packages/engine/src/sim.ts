@@ -18,55 +18,49 @@ export function makeInitialSim(graph: Graph): SimState {
 }
 
 export function step(graph: Graph, sim: SimState, dt: number): SimState {
-  const startValues = sim.nodeValues
-  const nodeValues = new Map(startValues)
+  const nodeValues = new Map(sim.nodeValues)
 
-  // Advance travelling signals
-  const travelling: Signal[] = sim.signals.map((s) => ({
-    ...s,
-    progress: s.progress + SIGNAL_SPEED * dt,
-  }))
-
-  // Apply arrived signals (progress >= 1) to destination node values
-  const edgeMap = new Map(graph.edges.map((e) => [e.id, e]))
-  const stillTravelling: Signal[] = []
-  for (const signal of travelling) {
-    if (signal.progress >= 1) {
-      const edge = edgeMap.get(signal.edgeId)
-      if (edge?.kind === 'causal') {
-        const dest = edge.to
-        nodeValues.set(dest, (nodeValues.get(dest) ?? 0) + signal.strength * edge.polarity)
-      }
-    } else {
-      stillTravelling.push(signal)
+  const edgeById = new Map(graph.edges.map((e) => [e.id, e]))
+  const causalEdgesFrom = new Map<string, CausalEdge[]>()
+  for (const e of graph.edges) {
+    if (e.kind === 'causal') {
+      const list = causalEdgesFrom.get(e.from) ?? []
+      list.push(e)
+      causalEdgesFrom.set(e.from, list)
     }
   }
 
-  // Apply decay toward each node's initial value
-  for (const node of graph.nodes) {
-    const curr = nodeValues.get(node.id) ?? node.initial
-    const decayed = node.initial + (curr - node.initial) * Math.pow(1 - DECAY, dt)
-    nodeValues.set(node.id, decayed)
+  // 1. Advance travelling signals and apply those that have arrived
+  const stillTravelling: Signal[] = []
+  for (const s of sim.signals) {
+    const advanced = { ...s, progress: s.progress + SIGNAL_SPEED * dt }
+    if (advanced.progress >= 1) {
+      const edge = edgeById.get(s.edgeId)
+      if (edge?.kind === 'causal') {
+        const prev = nodeValues.get(edge.to) ?? 0
+        nodeValues.set(edge.to, prev + s.strength * edge.polarity)
+      }
+    } else {
+      stillTravelling.push(advanced)
+    }
   }
 
-  // Emit signals for nodes where |endValue - prevValue| >= EMIT_THRESHOLD.
-  // prevNodeValues reflects the end of the previous step, so inject() deltas
-  // (which change nodeValues but not prevNodeValues) are visible here.
-  const causalEdges = graph.edges.filter((e): e is CausalEdge => e.kind === 'causal')
+  // 2. Decay each node toward its initial value (frame-rate independent)
+  for (const node of graph.nodes) {
+    const curr = nodeValues.get(node.id) ?? node.initial
+    nodeValues.set(node.id, node.initial + (curr - node.initial) * Math.pow(1 - DECAY, dt))
+  }
+
+  // 3. Emit new signals for nodes where |end - prev| >= EMIT_THRESHOLD.
+  //    prevNodeValues is the end of the previous step, so inject() deltas
+  //    (which update nodeValues but not prevNodeValues) are captured here.
   const newSignals: Signal[] = []
   for (const node of graph.nodes) {
-    const prev = sim.prevNodeValues.get(node.id) ?? node.initial
-    const curr = nodeValues.get(node.id) ?? node.initial
-    const delta = curr - prev
-    if (Math.abs(delta) >= EMIT_THRESHOLD) {
-      for (const edge of causalEdges.filter((e) => e.from === node.id && e.delay === 'none')) {
-        newSignals.push({
-          id: nextSignalId(),
-          edgeId: edge.id,
-          progress: 0,
-          strength: delta * edge.weight,
-        })
-      }
+    const delta = (nodeValues.get(node.id) ?? node.initial) - (sim.prevNodeValues.get(node.id) ?? node.initial)
+    if (Math.abs(delta) < EMIT_THRESHOLD) continue
+    for (const edge of causalEdgesFrom.get(node.id) ?? []) {
+      if (edge.delay !== 'none') continue
+      newSignals.push({ id: nextSignalId(), edgeId: edge.id, progress: 0, strength: delta * edge.weight })
     }
   }
 
