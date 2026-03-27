@@ -9,3 +9,12 @@ describe('serialize', () => {
     expect(blob).toMatchObject({ version: 1 })
   })
 })
+
+// SE-03
+describe('deserialize', () => {
+  it('round-trips: deserialize(serialize(graph)) restores the graph exactly', () => {
+    const restored = deserialize(serialize(seedGraph))
+    expect(restored.nodes).toEqual(seedGraph.nodes)
+    expect(restored.edges).toEqual(seedGraph.edges)
+  })
+})
