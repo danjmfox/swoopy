@@ -1,8 +1,7 @@
 import { create } from 'zustand'
 import type { Graph, SimState } from '@swoopy/engine'
 import { makeInitialSim, step } from '@swoopy/engine'
-
-const emptyGraph: Graph = { nodes: [], edges: [] }
+import { seedGraph } from './seed.ts'
 
 interface StoreState {
   // graphSlice — React components subscribe to this
@@ -14,8 +13,8 @@ interface StoreState {
 }
 
 export const useStore = create<StoreState>((set, get) => ({
-  graph: emptyGraph,
-  sim: makeInitialSim(emptyGraph),
+  graph: seedGraph,
+  sim: makeInitialSim(seedGraph),
   tickSim: (dt: number) => {
     const { graph, sim } = get()
     set({ sim: step(graph, sim, dt) })
