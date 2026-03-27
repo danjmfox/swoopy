@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "@swoopy/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0"
   }
 }
