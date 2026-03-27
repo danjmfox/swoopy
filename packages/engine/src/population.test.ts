@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { makeNodeId, makeEdgeId, makeInitialSim, inject, INJECT_STRENGTH } from './index.ts'
+import { makeNodeId, makeEdgeId, makeInitialSim, inject, step, INJECT_STRENGTH } from './index.ts'
 import type { Graph, Node, CausalEdge } from './types.ts'
 
 const popId = makeNodeId('population')
@@ -50,5 +50,15 @@ describe('inject', () => {
     const sim = makeInitialSim(seedGraph)
     const next = inject(sim, popId, INJECT_STRENGTH)
     expect(next.nodeValues.get(popId)).toBe(5 + INJECT_STRENGTH)
+  })
+})
+
+// SI-04
+describe('step', () => {
+  it('emits signals on outgoing causal edges when |delta| >= EMIT_THRESHOLD', () => {
+    const sim0 = makeInitialSim(seedGraph)
+    const sim1 = inject(sim0, popId, INJECT_STRENGTH) // delta = 1.0, well above 0.06
+    const sim2 = step(seedGraph, sim1, 1 / 60)
+    expect(sim2.signals.length).toBeGreaterThan(0)
   })
 })
