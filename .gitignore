@@ -1,1 +1,6 @@
 .claude/
+node_modules/
+dist/
+coverage/
+.trunk/out/
+*.tsbuildinfo

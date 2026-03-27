@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
+    "paths": {
+      "@swoopy/engine": ["../engine/src/index.ts"]
+    }
+  },
+  "references": [
+    { "path": "../engine" }
+  ],
+  "include": ["src"]
+}
