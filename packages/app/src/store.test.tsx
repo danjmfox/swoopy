@@ -65,6 +65,23 @@ describe('GE-04 / GE-06 / GE-07: addEdge', () => {
   })
 })
 
+describe('GE-09: deleteNode', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph })
+  })
+
+  it('removes the node and all edges connected to it', () => {
+    const { graph } = useStore.getState()
+    const target = graph.nodes[0] // Population — connected to all 4 edges
+
+    useStore.getState().deleteNode(target.id)
+
+    const updated = useStore.getState().graph
+    expect(updated.nodes.find((n) => n.id === target.id)).toBeUndefined()
+    expect(updated.edges.every((e) => e.from !== target.id && e.to !== target.id)).toBe(true)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
