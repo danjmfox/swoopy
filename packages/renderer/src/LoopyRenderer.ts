@@ -1,3 +1,6 @@
+// Max dt cap prevents simulation jumps on tab wake (PRD §9)
+const MAX_DT = 0.05
+
 export interface RendererStore {
   tickSim: (dt: number) => void
 }
@@ -12,10 +15,25 @@ export class LoopyRenderer {
   ) {}
 
   start(): void {
-    throw new Error('not implemented')
+    this.rafId = requestAnimationFrame(this.tick)
   }
 
   stop(): void {
-    throw new Error('not implemented')
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId)
+      this.rafId = null
+      this.lastTime = null
+    }
+  }
+
+  private tick = (time: number): void => {
+    const dt = this.lastTime !== null
+      ? Math.min((time - this.lastTime) / 1000, MAX_DT)
+      : 1 / 60
+    this.lastTime = time
+
+    this.getState().tickSim(dt)
+
+    this.rafId = requestAnimationFrame(this.tick)
   }
 }

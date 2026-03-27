@@ -65,6 +65,10 @@ importers:
       '@swoopy/engine':
         specifier: workspace:*
         version: link:../engine
+    devDependencies:
+      jsdom:
+        specifier: ^26.0.0
+        version: 26.1.0
 
 packages:
 
