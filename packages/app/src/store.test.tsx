@@ -158,6 +158,26 @@ describe('SE-02 / SE-06: shareGraph', () => {
   })
 })
 
+describe('SE-03: loadFromUrl', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: { nodes: [], edges: [] }, past: [], future: [] })
+  })
+
+  it('restores graph from base64 ?g= param when present', () => {
+    useStore.getState().addNode(77, 88)
+    const graph = useStore.getState().graph
+    const encoded = btoa(JSON.stringify({ version: 1, graph }))
+
+    useStore.setState({ graph: { nodes: [], edges: [] } })
+    useStore.getState().loadFromUrl(`?g=${encoded}`)
+
+    const restored = useStore.getState().graph
+    expect(restored.nodes).toHaveLength(1)
+    expect(restored.nodes[0].x).toBe(77)
+    expect(restored.nodes[0].y).toBe(88)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
