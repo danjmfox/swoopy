@@ -342,6 +342,81 @@ describe('SI-17 setSimSpeed', () => {
   })
 })
 
+describe('GE-03/20 moveNode', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('moves the node to the given coordinates', () => {
+    const node = seedGraph.nodes[0]
+    useStore.getState().moveNode(node.id, 42, 99)
+    const moved = useStore.getState().graph.nodes.find((n) => n.id === node.id)!
+    expect(moved.x).toBe(42)
+    expect(moved.y).toBe(99)
+  })
+
+  it('moveNode is undoable — undo restores original position', () => {
+    const node = seedGraph.nodes[0]
+    const origX = node.x
+    const origY = node.y
+    useStore.getState().moveNode(node.id, 500, 500)
+    useStore.getState().undo()
+    const restored = useStore.getState().graph.nodes.find((n) => n.id === node.id)!
+    expect(restored.x).toBe(origX)
+    expect(restored.y).toBe(origY)
+  })
+})
+
+describe('GE-20 focusNextNode — Tab cycles node focus', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, focusedNodeId: null })
+  })
+
+  it('focusedNodeId starts null', () => {
+    expect(useStore.getState().focusedNodeId).toBeNull()
+  })
+
+  it('focusNextNode focuses the first node when none is focused', () => {
+    useStore.getState().focusNextNode()
+    expect(useStore.getState().focusedNodeId).toBe(seedGraph.nodes[0].id)
+  })
+
+  it('focusNextNode advances to the next node', () => {
+    useStore.setState({ focusedNodeId: seedGraph.nodes[0].id })
+    useStore.getState().focusNextNode()
+    expect(useStore.getState().focusedNodeId).toBe(seedGraph.nodes[1].id)
+  })
+
+  it('focusNextNode wraps from last back to first', () => {
+    const last = seedGraph.nodes[seedGraph.nodes.length - 1]
+    useStore.setState({ focusedNodeId: last.id })
+    useStore.getState().focusNextNode()
+    expect(useStore.getState().focusedNodeId).toBe(seedGraph.nodes[0].id)
+  })
+})
+
+describe('GE-20 nudgeNode — arrow key repositions focused node', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('nudgeNode shifts the node by the given delta', () => {
+    const node = seedGraph.nodes[0]
+    useStore.getState().nudgeNode(node.id, 10, -5)
+    const moved = useStore.getState().graph.nodes.find((n) => n.id === node.id)!
+    expect(moved.x).toBe(node.x + 10)
+    expect(moved.y).toBe(node.y - 5)
+  })
+
+  it('nudgeNode is undoable', () => {
+    const node = seedGraph.nodes[0]
+    useStore.getState().nudgeNode(node.id, 10, 0)
+    useStore.getState().undo()
+    const restored = useStore.getState().graph.nodes.find((n) => n.id === node.id)!
+    expect(restored.x).toBe(node.x)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
