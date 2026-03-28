@@ -1,4 +1,5 @@
 import type { Graph, SimState, CausalEdge, ConstraintEdge } from '@swoopy/engine'
+import { stockIndicator, timebombStrength } from './indicators.ts'
 import { bezierPoint, controlPoint, BOW, T_DELAY, T_POLARITY, T_WEIGHT } from './geometry.ts'
 
 const MAX_DT = 0.05
@@ -233,19 +234,52 @@ export class LoopyRenderer {
     // Nodes
     for (const node of graph.nodes) {
       const value = sim.nodeValues.get(node.id) ?? node.initial
+      const prevValue = sim.prevNodeValues.get(node.id) ?? node.initial
+      const { fill, trend } = stockIndicator(value, node.min, node.max, prevValue)
+      const timebomb = timebombStrength(sim.pending, node.id, graph.edges)
+
+      // Base fill
       ctx.beginPath()
       ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2)
       ctx.fillStyle = activationColour(value, node.min, node.max)
       ctx.fill()
+
+      // SI-12: stock fill arc — thin ring showing position in [min, max]
+      if (fill > 0) {
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, node.radius - 4, -Math.PI / 2, -Math.PI / 2 + fill * 2 * Math.PI)
+        ctx.strokeStyle = fill > 0.75 ? '#f97316' : fill > 0.25 ? '#facc15' : '#4ade80'
+        ctx.lineWidth = 3
+        ctx.stroke()
+      }
+
+      // SI-15: timebomb badge — pulsing orange dot when pending > threshold
+      if (timebomb > 0.1) {
+        ctx.beginPath()
+        ctx.arc(node.x + node.radius * 0.6, node.y - node.radius * 0.6, 6, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(251,146,60,${Math.min(1, timebomb)})`
+        ctx.fill()
+      }
+
+      // Outer ring
+      ctx.beginPath()
+      ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2)
       ctx.strokeStyle = '#94a3b8'
       ctx.lineWidth = 1.5
       ctx.stroke()
 
+      // SI-12: trend arrow
+      const arrow = trend === 'up' ? '▲' : trend === 'down' ? '▼' : ''
       ctx.fillStyle = '#f1f5f9'
       ctx.font = '13px system-ui, sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(node.label, node.x, node.y)
+      ctx.fillText(node.label, node.x, node.y - (arrow ? 6 : 0))
+      if (arrow) {
+        ctx.font = '10px system-ui, sans-serif'
+        ctx.fillStyle = trend === 'up' ? '#4ade80' : '#f87171'
+        ctx.fillText(arrow, node.x, node.y + 8)
+      }
     }
   }
 }
