@@ -2,16 +2,16 @@
 id: DR--20260327--engine--simstate-prev-node-values
 dateCreated: '2026-03-27'
 version: 1.0.0
-status: draft
+status: accepted
 changeType: creation
 domain: engine
 slug: simstate-prev-node-values
 changelog:
   - date: '2026-03-27'
     note: Initial creation — captured at implementation time
-  - date: '2026-03-27'
-    note: Marked as draft
-lastEdited: '2026-03-27'
+  - date: '2026-03-28'
+    note: Accepted — prevNodeValues pattern validated across all engine tests
+lastEdited: '2026-03-28'
 ---
 # SimState carries prevNodeValues for cross-step delta detection
 
