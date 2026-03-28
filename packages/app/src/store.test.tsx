@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { useStore } from './store.ts'
 import { seedGraph } from './seed.ts'
+import { ConstraintChoiceDialog } from './ConstraintChoiceDialog.tsx'
 
 // Component subscribing to graphSlice only — must never re-render from sim ticks
 function GraphView() {
@@ -110,7 +111,6 @@ describe('GE-23 ConstraintChoiceDialog', () => {
   })
 
   it('renders ceiling and floor buttons when pendingConstraintEdge is set', () => {
-    const { ConstraintChoiceDialog } = require('./ConstraintChoiceDialog.tsx')
     const { getByText } = render(<ConstraintChoiceDialog />)
     expect(getByText(/ceiling/i)).toBeTruthy()
     expect(getByText(/floor/i)).toBeTruthy()
