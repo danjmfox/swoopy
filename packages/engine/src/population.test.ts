@@ -164,7 +164,7 @@ describe('GE-13 edge weight', () => {
     let sim = makeInitialSim(noWeightGraph)
     sim = inject(sim, popId, INJECT_STRENGTH)
     for (let i = 0; i < 120; i++) sim = step(noWeightGraph, sim, 1 / 60)
-    // Births should stay at or near 0 (only decay-driven, no signal arriving)
+    // Births should stay at 0 — no signal arrives, no decay
     expect(sim.nodeValues.get(birthsId)).toBeLessThan(0.1)
   })
 })
