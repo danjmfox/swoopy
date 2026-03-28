@@ -43,6 +43,7 @@ interface StoreState {
 
   // Keyboard focus
   focusedNodeId: NodeId | null
+  setFocusedNode: (id: NodeId | null) => void
   focusNextNode: () => void
 
   // Constraint edge pending state
@@ -89,6 +90,7 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   cancelConstraintEdge: () => set({ pendingConstraintEdge: null }),
   focusedNodeId: null as NodeId | null,
+  setFocusedNode: (id) => set({ focusedNodeId: id }),
   focusNextNode: () => {
     const { graph, focusedNodeId } = get()
     const nodes = graph.nodes

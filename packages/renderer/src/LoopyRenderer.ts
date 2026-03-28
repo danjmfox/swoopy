@@ -1,4 +1,4 @@
-import type { Graph, SimState, CausalEdge, ConstraintEdge } from '@swoopy/engine'
+import type { Graph, SimState, CausalEdge, ConstraintEdge, NodeId } from '@swoopy/engine'
 import { MAX_SIGNALS } from '@swoopy/engine'
 import { stockIndicator, timebombStrength, saturationAlpha } from './indicators.ts'
 import { bezierPoint, controlPoint, BOW, T_DELAY, T_POLARITY, T_WEIGHT } from './geometry.ts'
@@ -12,6 +12,7 @@ export interface RendererStore {
   simRunning: boolean
   simSpeed: number
   tickSim: (dt: number) => void
+  focusedNodeId: NodeId | null
 }
 
 function activationColour(value: number, min: number, max: number): string {
@@ -275,6 +276,15 @@ export class LoopyRenderer {
       ctx.strokeStyle = '#94a3b8'
       ctx.lineWidth = 1.5
       ctx.stroke()
+
+      // GE-20: focus ring — white highlight when node is keyboard/click focused
+      if (state.focusedNodeId === node.id) {
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, node.radius + 3, 0, Math.PI * 2)
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = 3
+        ctx.stroke()
+      }
 
       // SI-12: trend arrow
       const arrow = trend === 'up' ? '▲' : trend === 'down' ? '▼' : ''

@@ -101,6 +101,39 @@ describe('GE-20 Canvas keyboard nav — Tab, arrows, Delete', () => {
   })
 })
 
+describe('GE-20 click sets focused node in select mode', () => {
+  let setFocusedNode: ReturnType<typeof vi.fn>
+  const node = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    setFocusedNode = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({
+      graph: seedGraph,
+      mode: 'select',
+      setFocusedNode,
+    } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('pointerdown on a node sets focusedNodeId to that node', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: node.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    expect(setFocusedNode).toHaveBeenCalledWith(node.id)
+  })
+
+  it('pointerdown on empty canvas clears focusedNodeId', async () => {
+    mockHitTest.mockReturnValue(null)
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    expect(setFocusedNode).toHaveBeenCalledWith(null)
+  })
+})
+
 describe('GE-03/20 Canvas drag — one moveNode call on pointerup', () => {
   let moveNode: ReturnType<typeof vi.fn>
   const popNode = seedGraph.nodes[0]
