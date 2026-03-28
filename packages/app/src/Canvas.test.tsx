@@ -430,3 +430,23 @@ describe('SI-02 hold-to-inject — continuous injection while pointer held', () 
     expect(valueAfterRelease).toBe(valueAtRelease)
   })
 })
+
+describe('GE-18 dblclick — no-op in simulate mode', () => {
+  let openNodeEditor: ReturnType<typeof vi.fn>
+  const node = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    openNodeEditor = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, openNodeEditor } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('dblclick on node in simulate mode does NOT open editor', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: node.id })
+    useStore.setState({ mode: 'simulate' } as Parameters<typeof useStore.setState>[0])
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.dblClick(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(openNodeEditor).not.toHaveBeenCalled()
+  })
+})

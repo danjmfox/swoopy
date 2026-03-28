@@ -99,9 +99,9 @@ export function Canvas() {
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      const { graph, togglePolarity, cycleDelay, openNodeEditor, openEdgeWeightEditor } = useStore.getState()
+      const { graph, mode, togglePolarity, cycleDelay, openNodeEditor, openEdgeWeightEditor } = useStore.getState()
       const hit = hitTest(graph, x, y)
-      if (hit?.kind === 'node') openNodeEditor(hit.id)
+      if (hit?.kind === 'node' && mode !== 'simulate') openNodeEditor(hit.id)
       else if (hit?.kind === 'edge-polarity') togglePolarity(hit.edgeId)
       else if (hit?.kind === 'edge-delay') cycleDelay(hit.edgeId)
       else if (hit?.kind === 'edge-weight') openEdgeWeightEditor(hit.edgeId)
