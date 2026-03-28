@@ -110,7 +110,12 @@ export function Canvas() {
     const NUDGE_PX = 8
 
     function onKeyDown(e: KeyboardEvent) {
-      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode } = useStore.getState()
+      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode, undo, redo } = useStore.getState()
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo(); else undo()
+        return
+      }
       if (e.key === 'Tab') { e.preventDefault(); focusNextNode(); return }
       if (focusedNodeId === null) return
       if (e.key === 'ArrowRight') nudgeNode(focusedNodeId,  NUDGE_PX, 0)

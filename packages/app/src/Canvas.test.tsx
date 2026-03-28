@@ -431,6 +431,45 @@ describe('SI-02 hold-to-inject — continuous injection while pointer held', () 
   })
 })
 
+describe('GE-21 Ctrl+Z / Ctrl+Shift+Z — undo and redo', () => {
+  let undo: ReturnType<typeof vi.fn>
+  let redo: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    undo = vi.fn()
+    redo = vi.fn()
+    useStore.setState({ graph: seedGraph, undo, redo } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('Ctrl+Z calls undo', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'z', ctrlKey: true })
+    expect(undo).toHaveBeenCalledTimes(1)
+  })
+
+  it('Meta+Z calls undo (macOS)', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'z', metaKey: true })
+    expect(undo).toHaveBeenCalledTimes(1)
+  })
+
+  it('Ctrl+Shift+Z calls redo', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'z', ctrlKey: true, shiftKey: true })
+    expect(redo).toHaveBeenCalledTimes(1)
+  })
+
+  it('Meta+Shift+Z calls redo (macOS)', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'z', metaKey: true, shiftKey: true })
+    expect(redo).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('GE-18 dblclick — no-op in simulate mode', () => {
   let openNodeEditor: ReturnType<typeof vi.fn>
   const node = seedGraph.nodes[0]
