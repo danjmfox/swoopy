@@ -97,6 +97,26 @@ describe('GE-23 confirmConstraintEdge', () => {
   })
 })
 
+describe('GE-23 ConstraintChoiceDialog', () => {
+  const [from, to] = seedGraph.nodes
+
+  beforeEach(() => {
+    useStore.setState({
+      graph: seedGraph,
+      past: [],
+      future: [],
+      pendingConstraintEdge: { from: from.id, to: to.id },
+    })
+  })
+
+  it('renders ceiling and floor buttons when pendingConstraintEdge is set', () => {
+    const { ConstraintChoiceDialog } = require('./ConstraintChoiceDialog.tsx')
+    const { getByText } = render(<ConstraintChoiceDialog />)
+    expect(getByText(/ceiling/i)).toBeTruthy()
+    expect(getByText(/floor/i)).toBeTruthy()
+  })
+})
+
 describe('GE-04 / GE-06 / GE-07: addEdge', () => {
   beforeEach(() => {
     useStore.setState({ graph: seedGraph })
