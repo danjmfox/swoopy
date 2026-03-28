@@ -70,7 +70,7 @@ export function Canvas() {
       else if (e.key === 'ArrowLeft')  nudgeNode(focusedNodeId, -NUDGE_PX, 0)
       else if (e.key === 'ArrowDown')  nudgeNode(focusedNodeId, 0,  NUDGE_PX)
       else if (e.key === 'ArrowUp')    nudgeNode(focusedNodeId, 0, -NUDGE_PX)
-      else if (e.key === 'Delete')     deleteNode(focusedNodeId)
+      else if (e.key === 'Delete' || e.key === 'Backspace') deleteNode(focusedNodeId)
     }
 
     canvas.addEventListener('pointerdown', onPointerDown)

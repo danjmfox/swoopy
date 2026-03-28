@@ -82,6 +82,14 @@ describe('GE-20 Canvas keyboard nav — Tab, arrows, Delete', () => {
     expect(deleteNode).toHaveBeenCalledWith(focusedNode.id)
   })
 
+  it('Backspace also calls deleteNode on focused node', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    fireEvent.keyDown(canvas, { key: 'Backspace' })
+    expect(deleteNode).toHaveBeenCalledWith(focusedNode.id)
+  })
+
   it('arrow keys do nothing when no node is focused', async () => {
     useStore.setState({ focusedNodeId: null } as Parameters<typeof useStore.setState>[0])
     const { container } = render(<Canvas />)
