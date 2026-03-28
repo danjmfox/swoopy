@@ -293,6 +293,41 @@ describe('GE-09 delete mode — pointerdown on node removes it', () => {
   })
 })
 
+describe('GE-26 delete mode — pointerdown on edge hit region removes it', () => {
+  let deleteEdge: ReturnType<typeof vi.fn>
+  const targetEdge = seedGraph.edges[0]
+
+  beforeEach(() => {
+    deleteEdge = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, deleteEdge, mode: 'delete' } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('pointerdown on edge-polarity calls deleteEdge', async () => {
+    mockHitTest.mockReturnValue({ kind: 'edge-polarity', edgeId: targetEdge.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.pointerDown(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(deleteEdge).toHaveBeenCalledWith(targetEdge.id)
+  })
+
+  it('pointerdown on edge-delay calls deleteEdge', async () => {
+    mockHitTest.mockReturnValue({ kind: 'edge-delay', edgeId: targetEdge.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.pointerDown(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(deleteEdge).toHaveBeenCalledWith(targetEdge.id)
+  })
+
+  it('pointerdown on edge-weight calls deleteEdge', async () => {
+    mockHitTest.mockReturnValue({ kind: 'edge-weight', edgeId: targetEdge.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.pointerDown(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(deleteEdge).toHaveBeenCalledWith(targetEdge.id)
+  })
+})
+
 describe('GE-04 add-edge mode — drag node to node creates edge', () => {
   let addEdge: ReturnType<typeof vi.fn>
   let moveNode: ReturnType<typeof vi.fn>

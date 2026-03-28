@@ -32,6 +32,7 @@ interface StoreState {
   addEdge: (from: NodeId, to: NodeId) => void
   addConstraintEdge: (from: NodeId, to: NodeId, constraintKind: ConstraintKind) => void
   deleteNode: (id: NodeId) => void
+  deleteEdge: (id: EdgeId) => void
   updateNode: (id: NodeId, patch: Partial<Pick<Node, 'label' | 'min' | 'max' | 'initial'>>) => void
   moveNode: (id: NodeId, x: number, y: number) => void
   nudgeNode: (id: NodeId, dx: number, dy: number) => void
@@ -214,6 +215,12 @@ export const useStore = create<StoreState>((set, get) => ({
       nodes: graph.nodes.filter((n) => n.id !== id),
       edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
     }
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
+  },
+  deleteEdge: (id: EdgeId) => {
+    const { graph, past } = get()
+    const next = { ...graph, edges: graph.edges.filter((e) => e.id !== id) }
     set({ past: [...past, graph], future: [], graph: next })
     persist(next)
   },

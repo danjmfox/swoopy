@@ -171,6 +171,25 @@ describe('GE-09: deleteNode', () => {
   })
 })
 
+describe('GE-26: deleteEdge', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('removes the edge from the graph', () => {
+    const edgeId = seedGraph.edges[0].id
+    useStore.getState().deleteEdge(edgeId)
+    expect(useStore.getState().graph.edges.find((e) => e.id === edgeId)).toBeUndefined()
+  })
+
+  it('deleteEdge is undoable', () => {
+    const edgeId = seedGraph.edges[0].id
+    useStore.getState().deleteEdge(edgeId)
+    useStore.getState().undo()
+    expect(useStore.getState().graph.edges.find((e) => e.id === edgeId)).toBeDefined()
+  })
+})
+
 describe('GE-21: undo', () => {
   beforeEach(() => {
     useStore.setState({ graph: { nodes: [], edges: [] } })

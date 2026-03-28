@@ -60,6 +60,9 @@ export function Canvas() {
         }
       } else if (mode === 'delete') {
         if (hit?.kind === 'node') deleteNode(hit.id)
+        else if (hit?.kind === 'edge-polarity' || hit?.kind === 'edge-delay' || hit?.kind === 'edge-weight') {
+          useStore.getState().deleteEdge(hit.edgeId)
+        }
       } else {
         // select / add-edge — track drag source; select mode also sets keyboard focus
         if (hit?.kind === 'node') {
