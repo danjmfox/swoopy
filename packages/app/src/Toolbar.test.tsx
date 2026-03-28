@@ -39,6 +39,15 @@ describe('Toolbar mode switcher', () => {
     expect(setMode).toHaveBeenCalledWith(mode)
   })
 
+  it('GE-28 each mode button displays its shortcut key inline', () => {
+    const { getByTitle } = render(<Toolbar />)
+    expect(getByTitle('Select').textContent).toContain('S')
+    expect(getByTitle('Add Node').textContent).toContain('N')
+    expect(getByTitle('Add Edge').textContent).toContain('E')
+    expect(getByTitle('Simulate').textContent).toContain('R')
+    expect(getByTitle('Delete').textContent).toContain('D')
+  })
+
   it('active mode button has distinct styling', () => {
     useStore.setState({ mode: 'simulate' } as Parameters<typeof useStore.setState>[0])
     const { getByTitle } = render(<Toolbar />)

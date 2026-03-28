@@ -534,6 +534,71 @@ describe('GE-27 Enter on focused node opens editor', () => {
   })
 })
 
+describe('GE-28 mode keyboard shortcuts — S/N/E/R/D', () => {
+  let setMode: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    setMode = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, setMode } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('S switches to select mode', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 's' })
+    expect(setMode).toHaveBeenCalledWith('select')
+  })
+
+  it('N switches to add-node mode', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'n' })
+    expect(setMode).toHaveBeenCalledWith('add-node')
+  })
+
+  it('E switches to add-edge mode', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'e' })
+    expect(setMode).toHaveBeenCalledWith('add-edge')
+  })
+
+  it('R switches to simulate mode', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'r' })
+    expect(setMode).toHaveBeenCalledWith('simulate')
+  })
+
+  it('D switches to delete mode', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'd' })
+    expect(setMode).toHaveBeenCalledWith('delete')
+  })
+
+  it('shortcuts do not fire when Ctrl is held', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    fireEvent.keyDown(canvas, { key: 's', ctrlKey: true })
+    fireEvent.keyDown(canvas, { key: 'n', ctrlKey: true })
+    fireEvent.keyDown(canvas, { key: 'r', ctrlKey: true })
+    expect(setMode).not.toHaveBeenCalled()
+  })
+
+  it('shortcuts do not fire when Meta is held', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    fireEvent.keyDown(canvas, { key: 's', metaKey: true })
+    fireEvent.keyDown(canvas, { key: 'n', metaKey: true })
+    fireEvent.keyDown(canvas, { key: 'r', metaKey: true })
+    expect(setMode).not.toHaveBeenCalled()
+  })
+})
+
 describe('GE-18 dblclick — no-op in simulate mode', () => {
   let openNodeEditor: ReturnType<typeof vi.fn>
   const node = seedGraph.nodes[0]
