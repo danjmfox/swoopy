@@ -41,6 +41,12 @@ interface StoreState {
   focusedNodeId: NodeId | null
   focusNextNode: () => void
 
+  // Constraint edge pending state
+  pendingConstraintEdge: { from: NodeId; to: NodeId } | null
+  setPendingConstraintEdge: (from: NodeId, to: NodeId) => void
+  confirmConstraintEdge: (kind: ConstraintKind) => void
+  cancelConstraintEdge: () => void
+
   // Editor UI state
   editingNodeId: NodeId | null
   openNodeEditor: (id: NodeId) => void
@@ -67,6 +73,15 @@ export const useStore = create<StoreState>((set, get) => ({
   future: [],
   simRunning: true,
   simSpeed: 1,
+  pendingConstraintEdge: null as { from: NodeId; to: NodeId } | null,
+  setPendingConstraintEdge: (from: NodeId, to: NodeId) => set({ pendingConstraintEdge: { from, to } }),
+  confirmConstraintEdge: (kind: ConstraintKind) => {
+    const { pendingConstraintEdge } = get()
+    if (!pendingConstraintEdge) return
+    get().addConstraintEdge(pendingConstraintEdge.from, pendingConstraintEdge.to, kind)
+    set({ pendingConstraintEdge: null })
+  },
+  cancelConstraintEdge: () => set({ pendingConstraintEdge: null }),
   focusedNodeId: null as NodeId | null,
   focusNextNode: () => {
     const { graph, focusedNodeId } = get()
