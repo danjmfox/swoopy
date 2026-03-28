@@ -430,3 +430,91 @@ describe('SI-02 hold-to-inject — continuous injection while pointer held', () 
     expect(valueAfterRelease).toBe(valueAtRelease)
   })
 })
+
+describe('GE-21 Ctrl+Z / Ctrl+Shift+Z — undo and redo', () => {
+  let undo: ReturnType<typeof vi.fn>
+  let redo: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    undo = vi.fn()
+    redo = vi.fn()
+    useStore.setState({ graph: seedGraph, undo, redo } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('Ctrl+Z calls undo', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'z', ctrlKey: true })
+    expect(undo).toHaveBeenCalledTimes(1)
+  })
+
+  it('Meta+Z calls undo (macOS)', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'z', metaKey: true })
+    expect(undo).toHaveBeenCalledTimes(1)
+  })
+
+  it('Ctrl+Shift+Z calls redo', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'z', ctrlKey: true, shiftKey: true })
+    expect(redo).toHaveBeenCalledTimes(1)
+  })
+
+  it('Meta+Shift+Z calls redo (macOS)', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'z', metaKey: true, shiftKey: true })
+    expect(redo).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('GE-27 Enter on focused node opens editor', () => {
+  let openNodeEditor: ReturnType<typeof vi.fn>
+  const node = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    openNodeEditor = vi.fn()
+    useStore.setState({
+      graph: seedGraph,
+      focusedNodeId: node.id,
+      openNodeEditor,
+    } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('Enter opens editor for the focused node', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'Enter' })
+    expect(openNodeEditor).toHaveBeenCalledWith(node.id)
+  })
+
+  it('Enter does nothing when no node is focused', async () => {
+    useStore.setState({ focusedNodeId: null } as Parameters<typeof useStore.setState>[0])
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'Enter' })
+    expect(openNodeEditor).not.toHaveBeenCalled()
+  })
+})
+
+describe('GE-18 dblclick — no-op in simulate mode', () => {
+  let openNodeEditor: ReturnType<typeof vi.fn>
+  const node = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    openNodeEditor = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, openNodeEditor } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('dblclick on node in simulate mode does NOT open editor', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: node.id })
+    useStore.setState({ mode: 'simulate' } as Parameters<typeof useStore.setState>[0])
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.dblClick(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(openNodeEditor).not.toHaveBeenCalled()
+  })
+})

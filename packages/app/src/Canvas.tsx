@@ -99,9 +99,9 @@ export function Canvas() {
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      const { graph, togglePolarity, cycleDelay, openNodeEditor, openEdgeWeightEditor } = useStore.getState()
+      const { graph, mode, togglePolarity, cycleDelay, openNodeEditor, openEdgeWeightEditor } = useStore.getState()
       const hit = hitTest(graph, x, y)
-      if (hit?.kind === 'node') openNodeEditor(hit.id)
+      if (hit?.kind === 'node' && mode !== 'simulate') openNodeEditor(hit.id)
       else if (hit?.kind === 'edge-polarity') togglePolarity(hit.edgeId)
       else if (hit?.kind === 'edge-delay') cycleDelay(hit.edgeId)
       else if (hit?.kind === 'edge-weight') openEdgeWeightEditor(hit.edgeId)
@@ -110,9 +110,15 @@ export function Canvas() {
     const NUDGE_PX = 8
 
     function onKeyDown(e: KeyboardEvent) {
-      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode } = useStore.getState()
+      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode, undo, redo } = useStore.getState()
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo(); else undo()
+        return
+      }
       if (e.key === 'Tab') { e.preventDefault(); focusNextNode(); return }
       if (focusedNodeId === null) return
+      if (e.key === 'Enter') { useStore.getState().openNodeEditor(focusedNodeId); return }
       if (e.key === 'ArrowRight') nudgeNode(focusedNodeId,  NUDGE_PX, 0)
       else if (e.key === 'ArrowLeft')  nudgeNode(focusedNodeId, -NUDGE_PX, 0)
       else if (e.key === 'ArrowDown')  nudgeNode(focusedNodeId, 0,  NUDGE_PX)
