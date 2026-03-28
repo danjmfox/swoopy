@@ -113,7 +113,12 @@ export function Canvas() {
     const NUDGE_PX = 8
 
     function onKeyDown(e: KeyboardEvent) {
-      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode, undo, redo } = useStore.getState()
+      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode, undo, redo, setMode } = useStore.getState()
+      if (e.key === 's' && !e.ctrlKey && !e.metaKey) { setMode('select'); return }
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey) { setMode('add-node'); return }
+      if (e.key === 'e' && !e.ctrlKey && !e.metaKey) { setMode('add-edge'); return }
+      if (e.key === 'r' && !e.ctrlKey && !e.metaKey) { setMode('simulate'); return }
+      if (e.key === 'd' && !e.ctrlKey && !e.metaKey) { setMode('delete'); return }
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault()
         if (e.shiftKey) redo(); else undo()

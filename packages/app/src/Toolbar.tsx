@@ -3,12 +3,12 @@ import type { AppMode } from './store.ts'
 
 const SPEEDS = [0.25, 0.5, 1, 2, 4]
 
-const MODES: { mode: AppMode; label: string; title: string }[] = [
-  { mode: 'select',   label: '↖',  title: 'Select' },
-  { mode: 'add-node', label: '⬤',  title: 'Add Node' },
-  { mode: 'add-edge', label: '→',  title: 'Add Edge' },
-  { mode: 'simulate', label: '▷',  title: 'Simulate' },
-  { mode: 'delete',   label: '✕',  title: 'Delete' },
+const MODES: { mode: AppMode; label: string; title: string; shortcut: string }[] = [
+  { mode: 'select',   label: '↖',  title: 'Select',   shortcut: 'S' },
+  { mode: 'add-node', label: '⬤',  title: 'Add Node', shortcut: 'N' },
+  { mode: 'add-edge', label: '→',  title: 'Add Edge', shortcut: 'E' },
+  { mode: 'simulate', label: '▷',  title: 'Simulate', shortcut: 'R' },
+  { mode: 'delete',   label: '✕',  title: 'Delete',   shortcut: 'D' },
 ]
 
 export function Toolbar() {
@@ -32,14 +32,14 @@ export function Toolbar() {
       padding: '8px 14px',
       boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
     }}>
-      {MODES.map(({ mode: m, label, title }) => (
+      {MODES.map(({ mode: m, label, title, shortcut }) => (
         <button
           key={m}
           onClick={() => setMode(m)}
           title={title}
           style={{ ...btn, background: mode === m ? '#334155' : 'transparent', fontWeight: mode === m ? 700 : 400 }}
         >
-          {label}
+          {label} {shortcut}
         </button>
       ))}
 
