@@ -11,4 +11,16 @@ describe('SI-12 stockIndicator', () => {
     const { fill } = stockIndicator(10, 0, 10, 0)
     expect(fill).toBe(1)
   })
+
+  it('trend is up when value > prevValue', () => {
+    expect(stockIndicator(6, 0, 10, 5).trend).toBe('up')
+  })
+
+  it('trend is down when value < prevValue', () => {
+    expect(stockIndicator(4, 0, 10, 5).trend).toBe('down')
+  })
+
+  it('trend is stable when value === prevValue', () => {
+    expect(stockIndicator(5, 0, 10, 5).trend).toBe('stable')
+  })
 })
