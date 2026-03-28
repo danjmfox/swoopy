@@ -59,4 +59,12 @@ describe('SI-11 saturationAlpha', () => {
   it('returns 1 when signal count is 0', () => {
     expect(saturationAlpha(0, 30)).toBe(1)
   })
+
+  it('returns 0.3 when signal count equals maxSignals', () => {
+    expect(saturationAlpha(30, 30)).toBeCloseTo(0.3)
+  })
+
+  it('never drops below 0.3', () => {
+    expect(saturationAlpha(100, 30)).toBeGreaterThanOrEqual(0.3)
+  })
 })
