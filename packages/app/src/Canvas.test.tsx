@@ -470,6 +470,35 @@ describe('GE-21 Ctrl+Z / Ctrl+Shift+Z — undo and redo', () => {
   })
 })
 
+describe('GE-27 Enter on focused node opens editor', () => {
+  let openNodeEditor: ReturnType<typeof vi.fn>
+  const node = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    openNodeEditor = vi.fn()
+    useStore.setState({
+      graph: seedGraph,
+      focusedNodeId: node.id,
+      openNodeEditor,
+    } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('Enter opens editor for the focused node', async () => {
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'Enter' })
+    expect(openNodeEditor).toHaveBeenCalledWith(node.id)
+  })
+
+  it('Enter does nothing when no node is focused', async () => {
+    useStore.setState({ focusedNodeId: null } as Parameters<typeof useStore.setState>[0])
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(container.querySelector('canvas')!, { key: 'Enter' })
+    expect(openNodeEditor).not.toHaveBeenCalled()
+  })
+})
+
 describe('GE-18 dblclick — no-op in simulate mode', () => {
   let openNodeEditor: ReturnType<typeof vi.fn>
   const node = seedGraph.nodes[0]

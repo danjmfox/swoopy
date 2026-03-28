@@ -118,6 +118,7 @@ export function Canvas() {
       }
       if (e.key === 'Tab') { e.preventDefault(); focusNextNode(); return }
       if (focusedNodeId === null) return
+      if (e.key === 'Enter') { useStore.getState().openNodeEditor(focusedNodeId); return }
       if (e.key === 'ArrowRight') nudgeNode(focusedNodeId,  NUDGE_PX, 0)
       else if (e.key === 'ArrowLeft')  nudgeNode(focusedNodeId, -NUDGE_PX, 0)
       else if (e.key === 'ArrowDown')  nudgeNode(focusedNodeId, 0,  NUDGE_PX)
