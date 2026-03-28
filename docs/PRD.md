@@ -173,7 +173,7 @@ Tertiary users are developers building on or extending the tool.
 | SI-03 | User can inject a negative signal by shift-clicking a node in Simulate mode |
 | SI-04 | Injected signal propagates along outgoing edges as animated particles |
 | SI-05 | Signal polarity is inverted when it traverses a balancing (−) edge |
-| SI-06 | Node values decay toward their initial value over time when not receiving signals |
+| SI-06 | Node values are driven only by arriving signals. Stocks remain at whatever value signals have left them; there is no intrinsic decay. Only a genuine balancing loop — a negative-polarity feedback path — brings a stock back toward a lower value. See DR-001. |
 | SI-07 | Node visual state reflects current activation level (colour and glow) |
 | SI-08 | Signal particles are coloured to indicate positive or negative strength |
 | SI-09 | Simulation state can be paused and resumed |
@@ -222,8 +222,6 @@ The editor operates in one of five mutually exclusive modes. Mode is always visi
 
 ### 5.2 Correctness
 
-- Decay must be frame-rate independent (exponential decay scaled by dt, not linear)
-- Decay floor is the node's `initial` value, not zero
 - Node values must be clamped to [min, max] after each step, including after signal arrival
 - Signal emission must detect deltas across the full step, including direct injections, not only signal arrivals
 - Polarity inversion must be applied at the edge, not at the emitting node
@@ -295,7 +293,7 @@ interface Node {
   readonly radius: number
   readonly min: number      // default 0
   readonly max: number      // default 10
-  readonly initial: number  // decay floor and reset value; default 0
+  readonly initial: number  // reset value (used by makeInitialSim and Reset button); default 0
 }
 ```
 
@@ -312,16 +310,15 @@ interface Node {
 2. Advance all signal progress values by `SIGNAL_SPEED × dt`
 3. Collect arrived signals (progress ≥ 1)
 4. Apply arrived signals to destination node values (strength × edge.weight × edge.polarity)
-5. Apply exponential decay toward each node's `initial` value: `initial + (value − initial) × (1 − DECAY)^dt`
-6. Clamp all node values to their effective max and min as recomputed from current constraint source values
-   - *(Re-clamping here is necessary: arrivals and decay in steps 4–5 may have pushed values outside the constrained range; constraint sources may also have changed value during this step)*
-7. Cull values within 0.001 of `initial` back to `initial`
-8. Compare start-of-step node values against end-of-step values
-9. For each node where |delta| ≥ EMIT_THRESHOLD, emit signals per outgoing causal edge:
+5. Clamp all node values to their effective max and min as recomputed from current constraint source values
+   - *(Re-clamping here is necessary: arrivals in step 4 may have pushed values outside the constrained range; constraint sources may also have changed value during this step)*
+6. Cull values within 0.001 of `initial` back to `initial`
+7. Compare start-of-step node values against end-of-step values
+8. For each node where |delta| ≥ EMIT_THRESHOLD, emit signals per outgoing causal edge:
    - If edge.delay is `none`: signal enters the travelling queue immediately
    - If edge.delay is non-zero: signal enters the pending queue with a remaining-ticks counter
-10. Decrement pending queue counters by 1; release signals whose counter reaches 0 into the travelling queue
-11. Cap total travelling signal count at MAX_SIGNALS, preferring signals with highest progress
+9. Decrement pending queue counters by 1; release signals whose counter reaches 0 into the travelling queue
+10. Cap total travelling signal count at MAX_SIGNALS, preferring signals with highest progress
 
 The pending queue is part of `SimState`, not `Graph`. Resetting the simulation clears both queues. Constraint edges are not part of the signal queues — they are resolved fresh each step from current node values.
 
@@ -400,7 +397,6 @@ When non-linear transfer functions are introduced, candidates include sigmoid (s
 | Constant | Provisional value | Rationale |
 |----------|------------------|-----------|
 | SIGNAL_SPEED | 0.65 | Visually legible at typical edge lengths |
-| DECAY | 0.28 | Nodes return to rest in ~3s without input |
 | EMIT_THRESHOLD | 0.06 | Suppresses noise without masking weak signals |
 | INJECT_STRENGTH | 1.0 | One click = 1 unit = 10% of default 0–10 range; meaningful nudge without saturating immediately |
 | DELAY_TICKS_SHORT | TBD | Represents days — should feel brief but perceptible |
