@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, fireEvent, act } from '@testing-library/react'
 import { useStore } from './store.ts'
 import { seedGraph } from './seed.ts'
 import { Canvas } from './Canvas.tsx'
-import { makeInitialSim } from '@swoopy/engine'
+import { makeInitialSim, INJECT_STRENGTH } from '@swoopy/engine'
 
 // Mock hitTest so tests don't depend on jsdom pointer coordinate plumbing.
 // jsdom does not expose PointerEvent as a global, so clientX/Y would be 0.
@@ -345,5 +345,55 @@ describe('GE-01 add-node mode — click canvas creates node', () => {
     fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50 })
 
     expect(addNode).not.toHaveBeenCalled()
+  })
+})
+
+describe('SI-02 hold-to-inject — continuous injection while pointer held', () => {
+  const targetNode = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    mockHitTest.mockReset()
+    useStore.setState({
+      graph: seedGraph,
+      sim: makeInitialSim(seedGraph),
+      mode: 'simulate',
+    } as Parameters<typeof useStore.setState>[0])
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('holding pointer injects more than once within 300ms', async () => {
+    vi.useFakeTimers()
+    mockHitTest.mockReturnValue({ kind: 'node', id: targetNode.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    const baseline = useStore.getState().sim.nodeValues.get(targetNode.id)!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    act(() => { vi.advanceTimersByTime(300) })
+
+    const after = useStore.getState().sim.nodeValues.get(targetNode.id)!
+    expect(after).toBeGreaterThan(baseline + INJECT_STRENGTH)
+  })
+
+  it('releasing pointer stops further injection', async () => {
+    vi.useFakeTimers()
+    mockHitTest.mockReturnValue({ kind: 'node', id: targetNode.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    act(() => { vi.advanceTimersByTime(200) })
+    fireEvent.pointerUp(canvas, { clientX: 0, clientY: 0 })
+
+    const valueAtRelease = useStore.getState().sim.nodeValues.get(targetNode.id)!
+    act(() => { vi.advanceTimersByTime(300) })
+
+    const valueAfterRelease = useStore.getState().sim.nodeValues.get(targetNode.id)!
+    expect(valueAfterRelease).toBe(valueAtRelease)
   })
 })
