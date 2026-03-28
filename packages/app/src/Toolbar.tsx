@@ -1,11 +1,21 @@
 import { useStore } from './store.ts'
+import type { AppMode } from './store.ts'
 
 const SPEEDS = [0.25, 0.5, 1, 2, 4]
+
+const MODES: { mode: AppMode; label: string; title: string }[] = [
+  { mode: 'select',   label: '↖',  title: 'Select' },
+  { mode: 'add-node', label: '⬤',  title: 'Add Node' },
+  { mode: 'add-edge', label: '→',  title: 'Add Edge' },
+  { mode: 'simulate', label: '▷',  title: 'Simulate' },
+  { mode: 'delete',   label: '✕',  title: 'Delete' },
+]
 
 export function Toolbar() {
   const simRunning = useStore((s) => s.simRunning)
   const simSpeed = useStore((s) => s.simSpeed)
-  const { pauseSim, resumeSim, resetSim, setSimSpeed } = useStore.getState()
+  const mode = useStore((s) => s.mode)
+  const { pauseSim, resumeSim, resetSim, setSimSpeed, setMode } = useStore.getState()
 
   return (
     <div style={{
@@ -22,6 +32,19 @@ export function Toolbar() {
       padding: '8px 14px',
       boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
     }}>
+      {MODES.map(({ mode: m, label, title }) => (
+        <button
+          key={m}
+          onClick={() => setMode(m)}
+          title={title}
+          style={{ ...btn, background: mode === m ? '#334155' : 'transparent', fontWeight: mode === m ? 700 : 400 }}
+        >
+          {label}
+        </button>
+      ))}
+
+      <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
+
       <button
         onClick={() => simRunning ? pauseSim() : resumeSim()}
         title={simRunning ? 'Pause' : 'Resume'}

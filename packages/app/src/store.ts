@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import type { Graph, SimState, NodeId, EdgeId, Node, DelayLevel, ConstraintKind } from '@swoopy/engine'
+
+export type AppMode = 'select' | 'add-node' | 'add-edge' | 'simulate' | 'delete'
 import { makeInitialSim, makeNodeId, makeEdgeId, step, serialize, deserialize } from '@swoopy/engine'
 
 const DELAY_CYCLE: DelayLevel[] = ['none', 'short', 'medium', 'long']
@@ -18,6 +20,8 @@ interface StoreState {
   future: Graph[]
   simRunning: boolean
   simSpeed: number
+  mode: AppMode
+  setMode: (mode: AppMode) => void
 
   // simSlice — RAF reads via getState() each frame; React does NOT subscribe
   sim: SimState
@@ -73,6 +77,8 @@ export const useStore = create<StoreState>((set, get) => ({
   future: [],
   simRunning: true,
   simSpeed: 1,
+  mode: 'select' as AppMode,
+  setMode: (m: AppMode) => set({ mode: m }),
   pendingConstraintEdge: null as { from: NodeId; to: NodeId } | null,
   setPendingConstraintEdge: (from: NodeId, to: NodeId) => set({ pendingConstraintEdge: { from, to } }),
   confirmConstraintEdge: (kind: ConstraintKind) => {
