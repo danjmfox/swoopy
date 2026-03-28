@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { useStore } from './store.ts'
 import { seedGraph } from './seed.ts'
+import { ConstraintChoiceDialog } from './ConstraintChoiceDialog.tsx'
 
 // Component subscribing to graphSlice only — must never re-render from sim ticks
 function GraphView() {
@@ -37,6 +38,92 @@ describe('GE-01: addNode', () => {
     expect(graph.nodes[0].x).toBe(200)
     expect(graph.nodes[0].y).toBe(300)
     expect(graph.nodes[0].label).toBeTruthy()
+  })
+})
+
+describe('GE-23 addConstraintEdge', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('adds a floor constraint edge between two nodes', () => {
+    const [from, to] = seedGraph.nodes
+    useStore.getState().addConstraintEdge(from.id, to.id, 'floor')
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('floor')
+  })
+
+  it('adds a ceiling constraint edge between two nodes', () => {
+    const [from, to] = seedGraph.nodes
+    useStore.getState().addConstraintEdge(from.id, to.id, 'ceiling')
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    expect(added!.from).toBe(from.id)
+    expect(added!.to).toBe(to.id)
+    if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('ceiling')
+  })
+})
+
+describe('GE-23 confirmConstraintEdge', () => {
+  const [from, to] = seedGraph.nodes
+
+  beforeEach(() => {
+    useStore.setState({
+      graph: { nodes: seedGraph.nodes, edges: [] },
+      past: [],
+      future: [],
+      pendingConstraintEdge: { from: from.id, to: to.id },
+    })
+  })
+
+  it('confirmConstraintEdge ceiling — adds edge and clears pending', () => {
+    useStore.getState().confirmConstraintEdge('ceiling')
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('ceiling')
+    expect(useStore.getState().pendingConstraintEdge).toBeNull()
+  })
+
+  it('confirmConstraintEdge floor — adds floor edge and clears pending', () => {
+    useStore.getState().confirmConstraintEdge('floor')
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('floor')
+    expect(useStore.getState().pendingConstraintEdge).toBeNull()
+  })
+})
+
+describe('GE-23 ConstraintChoiceDialog', () => {
+  const [from, to] = seedGraph.nodes
+
+  beforeEach(() => {
+    useStore.setState({
+      graph: seedGraph,
+      past: [],
+      future: [],
+      pendingConstraintEdge: { from: from.id, to: to.id },
+    })
+  })
+
+  it('renders ceiling and floor buttons when pendingConstraintEdge is set', () => {
+    const { getByRole } = render(<ConstraintChoiceDialog />)
+    expect(getByRole('button', { name: /ceiling/i })).toBeTruthy()
+    expect(getByRole('button', { name: /floor/i })).toBeTruthy()
+  })
+
+  it('clicking Ceiling button adds a ceiling constraint edge and clears pending', async () => {
+    const { getByRole } = render(<ConstraintChoiceDialog />)
+    await act(async () => { getByRole('button', { name: /ceiling/i }).click() })
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    if (added?.kind === 'constraint') expect(added.constraintKind).toBe('ceiling')
+    expect(useStore.getState().pendingConstraintEdge).toBeNull()
   })
 })
 

@@ -1,4 +1,4 @@
-import type { Graph, SimState, CausalEdge } from '@swoopy/engine'
+import type { Graph, SimState, CausalEdge, ConstraintEdge } from '@swoopy/engine'
 import { bezierPoint, controlPoint, BOW, T_DELAY, T_POLARITY, T_WEIGHT } from './geometry.ts'
 
 const MAX_DT = 0.05
@@ -141,6 +141,7 @@ export class LoopyRenderer {
     const { graph, sim } = state
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]))
     const causalEdges = graph.edges.filter((e): e is CausalEdge => e.kind === 'causal')
+    const constraintEdges = graph.edges.filter((e): e is ConstraintEdge => e.kind === 'constraint')
 
     const hasReverse = new Set(
       causalEdges
@@ -148,7 +149,38 @@ export class LoopyRenderer {
         .map((e) => e.id),
     )
 
-    // Edges
+    // Constraint edges — dashed lines, no arrowhead, ⌈/⌊ label
+    for (const edge of constraintEdges) {
+      const from = nodeById.get(edge.from)
+      const to = nodeById.get(edge.to)
+      if (!from || !to) continue
+      const dx = to.x - from.x
+      const dy = to.y - from.y
+      const len = Math.hypot(dx, dy)
+      const ux = dx / len
+      const uy = dy / len
+      const x1 = from.x + ux * from.radius
+      const y1 = from.y + uy * from.radius
+      const x2 = to.x - ux * to.radius
+      const y2 = to.y - uy * to.radius
+      ctx.setLineDash([6, 4])
+      ctx.beginPath()
+      ctx.moveTo(x1, y1)
+      ctx.lineTo(x2, y2)
+      ctx.strokeStyle = '#94a3b8'
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+      ctx.setLineDash([])
+      const mx = (x1 + x2) / 2
+      const my = (y1 + y2) / 2
+      ctx.fillStyle = '#94a3b8'
+      ctx.font = '14px system-ui, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(edge.constraintKind === 'ceiling' ? '⌈' : '⌊', mx, my - 10)
+    }
+
+    // Causal edges
     for (const edge of causalEdges) {
       const from = nodeById.get(edge.from)
       const to = nodeById.get(edge.to)

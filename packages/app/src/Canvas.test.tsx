@@ -136,6 +136,28 @@ describe('GE-03/20 Canvas drag — one moveNode call on pointerup', () => {
     expect(moveNode).not.toHaveBeenCalled()
   })
 
+  it('GE-23 modifier+drag from nodeA to nodeB calls setPendingConstraintEdge', async () => {
+    const nodeA = seedGraph.nodes[0]
+    const nodeB = seedGraph.nodes[1]
+    const setPendingConstraintEdge = vi.fn()
+    useStore.setState({ setPendingConstraintEdge } as Parameters<typeof useStore.setState>[0])
+    // pointerdown hits nodeA; pointerup hits nodeB
+    mockHitTest
+      .mockReturnValueOnce({ kind: 'node', id: nodeA.id })
+      .mockReturnValueOnce({ kind: 'node', id: nodeB.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.keyDown(document, { key: 'Alt' })
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(canvas, { clientX: 50, clientY: 50 })
+    fireEvent.keyUp(document, { key: 'Alt' })
+
+    expect(setPendingConstraintEdge).toHaveBeenCalledWith(nodeA.id, nodeB.id)
+    expect(moveNode).not.toHaveBeenCalled()
+  })
+
   it('pointerdown on empty space does not start a drag', async () => {
     mockHitTest.mockReturnValue(null)
     const { container } = render(<Canvas />)

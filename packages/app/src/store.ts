@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Graph, SimState, NodeId, EdgeId, Node, DelayLevel } from '@swoopy/engine'
+import type { Graph, SimState, NodeId, EdgeId, Node, DelayLevel, ConstraintKind } from '@swoopy/engine'
 import { makeInitialSim, makeNodeId, makeEdgeId, step, serialize, deserialize } from '@swoopy/engine'
 
 const DELAY_CYCLE: DelayLevel[] = ['none', 'short', 'medium', 'long']
@@ -26,6 +26,7 @@ interface StoreState {
   // Edit actions
   addNode: (x: number, y: number) => void
   addEdge: (from: NodeId, to: NodeId) => void
+  addConstraintEdge: (from: NodeId, to: NodeId, constraintKind: ConstraintKind) => void
   deleteNode: (id: NodeId) => void
   updateNode: (id: NodeId, patch: Partial<Pick<Node, 'label' | 'min' | 'max' | 'initial'>>) => void
   moveNode: (id: NodeId, x: number, y: number) => void
@@ -39,6 +40,12 @@ interface StoreState {
   // Keyboard focus
   focusedNodeId: NodeId | null
   focusNextNode: () => void
+
+  // Constraint edge pending state
+  pendingConstraintEdge: { from: NodeId; to: NodeId } | null
+  setPendingConstraintEdge: (from: NodeId, to: NodeId) => void
+  confirmConstraintEdge: (kind: ConstraintKind) => void
+  cancelConstraintEdge: () => void
 
   // Editor UI state
   editingNodeId: NodeId | null
@@ -66,6 +73,15 @@ export const useStore = create<StoreState>((set, get) => ({
   future: [],
   simRunning: true,
   simSpeed: 1,
+  pendingConstraintEdge: null as { from: NodeId; to: NodeId } | null,
+  setPendingConstraintEdge: (from: NodeId, to: NodeId) => set({ pendingConstraintEdge: { from, to } }),
+  confirmConstraintEdge: (kind: ConstraintKind) => {
+    const { pendingConstraintEdge } = get()
+    if (!pendingConstraintEdge) return
+    get().addConstraintEdge(pendingConstraintEdge.from, pendingConstraintEdge.to, kind)
+    set({ pendingConstraintEdge: null })
+  },
+  cancelConstraintEdge: () => set({ pendingConstraintEdge: null }),
   focusedNodeId: null as NodeId | null,
   focusNextNode: () => {
     const { graph, focusedNodeId } = get()
@@ -115,6 +131,17 @@ export const useStore = create<StoreState>((set, get) => ({
       delay: 'none' as const,
       transferFn: 'linear' as const,
     }
+    const next = { ...graph, edges: [...graph.edges, edge] }
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
+  },
+  addConstraintEdge: (from: NodeId, to: NodeId, constraintKind: ConstraintKind) => {
+    const { graph, past } = get()
+    const duplicate = graph.edges.some(
+      (e) => e.kind === 'constraint' && e.from === from && e.to === to && e.constraintKind === constraintKind,
+    )
+    if (duplicate) return
+    const edge = { kind: 'constraint' as const, id: makeEdgeId(crypto.randomUUID()), from, to, constraintKind }
     const next = { ...graph, edges: [...graph.edges, edge] }
     set({ past: [...past, graph], future: [], graph: next })
     persist(next)
