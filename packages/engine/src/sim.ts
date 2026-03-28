@@ -1,5 +1,5 @@
 import type { Graph, SimState, NodeId, Signal, PendingSignal, CausalEdge, ConstraintEdge, Node } from './types.ts'
-import { EMIT_THRESHOLD, SIGNAL_SPEED, DECAY, MAX_SIGNALS, DELAY_TICKS_SHORT, DELAY_TICKS_MEDIUM, DELAY_TICKS_LONG } from './constants.ts'
+import { EMIT_THRESHOLD, SIGNAL_SPEED, MAX_SIGNALS, DELAY_TICKS_SHORT, DELAY_TICKS_MEDIUM, DELAY_TICKS_LONG } from './constants.ts'
 
 const DELAY_TICKS: Record<string, number> = {
   short: DELAY_TICKS_SHORT,
@@ -85,13 +85,7 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     }
   }
 
-  // §7.2 step 5 — decay each node toward its initial value (frame-rate independent)
-  for (const node of graph.nodes) {
-    const curr = nodeValues.get(node.id) ?? node.initial
-    nodeValues.set(node.id, node.initial + (curr - node.initial) * Math.pow(1 - DECAY, dt))
-  }
-
-  // §7.2 step 6 — post-clamp: re-clamp after arrivals and decay
+  // §7.2 step 6 — post-clamp: re-clamp after arrivals
   resolveConstraints(nodeValues, graph.nodes, constraintEdges)
 
   // §7.2 steps 8–9 — emit signals for nodes where |delta| >= EMIT_THRESHOLD.
