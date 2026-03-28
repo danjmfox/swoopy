@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { useStore } from './store.ts'
 import { seedGraph } from './seed.ts'
+import { makeInitialSim } from '@swoopy/engine'
 import { ConstraintChoiceDialog } from './ConstraintChoiceDialog.tsx'
 
 // Component subscribing to graphSlice only — must never re-render from sim ticks
@@ -530,5 +531,30 @@ describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
     })
 
     expect(renders).toBe(1)
+  })
+})
+
+describe('GE-22 undo scope — sim state is excluded from undo history', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [], sim: makeInitialSim(seedGraph) })
+  })
+
+  it('undo after a sim tick does not restore previous node values', () => {
+    // mutate graph (creates an undo entry)
+    useStore.getState().addNode(50, 50)
+
+    // advance sim — node values diverge from initial
+    useStore.getState().tickSim(1 / 60)
+    useStore.getState().tickSim(1 / 60)
+    const simValuesAfterTick = new Map(useStore.getState().sim.nodeValues)
+
+    // undo the graph mutation
+    useStore.getState().undo()
+
+    // sim node values must be unchanged — undo only affects graph, not sim
+    const simValuesAfterUndo = useStore.getState().sim.nodeValues
+    for (const [id, value] of simValuesAfterTick) {
+      expect(simValuesAfterUndo.get(id)).toBe(value)
+    }
   })
 })
