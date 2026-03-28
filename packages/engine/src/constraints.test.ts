@@ -102,10 +102,10 @@ describe('GE-25 multiple incoming constraints combine', () => {
 // GE-24: constraint resolves using the current (dynamic) source value, not a stale one
 describe('GE-24 dynamic source variation', () => {
   it('relaxes ceiling when source value increases between steps', () => {
-    // Step 1: A.value=2 → effective_max=2. B.initial=8 → clamp to 2.
-    // Inject A to raise A.value to 7.
-    // Step 2: effective_max = min(10, 7) = 7. B (currently ~2) can now rise toward initial=8.
-    // B after step 2 > 2 proves constraint used the updated A.value.
+    // Step 1: A.value=2 → effective_max=2. B.initial=8 → clamped to 2.
+    // Inject A to 7 and B to 5. effective_max is now min(10, 7) = 7.
+    // Step 2: B=5 is within the new ceiling → stays at 5.
+    // If step() had used the stale A.value=2, B would be clamped back to 2.
     const graph: Graph = {
       nodes: [node('A', 2), node('B', 8)],
       edges: [ceiling('A-B', 'A', 'B')],
@@ -114,7 +114,7 @@ describe('GE-24 dynamic source variation', () => {
     const sim1 = step(graph, sim0, 1 / 60)
     expect(sim1.nodeValues.get(makeNodeId('B'))).toBeLessThanOrEqual(2)
 
-    const sim2 = inject(sim1, makeNodeId('A'), 5) // A.value → ~7
+    const sim2 = inject(inject(sim1, makeNodeId('A'), 5), makeNodeId('B'), 3) // A→7, B→5
     const sim3 = step(graph, sim2, 1 / 60)
     expect(sim3.nodeValues.get(makeNodeId('B'))).toBeGreaterThan(2)
   })
