@@ -6,4 +6,9 @@ describe('SI-12 stockIndicator', () => {
     const { fill } = stockIndicator(0, 0, 10, 0)
     expect(fill).toBe(0)
   })
+
+  it('fill is 1 at max value', () => {
+    const { fill } = stockIndicator(10, 0, 10, 0)
+    expect(fill).toBe(1)
+  })
 })
