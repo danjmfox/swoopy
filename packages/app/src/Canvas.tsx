@@ -17,7 +17,10 @@ export function Canvas() {
     const renderer = new LoopyRenderer(canvas, useStore.getState)
     renderer.start()
 
-    // Pointer events → hit test → inject (SI-02, SI-03)
+    // Drag state machine
+    let dragNodeId: import('@swoopy/engine').NodeId | null = null
+
+    // Pointer events → hit test → inject (SI-02, SI-03) + drag (GE-03/20)
     // Operates in CSS pixels; no DPR scaling needed (DR--20260327--renderer--dpr-css-pixel-geometry)
     function onPointerDown(e: PointerEvent) {
       const rect = canvas.getBoundingClientRect()
@@ -26,9 +29,23 @@ export function Canvas() {
       const { graph } = useStore.getState()
       const hit = hitTest(graph, x, y)
       if (hit?.kind === 'node') {
+        dragNodeId = hit.id
         const strength = e.shiftKey ? -INJECT_STRENGTH : INJECT_STRENGTH
         useStore.setState((s) => ({ sim: inject(s.sim, hit.id, strength) }))
       }
+    }
+
+    function onPointerMove(_e: PointerEvent) {
+      // Track in-flight position without committing to history
+    }
+
+    function onPointerUp(e: PointerEvent) {
+      if (dragNodeId === null) return
+      const rect = canvas.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      useStore.getState().moveNode(dragNodeId, x, y)
+      dragNodeId = null
     }
 
     function onDblClick(e: MouseEvent) {
@@ -44,10 +61,14 @@ export function Canvas() {
     }
 
     canvas.addEventListener('pointerdown', onPointerDown)
+    canvas.addEventListener('pointermove', onPointerMove)
+    canvas.addEventListener('pointerup', onPointerUp)
     canvas.addEventListener('dblclick', onDblClick)
     return () => {
       renderer.stop()
       canvas.removeEventListener('pointerdown', onPointerDown)
+      canvas.removeEventListener('pointermove', onPointerMove)
+      canvas.removeEventListener('pointerup', onPointerUp)
       canvas.removeEventListener('dblclick', onDblClick)
     }
   }, [])
