@@ -40,6 +40,23 @@ describe('GE-01: addNode', () => {
   })
 })
 
+describe('GE-23 addConstraintEdge', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('adds a ceiling constraint edge between two nodes', () => {
+    const [from, to] = seedGraph.nodes
+    useStore.getState().addConstraintEdge(from.id, to.id, 'ceiling')
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    expect(added!.from).toBe(from.id)
+    expect(added!.to).toBe(to.id)
+    if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('ceiling')
+  })
+})
+
 describe('GE-04 / GE-06 / GE-07: addEdge', () => {
   beforeEach(() => {
     useStore.setState({ graph: seedGraph })
