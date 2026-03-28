@@ -1,5 +1,6 @@
 import type { Graph, SimState, CausalEdge, ConstraintEdge } from '@swoopy/engine'
-import { stockIndicator, timebombStrength } from './indicators.ts'
+import { MAX_SIGNALS } from '@swoopy/engine'
+import { stockIndicator, timebombStrength, saturationAlpha } from './indicators.ts'
 import { bezierPoint, controlPoint, BOW, T_DELAY, T_POLARITY, T_WEIGHT } from './geometry.ts'
 
 const MAX_DT = 0.05
@@ -27,8 +28,10 @@ function drawCurvedArrow(
   x2: number, y2: number,
   edge: CausalEdge,
   bow: number,
+  alpha = 1,
 ) {
-  const colour = edge.polarity === 1 ? '#38bdf8' : '#f87171'
+  const base = edge.polarity === 1 ? '#38bdf8' : '#f87171'
+  const colour = alpha < 1 ? `rgba(${edge.polarity === 1 ? '56,189,248' : '248,113,113'},${alpha.toFixed(2)})` : base
   const { cx, cy } = controlPoint(x1, y1, x2, y2, bow)
 
   ctx.beginPath()
@@ -193,6 +196,10 @@ export class LoopyRenderer {
       const ux = dx / len
       const uy = dy / len
 
+      // SI-11: dim edge when signal count is high
+      const edgeSignalCount = sim.signals.filter((s) => s.edgeId === edge.id).length
+      const alpha = saturationAlpha(edgeSignalCount, MAX_SIGNALS)
+
       drawCurvedArrow(
         ctx,
         from.x + ux * from.radius,
@@ -201,6 +208,7 @@ export class LoopyRenderer {
         to.y - uy * to.radius,
         edge,
         hasReverse.has(edge.id) ? BOW : 0,
+        alpha,
       )
     }
 
