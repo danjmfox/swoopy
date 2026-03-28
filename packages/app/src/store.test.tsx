@@ -45,6 +45,15 @@ describe('GE-23 addConstraintEdge', () => {
     useStore.setState({ graph: seedGraph, past: [], future: [] })
   })
 
+  it('adds a floor constraint edge between two nodes', () => {
+    const [from, to] = seedGraph.nodes
+    useStore.getState().addConstraintEdge(from.id, to.id, 'floor')
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('floor')
+  })
+
   it('adds a ceiling constraint edge between two nodes', () => {
     const [from, to] = seedGraph.nodes
     useStore.getState().addConstraintEdge(from.id, to.id, 'ceiling')
@@ -55,6 +64,29 @@ describe('GE-23 addConstraintEdge', () => {
     expect(added!.to).toBe(to.id)
     if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('ceiling')
   })
+})
+
+describe('GE-23 confirmConstraintEdge', () => {
+  const [from, to] = seedGraph.nodes
+
+  beforeEach(() => {
+    useStore.setState({
+      graph: { nodes: seedGraph.nodes, edges: [] },
+      past: [],
+      future: [],
+      pendingConstraintEdge: { from: from.id, to: to.id },
+    })
+  })
+
+  it('confirmConstraintEdge ceiling — adds edge and clears pending', () => {
+    useStore.getState().confirmConstraintEdge('ceiling')
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('ceiling')
+    expect(useStore.getState().pendingConstraintEdge).toBeNull()
+  })
+
 })
 
 describe('GE-04 / GE-06 / GE-07: addEdge', () => {
