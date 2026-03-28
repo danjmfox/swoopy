@@ -150,12 +150,12 @@ Tertiary users are developers building on or extending the tool.
 | GE-10 | Duplicate causal edges between the same node pair in the same direction are not permitted; duplicate constraint edges of the same kind (ceiling or floor) from the same source to the same target are not permitted; a ceiling and a floor constraint between the same pair are permitted |
 | GE-11 | Each node has a configurable min and max value (defaults: 0 and 10) |
 | GE-12 | Each node has a configurable initial value, used as the reset state (default: 0) |
-| GE-13 | Each edge has a configurable weight representing signal strength (default: 1.0, range: 0–1) |
+| GE-13 | Each edge has a configurable weight representing signal strength (default: 1.0, range: 0–5); weight is rendered as line thickness — weight 1 = standard width, weight 5 = maximum width; this allows relative scaling ("this edge is 3× the others") without editing every other edge |
 | GE-14 | Each edge has a configurable delay level: none, short (days), medium (weeks), long (months) |
 | GE-15 | Delay level is rendered as vertical bars on the edge curve: none = no marks, short = \|\|, medium = \|\|\|\|, long = \|\|\|\|\|\| |
 | GE-16 | A fixed-size hit region exists on the edge curve for delay cycling regardless of whether delay marks are currently visible; double-clicking this region cycles none → \|\| → \|\|\|\| → \|\|\|\|\|\| → none |
 | GE-17 | Polarity badge, delay hit region, and weight popover target are visually distinct and occupy non-overlapping hit regions along the edge curve |
-| GE-18 | Double-clicking a node in Select, Add Node, Add Edge, or Delete mode opens an inline popover for label, min, max, and initial value |
+| GE-18 | Double-clicking a node in Select, Add Node, Add Edge, or Delete mode opens an inline popover for label, min, max, and initial value; double-clicking a node in Simulate mode has no effect |
 | GE-19 | Double-clicking the weight region of an edge (between polarity badge and arrowhead) opens an inline popover for weight configuration; active in Select, Add Node, Add Edge, and Delete modes |
 | GE-20 | In Select mode, Tab key cycles focus through nodes; arrow keys nudge the focused node; Delete key removes it |
 | GE-21 | Ctrl+Z undoes and Ctrl+Shift+Z redoes regardless of active mode; all graph mutations (add, delete, move, configure) are recorded in the linear undo stack |
@@ -163,6 +163,10 @@ Tertiary users are developers building on or extending the tool.
 | GE-23 | User can create a constraint edge by holding a modifier key while dragging from node to node in Add Edge mode; on release a choice is offered: ceiling or floor constraint; constraint edges are visually distinct from causal edges (dashed line, no arrowhead) and labelled ⌈ or ⌊ accordingly |
 | GE-24 | Ceiling constraint edges set `effective_max = min(target.max, source.value)` each step; floor constraint edges set `effective_min = max(target.min, source.value)` each step; if active constraints produce a state where effective_min > effective_max, floor wins and the node is pinned to effective_min |
 | GE-25 | A node may have multiple incoming constraint edges of either kind from different source nodes; all are resolved in combination before signal propagation each step |
+| GE-26 | User can delete an individual edge in Delete mode by clicking any hit region on that edge (polarity badge, delay region, or weight region) |
+| GE-27 | In Select mode, pressing Enter/Return while a node is focused opens its node editor popover |
+| GE-28 | Each mode has a keyboard shortcut (S = Select, N = Add Node, E = Add Edge, R = Run/Simulate, D = Delete); the Toolbar button for each mode displays its shortcut key; the active mode is visually highlighted |
+| GE-29 | In Select mode, the delay hit region and weight hit region on each edge are rendered with a subtle visible indicator (e.g. a dim translucent dot) so users can discover they are interactive without hovering |
 
 ### 4.2 Simulation
 
@@ -361,7 +365,7 @@ interface CausalEdge {
   readonly from: NodeId
   readonly to: NodeId
   readonly polarity: 1 | -1
-  readonly weight: number       // 0–1, default 1.0
+  readonly weight: number       // 0–5, default 1.0; see DR-002
   readonly delay: DelayLevel    // default 'none'
   readonly transferFn: 'linear' // v1 only; extended in future
 }
