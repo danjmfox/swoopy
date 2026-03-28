@@ -22,6 +22,13 @@ export function Canvas() {
     let constraintModifierHeld = false
     let shiftHeld = false
 
+    // Hold-to-inject: fires every HOLD_INTERVAL_MS while pointer is held on a node in simulate mode
+    const HOLD_INTERVAL_MS = 100
+    let holdInterval: ReturnType<typeof setInterval> | null = null
+    function clearHold() {
+      if (holdInterval !== null) { clearInterval(holdInterval); holdInterval = null }
+    }
+
     // Track modifier key state via document — jsdom doesn't propagate altKey/shiftKey via PointerEvent init
     function onDocKeyDown(e: KeyboardEvent) {
       if (e.key === 'Alt')   constraintModifierHeld = true
@@ -47,8 +54,13 @@ export function Canvas() {
         if (!hit) addNode(x, y)
       } else if (mode === 'simulate') {
         if (hit?.kind === 'node') {
-          const strength = shiftHeld ? -INJECT_STRENGTH : INJECT_STRENGTH
-          useStore.setState((s) => ({ sim: inject(s.sim, hit.id, strength) }))
+          const nodeId = hit.id
+          const doInject = () => {
+            const strength = shiftHeld ? -INJECT_STRENGTH : INJECT_STRENGTH
+            useStore.setState((s) => ({ sim: inject(s.sim, nodeId, strength) }))
+          }
+          doInject()
+          holdInterval = setInterval(doInject, HOLD_INTERVAL_MS)
         }
       } else if (mode === 'delete') {
         if (hit?.kind === 'node') deleteNode(hit.id)
@@ -63,6 +75,7 @@ export function Canvas() {
     }
 
     function onPointerUp(e: PointerEvent) {
+      clearHold()
       if (dragNodeId === null) return
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
@@ -109,13 +122,18 @@ export function Canvas() {
     canvas.addEventListener('pointerdown', onPointerDown)
     canvas.addEventListener('pointermove', onPointerMove)
     canvas.addEventListener('pointerup', onPointerUp)
+    canvas.addEventListener('pointercancel', clearHold)
+    canvas.addEventListener('pointerleave', clearHold)
     canvas.addEventListener('dblclick', onDblClick)
     canvas.addEventListener('keydown', onKeyDown)
     return () => {
       renderer.stop()
+      clearHold()
       canvas.removeEventListener('pointerdown', onPointerDown)
       canvas.removeEventListener('pointermove', onPointerMove)
       canvas.removeEventListener('pointerup', onPointerUp)
+      canvas.removeEventListener('pointercancel', clearHold)
+      canvas.removeEventListener('pointerleave', clearHold)
       canvas.removeEventListener('dblclick', onDblClick)
       canvas.removeEventListener('keydown', onKeyDown)
       document.removeEventListener('keydown', onDocKeyDown)
