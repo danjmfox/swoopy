@@ -19,30 +19,29 @@ const graph: Graph = {
   }],
 }
 
-// Edge runs from (50,0) to (250,0) — a 200px straight line (no bow, no reverse)
-// t=0.2 → delay region at (90,0)
-// t=0.5 → polarity badge at (150,0)
-// t=0.8 → weight region at (210,0)
+// Edge runs from (50,0) to (250,0) — bowed upward with BOW=28
+// Control point: (150,-28). Badge positions on the curve:
+// t=0.2 → delay region at (90,-9)
+// t=0.5 → polarity badge at (150,-14)
+// t=0.8 → weight region at (210,-9)
 
 describe('GE-08/16/17 edge hit regions', () => {
   it('returns edge-polarity when clicking near the edge midpoint (t=0.5)', () => {
-    expect(hitTest(graph, 150, 0)).toMatchObject({ kind: 'edge-polarity', edgeId })
+    expect(hitTest(graph, 150, -14)).toMatchObject({ kind: 'edge-polarity', edgeId })
   })
 
   it('returns edge-delay when clicking near the t=0.2 point', () => {
-    // Edge from (50,0) to (250,0). t=0.2 → x = 50 + 0.2*200 = 90
-    expect(hitTest(graph, 90, 0)).toMatchObject({ kind: 'edge-delay', edgeId })
+    expect(hitTest(graph, 90, -9)).toMatchObject({ kind: 'edge-delay', edgeId })
   })
 
   it('returns edge-weight when clicking near the t=0.8 point', () => {
-    // t=0.8 → x = 50 + 0.8*200 = 210
-    expect(hitTest(graph, 210, 0)).toMatchObject({ kind: 'edge-weight', edgeId })
+    expect(hitTest(graph, 210, -9)).toMatchObject({ kind: 'edge-weight', edgeId })
   })
 
   it('GE-17 hit regions do not overlap — points between regions return null', () => {
-    // Midpoint between delay (90) and polarity (150): x=120 — should miss both
+    // Midpoint between delay (90,-9) and polarity (150,-14): x=120,y=0 — ~31px from both badges
     expect(hitTest(graph, 120, 0)).toBeNull()
-    // Midpoint between polarity (150) and weight (210): x=180 — should miss both
+    // Midpoint between polarity (150,-14) and weight (210,-9): x=180,y=0 — ~31px from both badges
     expect(hitTest(graph, 180, 0)).toBeNull()
   })
 
