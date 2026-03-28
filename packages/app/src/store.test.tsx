@@ -111,9 +111,19 @@ describe('GE-23 ConstraintChoiceDialog', () => {
   })
 
   it('renders ceiling and floor buttons when pendingConstraintEdge is set', () => {
-    const { getByText } = render(<ConstraintChoiceDialog />)
-    expect(getByText(/ceiling/i)).toBeTruthy()
-    expect(getByText(/floor/i)).toBeTruthy()
+    const { getByRole } = render(<ConstraintChoiceDialog />)
+    expect(getByRole('button', { name: /ceiling/i })).toBeTruthy()
+    expect(getByRole('button', { name: /floor/i })).toBeTruthy()
+  })
+
+  it('clicking Ceiling button adds a ceiling constraint edge and clears pending', async () => {
+    const { getByRole } = render(<ConstraintChoiceDialog />)
+    await act(async () => { getByRole('button', { name: /ceiling/i }).click() })
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    if (added?.kind === 'constraint') expect(added.constraintKind).toBe('ceiling')
+    expect(useStore.getState().pendingConstraintEdge).toBeNull()
   })
 })
 
