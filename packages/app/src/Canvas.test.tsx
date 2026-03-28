@@ -149,8 +149,10 @@ describe('GE-03/20 Canvas drag — one moveNode call on pointerup', () => {
     await act(async () => {})
     const canvas = container.querySelector('canvas')!
 
-    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0, altKey: true })
-    fireEvent.pointerUp(canvas, { clientX: 50, clientY: 50, altKey: true })
+    fireEvent.keyDown(document, { key: 'Alt' })
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(canvas, { clientX: 50, clientY: 50 })
+    fireEvent.keyUp(document, { key: 'Alt' })
 
     expect(setPendingConstraintEdge).toHaveBeenCalledWith(nodeA.id, nodeB.id)
     expect(moveNode).not.toHaveBeenCalled()

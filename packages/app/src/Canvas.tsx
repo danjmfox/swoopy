@@ -19,8 +19,15 @@ export function Canvas() {
 
     // Drag state machine
     let dragNodeId: import('@swoopy/engine').NodeId | null = null
+    let constraintModifierHeld = false
 
-    // Pointer events → hit test → inject (SI-02, SI-03) + drag (GE-03/20)
+    // Track Alt key state separately — jsdom doesn't propagate altKey via PointerEvent init
+    function onDocKeyDown(e: KeyboardEvent) { if (e.key === 'Alt') constraintModifierHeld = true }
+    function onDocKeyUp(e: KeyboardEvent)   { if (e.key === 'Alt') constraintModifierHeld = false }
+    document.addEventListener('keydown', onDocKeyDown)
+    document.addEventListener('keyup', onDocKeyUp)
+
+    // Pointer events → hit test → inject (SI-02, SI-03) + drag (GE-03/20, GE-23)
     // Operates in CSS pixels; no DPR scaling needed (DR--20260327--renderer--dpr-css-pixel-geometry)
     function onPointerDown(e: PointerEvent) {
       const rect = canvas.getBoundingClientRect()
@@ -44,7 +51,14 @@ export function Canvas() {
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      useStore.getState().moveNode(dragNodeId, x, y)
+      const { graph, setPendingConstraintEdge, moveNode } = useStore.getState()
+      const releaseHit = hitTest(graph, x, y)
+      const releasedOnDifferentNode = releaseHit?.kind === 'node' && releaseHit.id !== dragNodeId
+      if (releasedOnDifferentNode && constraintModifierHeld) {
+        setPendingConstraintEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
+      } else {
+        moveNode(dragNodeId, x, y)
+      }
       dragNodeId = null
     }
 
@@ -85,6 +99,8 @@ export function Canvas() {
       canvas.removeEventListener('pointerup', onPointerUp)
       canvas.removeEventListener('dblclick', onDblClick)
       canvas.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('keydown', onDocKeyDown)
+      document.removeEventListener('keyup', onDocKeyUp)
     }
   }, [])
 
