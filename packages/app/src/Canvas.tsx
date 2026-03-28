@@ -61,8 +61,13 @@ export function Canvas() {
       } else if (mode === 'delete') {
         if (hit?.kind === 'node') deleteNode(hit.id)
       } else {
-        // select / add-edge — track drag source
-        if (hit?.kind === 'node') dragNodeId = hit.id
+        // select / add-edge — track drag source; select mode also sets keyboard focus
+        if (hit?.kind === 'node') {
+          dragNodeId = hit.id
+          if (mode === 'select') useStore.getState().setFocusedNode(hit.id)
+        } else if (mode === 'select') {
+          useStore.getState().setFocusedNode(null)
+        }
       }
     }
 

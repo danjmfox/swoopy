@@ -505,6 +505,24 @@ describe('GE-20 nudgeNode — arrow key repositions focused node', () => {
   })
 })
 
+describe('GE-20 setFocusedNode — click sets focus', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, focusedNodeId: null })
+  })
+
+  it('setFocusedNode sets focusedNodeId to the given id', () => {
+    const id = seedGraph.nodes[0].id
+    useStore.getState().setFocusedNode(id)
+    expect(useStore.getState().focusedNodeId).toBe(id)
+  })
+
+  it('setFocusedNode clears focus when passed null', () => {
+    useStore.setState({ focusedNodeId: seedGraph.nodes[0].id })
+    useStore.getState().setFocusedNode(null)
+    expect(useStore.getState().focusedNodeId).toBeNull()
+  })
+})
+
 describe('AppMode — mode field and setMode', () => {
   beforeEach(() => {
     useStore.setState({ graph: seedGraph, past: [], future: [] })
