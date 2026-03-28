@@ -26,9 +26,19 @@ export function Canvas() {
     }
 
     // Track modifier key state via document — jsdom doesn't propagate altKey/shiftKey via PointerEvent init
+    // Mode shortcuts (S/N/E/R/D) also live here so they fire regardless of canvas focus
     function onDocKeyDown(e: KeyboardEvent) {
       if (e.key === 'Alt')   constraintModifierHeld = true
       if (e.key === 'Shift') shiftHeld = true
+      if (e.ctrlKey || e.metaKey) return
+      const active = document.activeElement
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
+      const { setMode } = useStore.getState()
+      if (e.key === 's') { e.preventDefault(); setMode('select'); return }
+      if (e.key === 'n') { e.preventDefault(); setMode('add-node'); return }
+      if (e.key === 'e') { e.preventDefault(); setMode('add-edge'); return }
+      if (e.key === 'r') { e.preventDefault(); setMode('simulate'); return }
+      if (e.key === 'd') { e.preventDefault(); setMode('delete'); return }
     }
     function onDocKeyUp(e: KeyboardEvent) {
       if (e.key === 'Alt')   constraintModifierHeld = false
@@ -113,12 +123,7 @@ export function Canvas() {
     const NUDGE_PX = 8
 
     function onKeyDown(e: KeyboardEvent) {
-      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode, undo, redo, setMode } = useStore.getState()
-      if (e.key === 's' && !e.ctrlKey && !e.metaKey) { setMode('select'); return }
-      if (e.key === 'n' && !e.ctrlKey && !e.metaKey) { setMode('add-node'); return }
-      if (e.key === 'e' && !e.ctrlKey && !e.metaKey) { setMode('add-edge'); return }
-      if (e.key === 'r' && !e.ctrlKey && !e.metaKey) { setMode('simulate'); return }
-      if (e.key === 'd' && !e.ctrlKey && !e.metaKey) { setMode('delete'); return }
+      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode, undo, redo } = useStore.getState()
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault()
         if (e.shiftKey) redo(); else undo()

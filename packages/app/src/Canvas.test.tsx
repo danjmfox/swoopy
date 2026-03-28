@@ -578,6 +578,13 @@ describe('GE-28 mode keyboard shortcuts — S/N/E/R/D', () => {
     expect(setMode).toHaveBeenCalledWith('delete')
   })
 
+  it('S switches mode even when canvas does not have focus', async () => {
+    render(<Canvas />)
+    await act(async () => {})
+    fireEvent.keyDown(document.body, { key: 's' })
+    expect(setMode).toHaveBeenCalledWith('select')
+  })
+
   it('shortcuts do not fire when Ctrl is held', async () => {
     const { container } = render(<Canvas />)
     await act(async () => {})
