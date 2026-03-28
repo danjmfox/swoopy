@@ -87,6 +87,14 @@ describe('GE-23 confirmConstraintEdge', () => {
     expect(useStore.getState().pendingConstraintEdge).toBeNull()
   })
 
+  it('confirmConstraintEdge floor — adds floor edge and clears pending', () => {
+    useStore.getState().confirmConstraintEdge('floor')
+    const edges = useStore.getState().graph.edges
+    const added = edges.find((e) => e.kind === 'constraint')
+    expect(added).toBeDefined()
+    if (added!.kind === 'constraint') expect(added!.constraintKind).toBe('floor')
+    expect(useStore.getState().pendingConstraintEdge).toBeNull()
+  })
 })
 
 describe('GE-04 / GE-06 / GE-07: addEdge', () => {
