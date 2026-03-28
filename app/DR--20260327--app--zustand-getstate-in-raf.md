@@ -2,16 +2,16 @@
 id: DR--20260327--app--zustand-getstate-in-raf
 dateCreated: '2026-03-27'
 version: 1.0.0
-status: draft
+status: accepted
 changeType: creation
 domain: app
 slug: zustand-getstate-in-raf
 changelog:
   - date: '2026-03-27'
     note: Initial creation — captured at RAF + store implementation (step 6)
-  - date: '2026-03-27'
-    note: Marked as draft
-lastEdited: '2026-03-27'
+  - date: '2026-03-28'
+    note: Accepted — decision validated by Zustand slice boundary test (store.test.tsx)
+lastEdited: '2026-03-28'
 ---
 # RAF loop reads simSlice via Zustand getState(), not useStore()
 

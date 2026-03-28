@@ -2,16 +2,16 @@
 id: DR--20260327--renderer--dpr-css-pixel-geometry
 dateCreated: '2026-03-27'
 version: 1.0.0
-status: draft
+status: accepted
 changeType: creation
 domain: renderer
 slug: dpr-css-pixel-geometry
 changelog:
   - date: '2026-03-27'
     note: Initial creation — captured at canvas mount (step 5)
-  - date: '2026-03-27'
-    note: Marked as draft
-lastEdited: '2026-03-27'
+  - date: '2026-03-28'
+    note: Accepted — CSS-pixel geometry validated by edgeHit.test.ts and hitTest.test.ts
+lastEdited: '2026-03-28'
 ---
 # All geometry and hit testing operate in CSS pixels; DPR applied at draw time only
 
