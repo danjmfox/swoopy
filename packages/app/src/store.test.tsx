@@ -342,6 +342,31 @@ describe('SI-17 setSimSpeed', () => {
   })
 })
 
+describe('GE-03/20 moveNode', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('moves the node to the given coordinates', () => {
+    const node = seedGraph.nodes[0]
+    useStore.getState().moveNode(node.id, 42, 99)
+    const moved = useStore.getState().graph.nodes.find((n) => n.id === node.id)!
+    expect(moved.x).toBe(42)
+    expect(moved.y).toBe(99)
+  })
+
+  it('moveNode is undoable — undo restores original position', () => {
+    const node = seedGraph.nodes[0]
+    const origX = node.x
+    const origY = node.y
+    useStore.getState().moveNode(node.id, 500, 500)
+    useStore.getState().undo()
+    const restored = useStore.getState().graph.nodes.find((n) => n.id === node.id)!
+    expect(restored.x).toBe(origX)
+    expect(restored.y).toBe(origY)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
