@@ -20,25 +20,41 @@ export function Canvas() {
     // Drag state machine
     let dragNodeId: import('@swoopy/engine').NodeId | null = null
     let constraintModifierHeld = false
+    let shiftHeld = false
 
-    // Track Alt key state separately — jsdom doesn't propagate altKey via PointerEvent init
-    function onDocKeyDown(e: KeyboardEvent) { if (e.key === 'Alt') constraintModifierHeld = true }
-    function onDocKeyUp(e: KeyboardEvent)   { if (e.key === 'Alt') constraintModifierHeld = false }
+    // Track modifier key state via document — jsdom doesn't propagate altKey/shiftKey via PointerEvent init
+    function onDocKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Alt')   constraintModifierHeld = true
+      if (e.key === 'Shift') shiftHeld = true
+    }
+    function onDocKeyUp(e: KeyboardEvent) {
+      if (e.key === 'Alt')   constraintModifierHeld = false
+      if (e.key === 'Shift') shiftHeld = false
+    }
     document.addEventListener('keydown', onDocKeyDown)
     document.addEventListener('keyup', onDocKeyUp)
 
-    // Pointer events → hit test → inject (SI-02, SI-03) + drag (GE-03/20, GE-23)
+    // Pointer events → hit test → mode-gated dispatch (GE-01/04/09, SI-02/03, GE-03/20/23)
     // Operates in CSS pixels; no DPR scaling needed (DR--20260327--renderer--dpr-css-pixel-geometry)
     function onPointerDown(e: PointerEvent) {
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      const { graph } = useStore.getState()
+      const { graph, mode, addNode, deleteNode } = useStore.getState()
       const hit = hitTest(graph, x, y)
-      if (hit?.kind === 'node') {
-        dragNodeId = hit.id
-        const strength = e.shiftKey ? -INJECT_STRENGTH : INJECT_STRENGTH
-        useStore.setState((s) => ({ sim: inject(s.sim, hit.id, strength) }))
+
+      if (mode === 'add-node') {
+        if (!hit) addNode(x, y)
+      } else if (mode === 'simulate') {
+        if (hit?.kind === 'node') {
+          const strength = shiftHeld ? -INJECT_STRENGTH : INJECT_STRENGTH
+          useStore.setState((s) => ({ sim: inject(s.sim, hit.id, strength) }))
+        }
+      } else if (mode === 'delete') {
+        if (hit?.kind === 'node') deleteNode(hit.id)
+      } else {
+        // select / add-edge — track drag source
+        if (hit?.kind === 'node') dragNodeId = hit.id
       }
     }
 
@@ -51,10 +67,13 @@ export function Canvas() {
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      const { graph, setPendingConstraintEdge, moveNode } = useStore.getState()
+      const { graph, mode, addEdge, setPendingConstraintEdge, moveNode } = useStore.getState()
       const releaseHit = hitTest(graph, x, y)
       const releasedOnDifferentNode = releaseHit?.kind === 'node' && releaseHit.id !== dragNodeId
-      if (releasedOnDifferentNode && constraintModifierHeld) {
+
+      if (mode === 'add-edge') {
+        if (releasedOnDifferentNode) addEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
+      } else if (releasedOnDifferentNode && constraintModifierHeld) {
         setPendingConstraintEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
       } else {
         moveNode(dragNodeId, x, y)

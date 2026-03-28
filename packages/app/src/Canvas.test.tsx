@@ -3,6 +3,7 @@ import { render, fireEvent, act } from '@testing-library/react'
 import { useStore } from './store.ts'
 import { seedGraph } from './seed.ts'
 import { Canvas } from './Canvas.tsx'
+import { makeInitialSim } from '@swoopy/engine'
 
 // Mock hitTest so tests don't depend on jsdom pointer coordinate plumbing.
 // jsdom does not expose PointerEvent as a global, so clientX/Y would be 0.
@@ -168,5 +169,181 @@ describe('GE-03/20 Canvas drag — one moveNode call on pointerup', () => {
     fireEvent.pointerUp(canvas, { clientX: 200, clientY: 200 })
 
     expect(moveNode).not.toHaveBeenCalled()
+  })
+})
+
+describe('SI-02/03 simulate mode — pointerdown on node injects signal', () => {
+  const targetNode = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    mockHitTest.mockReset()
+    useStore.setState({
+      graph: seedGraph,
+      sim: makeInitialSim(seedGraph),
+      mode: 'simulate',
+    } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('SI-02 pointerdown on node injects a positive signal', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: targetNode.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    const before = useStore.getState().sim.nodeValues.get(targetNode.id)!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+
+    const after = useStore.getState().sim.nodeValues.get(targetNode.id)!
+    expect(after).toBeGreaterThan(before)
+  })
+
+  it('SI-03 shift+pointerdown injects a negative signal', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: targetNode.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    const before = useStore.getState().sim.nodeValues.get(targetNode.id)!
+
+    fireEvent.keyDown(document, { key: 'Shift' })
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    fireEvent.keyUp(document, { key: 'Shift' })
+
+    const after = useStore.getState().sim.nodeValues.get(targetNode.id)!
+    expect(after).toBeLessThan(before)
+  })
+
+  it('select mode does not inject on node click', async () => {
+    useStore.setState({ mode: 'select' } as Parameters<typeof useStore.setState>[0])
+    mockHitTest.mockReturnValue({ kind: 'node', id: targetNode.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+    const before = useStore.getState().sim.nodeValues.get(targetNode.id)!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+
+    const after = useStore.getState().sim.nodeValues.get(targetNode.id)!
+    expect(after).toBe(before)
+  })
+})
+
+describe('GE-09 delete mode — pointerdown on node removes it', () => {
+  let deleteNode: ReturnType<typeof vi.fn>
+  const targetNode = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    deleteNode = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, deleteNode, mode: 'delete' } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('pointerdown on a node calls deleteNode', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: targetNode.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+
+    expect(deleteNode).toHaveBeenCalledWith(targetNode.id)
+  })
+
+  it('pointerdown on empty space does not call deleteNode', async () => {
+    mockHitTest.mockReturnValue(null)
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+
+    expect(deleteNode).not.toHaveBeenCalled()
+  })
+})
+
+describe('GE-04 add-edge mode — drag node to node creates edge', () => {
+  let addEdge: ReturnType<typeof vi.fn>
+  let moveNode: ReturnType<typeof vi.fn>
+  const nodeA = seedGraph.nodes[0]
+  const nodeB = seedGraph.nodes[1]
+
+  beforeEach(() => {
+    addEdge = vi.fn()
+    moveNode = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, addEdge, moveNode, mode: 'add-edge' } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('drag from nodeA to nodeB calls addEdge', async () => {
+    mockHitTest
+      .mockReturnValueOnce({ kind: 'node', id: nodeA.id })
+      .mockReturnValueOnce({ kind: 'node', id: nodeB.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(canvas, { clientX: 50, clientY: 50 })
+
+    expect(addEdge).toHaveBeenCalledWith(nodeA.id, nodeB.id)
+  })
+
+  it('drag from node to empty space does not call addEdge', async () => {
+    mockHitTest
+      .mockReturnValueOnce({ kind: 'node', id: nodeA.id })
+      .mockReturnValueOnce(null)
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(canvas, { clientX: 200, clientY: 200 })
+
+    expect(addEdge).not.toHaveBeenCalled()
+  })
+
+  it('add-edge mode does not call moveNode on drag release', async () => {
+    mockHitTest
+      .mockReturnValueOnce({ kind: 'node', id: nodeA.id })
+      .mockReturnValueOnce({ kind: 'node', id: nodeB.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(canvas, { clientX: 50, clientY: 50 })
+
+    expect(moveNode).not.toHaveBeenCalled()
+  })
+})
+
+describe('GE-01 add-node mode — click canvas creates node', () => {
+  let addNode: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    addNode = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, addNode, mode: 'add-node' } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('pointerdown on empty space calls addNode with pointer coordinates', async () => {
+    mockHitTest.mockReturnValue(null)
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 200, clientY: 150 })
+
+    expect(addNode).toHaveBeenCalledTimes(1)
+  })
+
+  it('pointerdown on an existing node does not call addNode', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: seedGraph.nodes[0].id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50 })
+
+    expect(addNode).not.toHaveBeenCalled()
   })
 })

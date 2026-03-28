@@ -505,6 +505,29 @@ describe('GE-20 nudgeNode — arrow key repositions focused node', () => {
   })
 })
 
+describe('AppMode — mode field and setMode', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('mode defaults to select', () => {
+    expect(useStore.getState().mode).toBe('select')
+  })
+
+  it('setMode changes the active mode', () => {
+    useStore.getState().setMode('add-node')
+    expect(useStore.getState().mode).toBe('add-node')
+  })
+
+  it('setMode accepts all five modes', () => {
+    const modes = ['select', 'add-node', 'add-edge', 'simulate', 'delete'] as const
+    for (const m of modes) {
+      useStore.getState().setMode(m)
+      expect(useStore.getState().mode).toBe(m)
+    }
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
