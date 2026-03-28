@@ -395,6 +395,28 @@ describe('GE-20 focusNextNode — Tab cycles node focus', () => {
   })
 })
 
+describe('GE-20 nudgeNode — arrow key repositions focused node', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] })
+  })
+
+  it('nudgeNode shifts the node by the given delta', () => {
+    const node = seedGraph.nodes[0]
+    useStore.getState().nudgeNode(node.id, 10, -5)
+    const moved = useStore.getState().graph.nodes.find((n) => n.id === node.id)!
+    expect(moved.x).toBe(node.x + 10)
+    expect(moved.y).toBe(node.y - 5)
+  })
+
+  it('nudgeNode is undoable', () => {
+    const node = seedGraph.nodes[0]
+    useStore.getState().nudgeNode(node.id, 10, 0)
+    useStore.getState().undo()
+    const restored = useStore.getState().graph.nodes.find((n) => n.id === node.id)!
+    expect(restored.x).toBe(node.x)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
