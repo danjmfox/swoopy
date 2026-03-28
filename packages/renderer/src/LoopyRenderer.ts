@@ -1,4 +1,6 @@
 import type { Graph, SimState, CausalEdge, ConstraintEdge } from '@swoopy/engine'
+import { MAX_SIGNALS } from '@swoopy/engine'
+import { stockIndicator, timebombStrength, saturationAlpha } from './indicators.ts'
 import { bezierPoint, controlPoint, BOW, T_DELAY, T_POLARITY, T_WEIGHT } from './geometry.ts'
 
 const MAX_DT = 0.05
@@ -26,8 +28,10 @@ function drawCurvedArrow(
   x2: number, y2: number,
   edge: CausalEdge,
   bow: number,
+  alpha = 1,
 ) {
-  const colour = edge.polarity === 1 ? '#38bdf8' : '#f87171'
+  const base = edge.polarity === 1 ? '#38bdf8' : '#f87171'
+  const colour = alpha < 1 ? `rgba(${edge.polarity === 1 ? '56,189,248' : '248,113,113'},${alpha.toFixed(2)})` : base
   const { cx, cy } = controlPoint(x1, y1, x2, y2, bow)
 
   ctx.beginPath()
@@ -192,6 +196,10 @@ export class LoopyRenderer {
       const ux = dx / len
       const uy = dy / len
 
+      // SI-11: dim edge when signal count is high
+      const edgeSignalCount = sim.signals.filter((s) => s.edgeId === edge.id).length
+      const alpha = saturationAlpha(edgeSignalCount, MAX_SIGNALS)
+
       drawCurvedArrow(
         ctx,
         from.x + ux * from.radius,
@@ -200,6 +208,7 @@ export class LoopyRenderer {
         to.y - uy * to.radius,
         edge,
         hasReverse.has(edge.id) ? BOW : 0,
+        alpha,
       )
     }
 
@@ -233,19 +242,52 @@ export class LoopyRenderer {
     // Nodes
     for (const node of graph.nodes) {
       const value = sim.nodeValues.get(node.id) ?? node.initial
+      const prevValue = sim.prevNodeValues.get(node.id) ?? node.initial
+      const { fill, trend } = stockIndicator(value, node.min, node.max, prevValue)
+      const timebomb = timebombStrength(sim.pending, node.id, graph.edges)
+
+      // Base fill
       ctx.beginPath()
       ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2)
       ctx.fillStyle = activationColour(value, node.min, node.max)
       ctx.fill()
+
+      // SI-12: stock fill arc — thin ring showing position in [min, max]
+      if (fill > 0) {
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, node.radius - 4, -Math.PI / 2, -Math.PI / 2 + fill * 2 * Math.PI)
+        ctx.strokeStyle = fill > 0.75 ? '#f97316' : fill > 0.25 ? '#facc15' : '#4ade80'
+        ctx.lineWidth = 3
+        ctx.stroke()
+      }
+
+      // SI-15: timebomb badge — pulsing orange dot when pending > threshold
+      if (timebomb > 0.1) {
+        ctx.beginPath()
+        ctx.arc(node.x + node.radius * 0.6, node.y - node.radius * 0.6, 6, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(251,146,60,${Math.min(1, timebomb)})`
+        ctx.fill()
+      }
+
+      // Outer ring
+      ctx.beginPath()
+      ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2)
       ctx.strokeStyle = '#94a3b8'
       ctx.lineWidth = 1.5
       ctx.stroke()
 
+      // SI-12: trend arrow
+      const arrow = trend === 'up' ? '▲' : trend === 'down' ? '▼' : ''
       ctx.fillStyle = '#f1f5f9'
       ctx.font = '13px system-ui, sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(node.label, node.x, node.y)
+      ctx.fillText(node.label, node.x, node.y - (arrow ? 6 : 0))
+      if (arrow) {
+        ctx.font = '10px system-ui, sans-serif'
+        ctx.fillStyle = trend === 'up' ? '#4ade80' : '#f87171'
+        ctx.fillText(arrow, node.x, node.y + 8)
+      }
     }
   }
 }
