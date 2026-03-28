@@ -35,6 +35,10 @@ interface StoreState {
   undo: () => void
   redo: () => void
 
+  // Keyboard focus
+  focusedNodeId: NodeId | null
+  focusNextNode: () => void
+
   // Editor UI state
   editingNodeId: NodeId | null
   openNodeEditor: (id: NodeId) => void
@@ -61,6 +65,14 @@ export const useStore = create<StoreState>((set, get) => ({
   future: [],
   simRunning: true,
   simSpeed: 1,
+  focusedNodeId: null as NodeId | null,
+  focusNextNode: () => {
+    const { graph, focusedNodeId } = get()
+    const nodes = graph.nodes
+    if (nodes.length === 0) return
+    const idx = nodes.findIndex((n) => n.id === focusedNodeId)
+    set({ focusedNodeId: nodes[(idx + 1) % nodes.length].id })
+  },
   editingNodeId: null,
   openNodeEditor: (id) => set({ editingNodeId: id }),
   closeNodeEditor: () => set({ editingNodeId: null }),
