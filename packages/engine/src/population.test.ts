@@ -72,14 +72,15 @@ describe('step', () => {
     expect(sim.nodeValues.get(popId)).toBeLessThan(5)
   })
 
-  it('decays node values toward initial over time without further input (SI-06)', () => {
-    // Inject into Births (initial=0), run long enough for decay to dominate
-    const sim0 = makeInitialSim(seedGraph)
+  it('node stays elevated after injection with no balancing loop (SI-06 — signal-driven model)', () => {
+    // An isolated node has no incoming signals — only intrinsic decay would reduce it.
+    // In the signal-driven model there is no decay: the node stays wherever injection left it.
+    const isolatedGraph: Graph = { nodes: [births], edges: [] }
+    const sim0 = makeInitialSim(isolatedGraph)
     const sim1 = inject(sim0, birthsId, INJECT_STRENGTH)
     let sim = sim1
-    for (let i = 0; i < 1200; i++) sim = step(seedGraph, sim, 1 / 60)
-    // ~20s of sim time; Births should be close to its initial value (0)
-    expect(sim.nodeValues.get(birthsId)).toBeLessThan(0.1)
+    for (let i = 0; i < 600; i++) sim = step(isolatedGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(birthsId)).toBeGreaterThanOrEqual(INJECT_STRENGTH * 0.9)
   })
 
   it('positive injection: balancing loop prevents Population diverging to max (Appendix A)', () => {
@@ -163,7 +164,7 @@ describe('GE-13 edge weight', () => {
     let sim = makeInitialSim(noWeightGraph)
     sim = inject(sim, popId, INJECT_STRENGTH)
     for (let i = 0; i < 120; i++) sim = step(noWeightGraph, sim, 1 / 60)
-    // Births should stay at or near 0 (only decay-driven, no signal arriving)
+    // Births should stay at 0 — no signal arrives, no decay
     expect(sim.nodeValues.get(birthsId)).toBeLessThan(0.1)
   })
 })

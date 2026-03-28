@@ -2,10 +2,6 @@
 // Provisional: visually legible at typical canvas edge lengths. (PRD §7.6)
 export const SIGNAL_SPEED = 0.65
 
-// Exponential decay constant (per second). Provisional: nodes return to rest
-// in ~3s without incoming signals. Formula: initial + (v - initial) × (1-DECAY)^dt
-export const DECAY = 0.28
-
 // Minimum |delta| before a node emits signals on outgoing edges.
 // Suppresses noise without masking weak signals. (PRD §7.6)
 export const EMIT_THRESHOLD = 0.06
