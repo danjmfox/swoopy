@@ -18,12 +18,6 @@ export function hitTest(graph: Graph, x: number, y: number): HitTarget | null {
   // Edge regions (causal edges only — constraint edges have no interaction badges yet)
   const nodeById = new Map(graph.nodes.map((n) => [n.id, n]))
   const causalEdges = graph.edges.filter((e): e is CausalEdge => e.kind === 'causal')
-  const hasReverse = new Set(
-    causalEdges
-      .filter((e) => causalEdges.some((r) => r.from === e.to && r.to === e.from))
-      .map((e) => e.id),
-  )
-
   for (const edge of causalEdges) {
     const from = nodeById.get(edge.from)
     const to = nodeById.get(edge.to)
@@ -38,7 +32,7 @@ export function hitTest(graph: Graph, x: number, y: number): HitTarget | null {
     const y1 = from.y + uy * from.radius
     const x2 = to.x - ux * to.radius
     const y2 = to.y - uy * to.radius
-    const bow = hasReverse.has(edge.id) ? BOW : 0
+    const bow = BOW
     const { cx, cy } = controlPoint(x1, y1, x2, y2, bow)
 
     const regions: Array<[number, HitTarget]> = [

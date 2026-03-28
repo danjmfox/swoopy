@@ -16,7 +16,7 @@ describe('store initialisation', () => {
   it('loads the seed graph with all three nodes', () => {
     const { graph } = useStore.getState()
     expect(graph.nodes).toHaveLength(3)
-    expect(graph.nodes.map((n) => n.label)).toContain('Population')
+    expect(graph.nodes.map((n) => n.label)).toContain('Pressure')
   })
 
   it('initialises sim node values from graph.initial fields', () => {
@@ -135,9 +135,9 @@ describe('GE-04 / GE-06 / GE-07: addEdge', () => {
 
   it('adds a directed edge between two existing nodes with default reinforcing polarity', () => {
     const { graph } = useStore.getState()
-    // Births→Deaths does not exist in seedGraph — safe to add without hitting duplicate guard
-    const from = graph.nodes[1].id // Births
-    const to = graph.nodes[2].id   // Deaths
+    // Shortcuts→Pressure does not exist in seedGraph — safe to add without hitting duplicate guard
+    const from = graph.nodes[1].id // Shortcuts
+    const to = graph.nodes[0].id   // Pressure
     const edgesBefore = graph.edges.length
 
     useStore.getState().addEdge(from, to)
