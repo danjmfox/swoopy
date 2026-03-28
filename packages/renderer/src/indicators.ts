@@ -11,6 +11,12 @@ export function stockIndicator(value: number, min: number, max: number, prevValu
   return { fill, trend }
 }
 
+/** SI-11: alpha 1→0.3 as signalCount approaches maxSignals */
+export function saturationAlpha(signalCount: number, maxSignals: number): number {
+  if (maxSignals <= 0) return 1
+  return Math.max(0.3, 1 - (signalCount / maxSignals) * 0.7)
+}
+
 export function timebombStrength(
   pending: ReadonlyArray<PendingSignal>,
   nodeId: NodeId,
