@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { stockIndicator, timebombStrength } from './indicators.ts'
+import { stockIndicator, timebombStrength, saturationAlpha } from './indicators.ts'
 import { makeNodeId, makeEdgeId } from '@swoopy/engine'
 
 describe('SI-12 stockIndicator', () => {
@@ -52,5 +52,11 @@ describe('SI-15 timebombStrength', () => {
     ]
     // nodeB is the destination, not the source
     expect(timebombStrength(pending, nodeB, edges)).toBe(0)
+  })
+})
+
+describe('SI-11 saturationAlpha', () => {
+  it('returns 1 when signal count is 0', () => {
+    expect(saturationAlpha(0, 30)).toBe(1)
   })
 })
