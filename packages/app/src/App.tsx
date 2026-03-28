@@ -2,6 +2,7 @@ import { Canvas } from './Canvas.tsx'
 import { Toolbar } from './Toolbar.tsx'
 import { NodePopover } from './NodePopover.tsx'
 import { EdgeWeightPopover } from './EdgeWeightPopover.tsx'
+import { ConstraintChoiceDialog } from './ConstraintChoiceDialog.tsx'
 
 export function App() {
   return (
@@ -10,6 +11,7 @@ export function App() {
       <Toolbar />
       <NodePopover />
       <EdgeWeightPopover />
+      <ConstraintChoiceDialog />
     </div>
   )
 }
