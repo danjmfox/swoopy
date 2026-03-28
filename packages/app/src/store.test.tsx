@@ -367,6 +367,34 @@ describe('GE-03/20 moveNode', () => {
   })
 })
 
+describe('GE-20 focusNextNode — Tab cycles node focus', () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, focusedNodeId: null })
+  })
+
+  it('focusedNodeId starts null', () => {
+    expect(useStore.getState().focusedNodeId).toBeNull()
+  })
+
+  it('focusNextNode focuses the first node when none is focused', () => {
+    useStore.getState().focusNextNode()
+    expect(useStore.getState().focusedNodeId).toBe(seedGraph.nodes[0].id)
+  })
+
+  it('focusNextNode advances to the next node', () => {
+    useStore.setState({ focusedNodeId: seedGraph.nodes[0].id })
+    useStore.getState().focusNextNode()
+    expect(useStore.getState().focusedNodeId).toBe(seedGraph.nodes[1].id)
+  })
+
+  it('focusNextNode wraps from last back to first', () => {
+    const last = seedGraph.nodes[seedGraph.nodes.length - 1]
+    useStore.setState({ focusedNodeId: last.id })
+    useStore.getState().focusNextNode()
+    expect(useStore.getState().focusedNodeId).toBe(seedGraph.nodes[0].id)
+  })
+})
+
 describe('Zustand slice boundary — PRD §5.1, §6.2', () => {
   beforeEach(() => {
     useStore.setState({
