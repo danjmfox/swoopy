@@ -28,6 +28,7 @@ interface StoreState {
   addEdge: (from: NodeId, to: NodeId) => void
   deleteNode: (id: NodeId) => void
   updateNode: (id: NodeId, patch: Partial<Pick<Node, 'label' | 'min' | 'max' | 'initial'>>) => void
+  moveNode: (id: NodeId, x: number, y: number) => void
   togglePolarity: (edgeId: EdgeId) => void
   cycleDelay: (edgeId: EdgeId) => void
   setEdgeWeight: (edgeId: EdgeId, weight: number) => void
@@ -144,6 +145,12 @@ export const useStore = create<StoreState>((set, get) => ({
         return { ...n, ...patch, min, max, initial }
       }),
     }
+    set({ past: [...past, graph], future: [], graph: next })
+    persist(next)
+  },
+  moveNode: (id: NodeId, x: number, y: number) => {
+    const { graph, past } = get()
+    const next = { ...graph, nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)) }
     set({ past: [...past, graph], future: [], graph: next })
     persist(next)
   },
