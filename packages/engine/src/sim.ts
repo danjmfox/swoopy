@@ -52,6 +52,7 @@ function resolveConstraints(
 }
 
 export function step(graph: Graph, sim: SimState, dt: number): SimState {
+  const safeDt = Math.min(dt, 0.1)
   const nodeValues = new Map(sim.nodeValues)
 
   const edgeById = new Map(graph.edges.map((e) => [e.id, e]))
@@ -73,7 +74,7 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
   // §7.2 steps 2–4 — advance signals, collect arrivals, apply to destination nodes
   const stillTravelling: Signal[] = []
   for (const s of sim.signals) {
-    const advanced = { ...s, progress: s.progress + SIGNAL_SPEED * dt }
+    const advanced = { ...s, progress: s.progress + SIGNAL_SPEED * safeDt }
     if (advanced.progress >= 1) {
       const edge = edgeById.get(s.edgeId)
       if (edge?.kind === 'causal') {
