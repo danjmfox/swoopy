@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, act } from "@testing-library/react";
 import { useStore } from "./store.ts";
 import { seedGraph } from "./seed.ts";
-import { makeInitialSim } from "@swoopy/engine";
+import { makeInitialSim, inject } from "@swoopy/engine";
 import { ConstraintChoiceDialog } from "./ConstraintChoiceDialog.tsx";
 
 // Component subscribing to graphSlice only — must never re-render from sim ticks
@@ -225,6 +225,25 @@ describe("GE-22: redo", () => {
     useStore.getState().undo();
     useStore.getState().redo();
     expect(useStore.getState().graph.nodes).toHaveLength(1);
+  });
+});
+
+describe("S5 — undo does not roll back sim state", () => {
+  it("undo restores graph but leaves sim nodeValues unchanged", () => {
+    const initialSim = makeInitialSim(seedGraph);
+    useStore.setState({ graph: seedGraph, past: [], future: [], sim: initialSim });
+    // Inject into first node via the engine function so sim state diverges from initial
+    const node = seedGraph.nodes[0];
+    const simAfterInject = inject(initialSim, node.id, 1);
+    useStore.setState({ sim: simAfterInject });
+    const injectedValue = useStore.getState().sim.nodeValues.get(node.id)!;
+    // Make a graph mutation so undo has something to do
+    useStore.getState().addNode(999, 999);
+    expect(useStore.getState().graph.nodes).toHaveLength(seedGraph.nodes.length + 1);
+    // Undo the addNode — graph reverts, sim must not
+    useStore.getState().undo();
+    expect(useStore.getState().graph.nodes).toHaveLength(seedGraph.nodes.length);
+    expect(useStore.getState().sim.nodeValues.get(node.id)).toBe(injectedValue);
   });
 });
 
