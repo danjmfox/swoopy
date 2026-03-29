@@ -116,11 +116,17 @@ The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and write
 
 ### Persistence
 
-On every graph mutation: `serialize(graph)` → `localStorage.setItem`.
+On every graph mutation: `serialize(graph)` → `localStorage.setItem('swoopy_graph_<modelId>', ...)`.
 
-On load: check for `?g=` query param → `deserialize` → use as initial graph; else restore from localStorage; else load seed graph.
+On load (target state — SE-07-fix + SE-08):
+1. If `?g=` param present → deserialize as transient model (no ID, not persisted until first mutation forks it)
+2. Else if `?m=<id>` param present → restore `swoopy_graph_<id>` from localStorage
+3. Else if legacy `swoopy_graph` key exists → migrate to a new UUID, redirect to `?m=<id>`
+4. Else → load seed graph (first visit)
 
-Share button: `serialize` → base64 → write to `?g=` param → copy URL to clipboard.
+**Current state (bug):** startup restore is not wired; app always loads the seed graph regardless of localStorage content. Fix tracked as SE-07-fix; model identity as SE-08 (DR--20260329--app--model-identity-persistence).
+
+Share button: `serialize` → base64 → write to `?g=` param → copy URL to clipboard. The `?m=` param is not included in shared URLs — recipients get a clean fork opportunity.
 
 ---
 

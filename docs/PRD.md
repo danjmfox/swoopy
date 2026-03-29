@@ -202,7 +202,8 @@ Tertiary users are developers building on or extending the tool.
 | SE-04 | Serialisation format is versioned |
 | SE-05 | Deserialisation of an unknown version produces a descriptive error, not a crash |
 | SE-06 | A Share button generates the encoded URL and copies it to the clipboard; the URL does not update automatically on mutation |
-| SE-07 | The current graph is auto-saved to localStorage on every mutation; on load, if no URL-encoded graph is present, the last saved graph is restored |
+| SE-07 | The current graph is auto-saved to localStorage on every mutation; on load, if no URL-encoded graph is present, the last saved graph is restored — **bug: startup restore hook not yet wired; always loads seed graph (SE-07-fix)** |
+| SE-08 | Each model is assigned a UUID on creation; localStorage key is `swoopy_graph_<id>`; the active model ID is reflected in the URL as `?m=<id>`; opening a `?g=...` shared link loads transiently — the first mutation forks a new local model (new UUID, new `?m=` param) without touching the opener's saved work; legacy `swoopy_graph` key is migrated to a generated ID on first load (DR--20260329--app--model-identity-persistence) |
 
 ### 4.4 Modes
 
