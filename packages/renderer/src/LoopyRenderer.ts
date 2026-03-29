@@ -13,6 +13,7 @@ export interface RendererStore {
   simSpeed: number
   tickSim: (dt: number) => void
   focusedNodeId: NodeId | null
+  mode: string
 }
 
 function activationColour(value: number, min: number, max: number): string {
@@ -143,7 +144,7 @@ export class LoopyRenderer {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, w, h)
 
-    const { graph, sim } = state
+    const { graph, sim, mode } = state
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]))
     const causalEdges = graph.edges.filter((e): e is CausalEdge => e.kind === 'causal')
     const constraintEdges = graph.edges.filter((e): e is ConstraintEdge => e.kind === 'constraint')
@@ -211,6 +212,32 @@ export class LoopyRenderer {
         BOW,
         alpha,
       )
+    }
+
+    // GE-29: Select mode — dim affordance dots at delay and weight hit regions
+    if (mode === 'select') {
+      for (const edge of causalEdges) {
+        const from = nodeById.get(edge.from)
+        const to = nodeById.get(edge.to)
+        if (!from || !to) continue
+        const dx = to.x - from.x
+        const dy = to.y - from.y
+        const len = Math.hypot(dx, dy)
+        const ux = dx / len
+        const uy = dy / len
+        const x1 = from.x + ux * from.radius
+        const y1 = from.y + uy * from.radius
+        const x2 = to.x - ux * to.radius
+        const y2 = to.y - uy * to.radius
+        const { cx, cy } = controlPoint(x1, y1, x2, y2, BOW)
+        for (const t of [T_DELAY, T_WEIGHT]) {
+          const { x: px, y: py } = bezierPoint(x1, y1, cx, cy, x2, y2, t)
+          ctx.beginPath()
+          ctx.arc(px, py, 4, 0, Math.PI * 2)
+          ctx.fillStyle = 'rgba(148,163,184,0.25)'
+          ctx.fill()
+        }
+      }
     }
 
     // Signal particles
