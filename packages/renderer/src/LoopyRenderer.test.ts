@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { LoopyRenderer } from "./LoopyRenderer.ts";
+import { LoopyRenderer, arrowheadDimensions } from "./LoopyRenderer.ts";
 import type { RendererStore } from "./LoopyRenderer.ts";
 import type { Node, CausalEdge } from "@swoopy/engine";
 
@@ -335,6 +335,58 @@ describe("LoopyRenderer", () => {
     expect(w0).toBeLessThan(w1);
     expect(w1).toBeLessThan(w5);
   });
+
+  it("stroke path ends at arrowhead base, not tip, so thick lines don't square off the arrowhead", () => {
+    const quadCurves: Array<{ cpx: number; cpy: number; ex: number; ey: number }> = []
+    const ctx = {
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(),
+      arc: vi.fn(), fill: vi.fn(), stroke: vi.fn(),
+      moveTo: vi.fn(), lineTo: vi.fn(), closePath: vi.fn(), fillText: vi.fn(),
+      quadraticCurveTo: vi.fn().mockImplementation((cpx: number, cpy: number, ex: number, ey: number) => {
+        quadCurves.push({ cpx, cpy, ex, ey })
+      }),
+      fillStyle: '', strokeStyle: '', lineWidth: 1, font: '', textAlign: '', textBaseline: '', scale: vi.fn(),
+    }
+    const canvas = {
+      clientWidth: 800, clientHeight: 600, width: 0, height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement
+    const heavyEdge: CausalEdge = { ...edgeAB, weight: 5 }
+    const getState = () => ({
+      tickSim: vi.fn(), simRunning: false, simSpeed: 1,
+      graph: { nodes: [nodeA, nodeB], edges: [heavyEdge] },
+      sim: { signals: [], pending: [], nodeValues: new Map(), prevNodeValues: new Map(), tick: 0 },
+      focusedNodeId: null, mode: 'simulate',
+    }) as unknown as RendererStore
+    const renderer = new LoopyRenderer(canvas, getState)
+    renderer.start()
+    vi.advanceTimersByTime(1000 / 60)
+    renderer.stop()
+    // nodeB is at x=300,y=100,r=30; edge goes left→right so x2=270,y2=100
+    const x2 = 270, y2 = 100
+    const strokeCurve = quadCurves[0]
+    expect(strokeCurve.ex).not.toBeCloseTo(x2, 0)
+    expect(strokeCurve).toBeDefined()
+  })
+
+  it("arrowheadDimensions(1) returns the baseline size (len=10, half=5)", () => {
+    const { len, half } = arrowheadDimensions(1)
+    expect(len).toBe(10)
+    expect(half).toBe(5)
+  })
+
+  it("arrowheadDimensions(5) halfWidth exceeds half the lineWidth so arrowhead is visible", () => {
+    const lineWidthAt5 = 1 + 5 * 1.5 // 8.5
+    const { half } = arrowheadDimensions(5)
+    expect(half).toBeGreaterThan(lineWidthAt5 / 2)
+  })
+
+  it("arrowheadDimensions scales up from weight=1 to weight=5", () => {
+    const w1 = arrowheadDimensions(1)
+    const w5 = arrowheadDimensions(5)
+    expect(w5.len).toBeGreaterThan(w1.len)
+    expect(w5.half).toBeGreaterThan(w1.half)
+  })
 
   it("stop() halts the RAF loop", () => {
     const tickSim = vi.fn();
