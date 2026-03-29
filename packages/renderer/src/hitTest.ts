@@ -7,7 +7,7 @@ export type HitTarget =
   | { kind: 'edge-delay'; edgeId: EdgeId }
   | { kind: 'edge-weight'; edgeId: EdgeId }
 
-// All coordinates in CSS pixels — DPR applied at draw time only (DR--20260327--renderer--dpr-css-pixel-geometry)
+// All coordinates in CSS pixels — DPR applied at draw time only (docs/decisions/DR--20260327--renderer--dpr-css-pixel-geometry.md)
 export function hitTest(graph: Graph, x: number, y: number): HitTarget | null {
   // Nodes take priority — check first
   for (const node of graph.nodes) {

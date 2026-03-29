@@ -22,7 +22,7 @@ export interface CausalEdge {
   readonly from: NodeId;
   readonly to: NodeId;
   readonly polarity: 1 | -1;
-  readonly weight: number; // 0–5, see DR-002
+  readonly weight: number; // 0–5, see docs/decisions/DR--20260328--engine--weight-range-expansion.md
   readonly delay: DelayLevel;
   readonly transferFn: "linear";
 }
