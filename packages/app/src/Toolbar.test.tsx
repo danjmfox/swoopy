@@ -63,6 +63,26 @@ describe('Toolbar mode switcher', () => {
     expect(getByTitle('Reset')).toBeTruthy()
   })
 
+  it('renders a ? button', () => {
+    const { getByTitle } = render(<Toolbar />)
+    expect(getByTitle('Help')).toBeTruthy()
+  })
+
+  it('pressing ? opens the help modal', () => {
+    const { queryByRole } = render(<Toolbar />)
+    expect(queryByRole('dialog')).toBeNull()
+    fireEvent.keyDown(document, { key: '?' })
+    expect(queryByRole('dialog')).toBeTruthy()
+  })
+
+  it('pressing ? while modal is open closes it', () => {
+    const { queryByRole } = render(<Toolbar />)
+    fireEvent.keyDown(document, { key: '?' })
+    expect(queryByRole('dialog')).toBeTruthy()
+    fireEvent.keyDown(document, { key: '?' })
+    expect(queryByRole('dialog')).toBeNull()
+  })
+
   it('active mode button has distinct styling', () => {
     useStore.setState({ mode: 'simulate' } as Parameters<typeof useStore.setState>[0])
     const { getByTitle } = render(<Toolbar />)
