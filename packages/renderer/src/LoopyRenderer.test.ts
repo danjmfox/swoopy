@@ -86,9 +86,11 @@ function makeArcCanvas(): {
     lineTo: vi.fn(),
     quadraticCurveTo: vi.fn(),
     fillText: vi.fn(),
+    setLineDash: vi.fn(),
     fillStyle: "" as string,
     strokeStyle: "" as string,
     lineWidth: 1 as number,
+    globalAlpha: 1 as number,
     font: "" as string,
     textAlign: "" as string,
     textBaseline: "" as string,
@@ -386,6 +388,23 @@ describe("LoopyRenderer", () => {
     const w5 = arrowheadDimensions(5)
     expect(w5.len).toBeGreaterThan(w1.len)
     expect(w5.half).toBeGreaterThan(w1.half)
+  })
+
+  it("draws a ghost arc at dragPosition when a node is being dragged", () => {
+    const { canvas, arcs } = makeArcCanvas()
+    const getState = () => ({
+      tickSim: vi.fn(), simRunning: false, simSpeed: 1,
+      graph: { nodes: [nodeA], edges: [] },
+      sim: { signals: [], pending: [], nodeValues: new Map(), prevNodeValues: new Map(), tick: 0 },
+      focusedNodeId: null, mode: 'select',
+      dragPosition: { nodeId: nodeA.id, x: 200, y: 250 },
+    }) as unknown as RendererStore
+    const renderer = new LoopyRenderer(canvas, getState)
+    renderer.start()
+    vi.advanceTimersByTime(1000 / 60)
+    renderer.stop()
+    // Ghost arc drawn at drag position (200, 250) with nodeA.radius
+    expect(arcs().some((a) => a.x === 200 && a.y === 250 && a.r === nodeA.radius)).toBe(true)
   })
 
   it("stop() halts the RAF loop", () => {

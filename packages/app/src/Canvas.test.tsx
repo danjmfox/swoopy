@@ -159,6 +159,23 @@ describe('GE-03/20 Canvas drag — one moveNode call on pointerup', () => {
     expect(moveNode.mock.calls[0][0]).toBe(popNode.id)
   })
 
+  it('pointermove while dragging in select mode calls setDragPosition', async () => {
+    const setDragPosition = vi.fn()
+    useStore.setState({ mode: 'select', setDragPosition } as Parameters<typeof useStore.setState>[0])
+    mockHitTest.mockReturnValue({ kind: 'node', id: popNode.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    fireEvent.pointerMove(canvas, { clientX: 50, clientY: 60 })
+
+    // jsdom PointerEvent doesn't populate clientX/clientY on pointermove;
+    // assert the function was called with the correct nodeId
+    expect(setDragPosition).toHaveBeenCalled()
+    expect(setDragPosition.mock.calls[0][0]).toBe(popNode.id)
+  })
+
   it('pointermove without prior pointerdown does not call moveNode', async () => {
     mockHitTest.mockReturnValue(null)
     const { container } = render(<Canvas />)
