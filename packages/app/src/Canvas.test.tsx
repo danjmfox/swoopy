@@ -642,6 +642,92 @@ describe('GE-28 mode keyboard shortcuts — S/N/E/R/D', () => {
   })
 })
 
+describe('GE-18 dblclick — opens node editor in non-simulate modes', () => {
+  let openNodeEditor: ReturnType<typeof vi.fn>
+  const node = seedGraph.nodes[0]
+
+  beforeEach(() => {
+    openNodeEditor = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, openNodeEditor } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('dblclick on node in select mode calls openNodeEditor', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: node.id })
+    useStore.setState({ mode: 'select' } as Parameters<typeof useStore.setState>[0])
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.dblClick(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(openNodeEditor).toHaveBeenCalledWith(node.id)
+  })
+
+  it('dblclick on node in add-node mode calls openNodeEditor', async () => {
+    mockHitTest.mockReturnValue({ kind: 'node', id: node.id })
+    useStore.setState({ mode: 'add-node' } as Parameters<typeof useStore.setState>[0])
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.dblClick(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(openNodeEditor).toHaveBeenCalledWith(node.id)
+  })
+})
+
+describe('GE-08 dblclick — toggle polarity on edge-polarity hit region', () => {
+  let togglePolarity: ReturnType<typeof vi.fn>
+  const edge = seedGraph.edges[0]
+
+  beforeEach(() => {
+    togglePolarity = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, togglePolarity } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('dblclick on edge-polarity calls togglePolarity', async () => {
+    mockHitTest.mockReturnValue({ kind: 'edge-polarity', edgeId: edge.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.dblClick(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(togglePolarity).toHaveBeenCalledWith(edge.id)
+  })
+})
+
+describe('GE-14 dblclick — cycle delay on edge-delay hit region', () => {
+  let cycleDelay: ReturnType<typeof vi.fn>
+  const edge = seedGraph.edges[0]
+
+  beforeEach(() => {
+    cycleDelay = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, cycleDelay } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('dblclick on edge-delay calls cycleDelay', async () => {
+    mockHitTest.mockReturnValue({ kind: 'edge-delay', edgeId: edge.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.dblClick(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(cycleDelay).toHaveBeenCalledWith(edge.id)
+  })
+})
+
+describe('GE-19 dblclick — open weight editor on edge-weight hit region', () => {
+  let openEdgeWeightEditor: ReturnType<typeof vi.fn>
+  const edge = seedGraph.edges[0]
+
+  beforeEach(() => {
+    openEdgeWeightEditor = vi.fn()
+    mockHitTest.mockReset()
+    useStore.setState({ graph: seedGraph, openEdgeWeightEditor } as Parameters<typeof useStore.setState>[0])
+  })
+
+  it('dblclick on edge-weight calls openEdgeWeightEditor', async () => {
+    mockHitTest.mockReturnValue({ kind: 'edge-weight', edgeId: edge.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    fireEvent.dblClick(container.querySelector('canvas')!, { clientX: 0, clientY: 0 })
+    expect(openEdgeWeightEditor).toHaveBeenCalledWith(edge.id)
+  })
+})
+
 describe('GE-18 dblclick — no-op in simulate mode', () => {
   let openNodeEditor: ReturnType<typeof vi.fn>
   const node = seedGraph.nodes[0]
