@@ -167,6 +167,8 @@ Tertiary users are developers building on or extending the tool.
 | GE-27 | In Select mode, pressing Enter/Return while a node is focused opens its node editor popover |
 | GE-28 | Each mode has a keyboard shortcut (S = Select, N = Add Node, E = Add Edge, R = Run/Simulate, D = Delete); the Toolbar button for each mode displays its shortcut key; the active mode is visually highlighted |
 | GE-29 | In Select mode, the delay hit region and weight hit region on each edge are rendered with a subtle visible indicator (e.g. a dim translucent dot) so users can discover they are interactive without hovering |
+| GE-30 | In Select mode, hovering over a delay hit region or weight hit region brightens the affordance indicator to signal the region is under the cursor and ready to interact with |
+| GE-31 | A `?` button in the toolbar opens a modal overlay showing mode descriptions and keyboard shortcuts reference; the modal is dismissible via the button, an explicit close button, pressing Escape, or pressing `?` again (toggle) |
 
 ### 4.2 Simulation
 
