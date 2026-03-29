@@ -382,6 +382,25 @@ describe('GE-04 add-edge mode — drag node to node creates edge', () => {
 
     expect(moveNode).not.toHaveBeenCalled()
   })
+
+  it('GE-23 Alt+drag in add-edge mode calls setPendingConstraintEdge, not addEdge', async () => {
+    const setPendingConstraintEdge = vi.fn()
+    useStore.setState({ setPendingConstraintEdge } as Parameters<typeof useStore.setState>[0])
+    mockHitTest
+      .mockReturnValueOnce({ kind: 'node', id: nodeA.id })
+      .mockReturnValueOnce({ kind: 'node', id: nodeB.id })
+    const { container } = render(<Canvas />)
+    await act(async () => {})
+    const canvas = container.querySelector('canvas')!
+
+    fireEvent.keyDown(document, { key: 'Alt' })
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(canvas, { clientX: 50, clientY: 50 })
+    fireEvent.keyUp(document, { key: 'Alt' })
+
+    expect(setPendingConstraintEdge).toHaveBeenCalledWith(nodeA.id, nodeB.id)
+    expect(addEdge).not.toHaveBeenCalled()
+  })
 })
 
 describe('GE-01 add-node mode — click canvas creates node', () => {

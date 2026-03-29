@@ -98,10 +98,10 @@ export function Canvas() {
       const releaseHit = hitTest(graph, x, y)
       const releasedOnDifferentNode = releaseHit?.kind === 'node' && releaseHit.id !== dragNodeId
 
-      if (mode === 'add-edge') {
-        if (releasedOnDifferentNode) addEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
-      } else if (releasedOnDifferentNode && (constraintModifierHeld || e.altKey)) {
+      if (releasedOnDifferentNode && (constraintModifierHeld || e.altKey)) {
         setPendingConstraintEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
+      } else if (mode === 'add-edge' && releasedOnDifferentNode) {
+        addEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
       } else {
         moveNode(dragNodeId, x, y)
       }
