@@ -100,7 +100,7 @@ export function Canvas() {
 
       if (mode === 'add-edge') {
         if (releasedOnDifferentNode) addEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
-      } else if (releasedOnDifferentNode && constraintModifierHeld) {
+      } else if (releasedOnDifferentNode && (constraintModifierHeld || e.altKey)) {
         setPendingConstraintEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
       } else {
         moveNode(dragNodeId, x, y)
