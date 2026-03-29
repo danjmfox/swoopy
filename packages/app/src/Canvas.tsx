@@ -23,6 +23,7 @@ export function Canvas() {
     let holdInterval: ReturnType<typeof setInterval> | null = null
     function clearHold() {
       if (holdInterval !== null) { clearInterval(holdInterval); holdInterval = null }
+      if (dragNodeId !== null) useStore.setState({ dragPosition: null })
     }
 
     // Track modifier key state via document — jsdom doesn't propagate altKey/shiftKey via PointerEvent init
@@ -84,8 +85,12 @@ export function Canvas() {
       }
     }
 
-    function onPointerMove(_e: PointerEvent) {
-      // Track in-flight position without committing to history
+    function onPointerMove(e: PointerEvent) {
+      if (dragNodeId === null) return
+      const { mode, setDragPosition } = useStore.getState()
+      if (mode !== 'select') return
+      const rect = canvas.getBoundingClientRect()
+      setDragPosition(dragNodeId, e.clientX - rect.left, e.clientY - rect.top)
     }
 
     function onPointerUp(e: PointerEvent) {
@@ -94,16 +99,18 @@ export function Canvas() {
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      const { graph, mode, addEdge, setPendingConstraintEdge, moveNode } = useStore.getState()
+      const { graph, mode, addEdge, setPendingConstraintEdge, moveNode, setDragPosition } = useStore.getState()
       const releaseHit = hitTest(graph, x, y)
       const releasedOnDifferentNode = releaseHit?.kind === 'node' && releaseHit.id !== dragNodeId
 
       if (releasedOnDifferentNode && (constraintModifierHeld || e.altKey)) {
         setPendingConstraintEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
+        useStore.setState({ dragPosition: null })
       } else if (mode === 'add-edge' && releasedOnDifferentNode) {
         addEdge(dragNodeId, releaseHit!.id as import('@swoopy/engine').NodeId)
+        useStore.setState({ dragPosition: null })
       } else {
-        moveNode(dragNodeId, x, y)
+        moveNode(dragNodeId, x, y) // clears dragPosition in store
       }
       dragNodeId = null
     }

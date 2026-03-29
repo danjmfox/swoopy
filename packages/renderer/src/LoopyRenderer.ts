@@ -36,6 +36,7 @@ export interface RendererStore {
   tickSim: (dt: number) => void;
   focusedNodeId: NodeId | null;
   mode: string;
+  dragPosition?: { nodeId: NodeId; x: number; y: number } | null;
 }
 
 function activationColour(value: number, min: number, max: number): string {
@@ -180,7 +181,7 @@ export class LoopyRenderer {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    const { graph, sim, mode } = state;
+    const { graph, sim, mode, dragPosition } = state;
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
     const causalEdges = graph.edges.filter(
       (e): e is CausalEdge => e.kind === "causal",
@@ -321,6 +322,7 @@ export class LoopyRenderer {
 
     // Nodes
     for (const node of graph.nodes) {
+      const isDragging = dragPosition?.nodeId === node.id
       const value = sim.nodeValues.get(node.id) ?? node.initial;
       const prevValue = sim.prevNodeValues.get(node.id) ?? node.initial;
       const { fill, trend } = stockIndicator(
@@ -330,6 +332,8 @@ export class LoopyRenderer {
         prevValue,
       );
       const timebomb = timebombStrength(sim.pending, node.id, graph.edges);
+
+      if (isDragging) ctx.globalAlpha = 0.3
 
       // Base fill
       ctx.beginPath();
@@ -394,6 +398,34 @@ export class LoopyRenderer {
         ctx.font = "10px system-ui, sans-serif";
         ctx.fillStyle = trend === "up" ? "#4ade80" : "#f87171";
         ctx.fillText(arrow, node.x, node.y + 8);
+      }
+
+      if (isDragging) ctx.globalAlpha = 1
+    }
+
+    // Ghost node — follows cursor during drag in select mode
+    if (dragPosition) {
+      const node = graph.nodes.find((n) => n.id === dragPosition.nodeId)
+      if (node) {
+        const value = sim.nodeValues.get(node.id) ?? node.initial
+        ctx.globalAlpha = 0.75
+        ctx.beginPath()
+        ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2)
+        ctx.fillStyle = activationColour(value, node.min, node.max)
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2)
+        ctx.strokeStyle = "#94a3b8"
+        ctx.lineWidth = 1.5
+        ctx.setLineDash([4, 4])
+        ctx.stroke()
+        ctx.setLineDash([])
+        ctx.fillStyle = "#f1f5f9"
+        ctx.font = "13px system-ui, sans-serif"
+        ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
+        ctx.fillText(node.label, dragPosition.x, dragPosition.y)
+        ctx.globalAlpha = 1
       }
     }
   }

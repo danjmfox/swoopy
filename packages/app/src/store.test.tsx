@@ -557,6 +557,25 @@ describe("GE-03/20 moveNode", () => {
   });
 });
 
+describe("dragPosition — ephemeral drag state", () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [], dragPosition: null });
+  });
+
+  it("setDragPosition stores nodeId and coordinates", () => {
+    const node = seedGraph.nodes[0];
+    useStore.getState().setDragPosition(node.id, 123, 456);
+    expect(useStore.getState().dragPosition).toEqual({ nodeId: node.id, x: 123, y: 456 });
+  });
+
+  it("moveNode clears dragPosition", () => {
+    const node = seedGraph.nodes[0];
+    useStore.getState().setDragPosition(node.id, 123, 456);
+    useStore.getState().moveNode(node.id, 123, 456);
+    expect(useStore.getState().dragPosition).toBeNull();
+  });
+});
+
 describe("GE-20 focusNextNode — Tab cycles node focus", () => {
   beforeEach(() => {
     useStore.setState({ graph: seedGraph, focusedNodeId: null });

@@ -74,6 +74,10 @@ interface StoreState {
   setFocusedNode: (id: NodeId | null) => void;
   focusNextNode: () => void;
 
+  // Ephemeral drag state (not persisted, not in undo history)
+  dragPosition: { nodeId: NodeId; x: number; y: number } | null;
+  setDragPosition: (nodeId: NodeId, x: number, y: number) => void;
+
   // Constraint edge pending state
   pendingConstraintEdge: { from: NodeId; to: NodeId } | null;
   setPendingConstraintEdge: (from: NodeId, to: NodeId) => void;
@@ -108,6 +112,9 @@ export const useStore = create<StoreState>((set, get) => ({
   simSpeed: 1,
   mode: "select" as AppMode,
   setMode: (m: AppMode) => set({ mode: m }),
+  dragPosition: null as { nodeId: NodeId; x: number; y: number } | null,
+  setDragPosition: (nodeId: NodeId, x: number, y: number) =>
+    set({ dragPosition: { nodeId, x, y } }),
   pendingConstraintEdge: null as { from: NodeId; to: NodeId } | null,
   setPendingConstraintEdge: (from: NodeId, to: NodeId) =>
     set({ pendingConstraintEdge: { from, to } }),
@@ -265,7 +272,7 @@ export const useStore = create<StoreState>((set, get) => ({
       ...graph,
       nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)),
     };
-    set({ past: [...past, graph], future: [], graph: next });
+    set({ past: [...past, graph], future: [], graph: next, dragPosition: null });
     persist(next);
   },
   nudgeNode: (id: NodeId, dx: number, dy: number) => {
