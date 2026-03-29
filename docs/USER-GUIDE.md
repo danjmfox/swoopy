@@ -167,7 +167,11 @@ The toolbar includes a **Share** button. Clicking it encodes the current graph i
 
 > The URL is generated on demand — it does not update automatically as you edit.
 
-Your model is also auto-saved to browser storage. If you close and reopen the tab (with no URL), your last model is restored.
+**Opening a shared link** loads the model as a preview. If you make changes, a new local copy is created automatically — your own saved work is not affected.
+
+Each model you work on is saved separately in your browser under its own URL (`?m=...`). Bookmarking that URL will return you to that specific model.
+
+> **Note:** auto-save restore is not yet active — closing and reopening the tab currently reloads the default example. This will be fixed in an upcoming release.
 
 ---
 
