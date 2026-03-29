@@ -48,6 +48,21 @@ describe('Toolbar mode switcher', () => {
     expect(getByTitle('Delete').textContent).toContain('D')
   })
 
+  it('sim controls (play/pause, reset, speed) are hidden outside simulate mode', () => {
+    useStore.setState({ mode: 'select' } as Parameters<typeof useStore.setState>[0])
+    const { queryByTitle } = render(<Toolbar />)
+    expect(queryByTitle('Pause')).toBeNull()
+    expect(queryByTitle('Resume')).toBeNull()
+    expect(queryByTitle('Reset')).toBeNull()
+  })
+
+  it('sim controls are visible in simulate mode', () => {
+    useStore.setState({ mode: 'simulate', simRunning: true } as Parameters<typeof useStore.setState>[0])
+    const { getByTitle } = render(<Toolbar />)
+    expect(getByTitle('Pause')).toBeTruthy()
+    expect(getByTitle('Reset')).toBeTruthy()
+  })
+
   it('active mode button has distinct styling', () => {
     useStore.setState({ mode: 'simulate' } as Parameters<typeof useStore.setState>[0])
     const { getByTitle } = render(<Toolbar />)

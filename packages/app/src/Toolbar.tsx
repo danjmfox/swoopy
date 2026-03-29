@@ -43,31 +43,33 @@ export function Toolbar() {
         </button>
       ))}
 
-      <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
+      {mode === 'simulate' && <>
+        <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
 
-      <button
-        onClick={() => simRunning ? pauseSim() : resumeSim()}
-        title={simRunning ? 'Pause' : 'Resume'}
-        style={btn}
-      >
-        {simRunning ? '⏸' : '▶'}
-      </button>
-
-      <button onClick={() => resetSim()} title="Reset" style={btn}>↺</button>
-
-      <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
-
-      <span style={{ color: '#94a3b8', fontSize: 12 }}>Speed</span>
-      {SPEEDS.map((s) => (
         <button
-          key={s}
-          onClick={() => setSimSpeed(s)}
-          title={`${s}×`}
-          style={{ ...btn, background: simSpeed === s ? '#334155' : 'transparent', fontWeight: simSpeed === s ? 700 : 400 }}
+          onClick={() => simRunning ? pauseSim() : resumeSim()}
+          title={simRunning ? 'Pause' : 'Resume'}
+          style={btn}
         >
-          {s}×
+          {simRunning ? '⏸' : '▶'}
         </button>
-      ))}
+
+        <button onClick={() => resetSim()} title="Reset" style={btn}>↺</button>
+
+        <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
+
+        <span style={{ color: '#94a3b8', fontSize: 12 }}>Speed</span>
+        {SPEEDS.map((s) => (
+          <button
+            key={s}
+            onClick={() => setSimSpeed(s)}
+            title={`${s}×`}
+            style={{ ...btn, background: simSpeed === s ? '#334155' : 'transparent', fontWeight: simSpeed === s ? 700 : 400 }}
+          >
+            {s}×
+          </button>
+        ))}
+      </>}
     </div>
   )
 }
