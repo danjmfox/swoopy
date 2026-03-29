@@ -1,19 +1,19 @@
 # Product Requirements Document
-## Loopy — Modern Rebuild
+## Swoopy — Causal Loop Diagram Simulator
 
-**Version:** 0.1 (draft)
-**Status:** In progress
+**Version:** 0.1
+**Status:** v1 feature-complete
 **Stack:** TypeScript · pnpm workspaces · Vite · React · Zustand · Canvas 2D · Vitest
 
 ---
 
 ## 1. Purpose
 
-Loopy is a browser-based tool for building and running causal loop diagrams — systems of nodes connected by signed directed edges. Users draw a model, inject signals, and watch the simulation propagate in real time.
+Swoopy is a browser-based tool for building and running causal loop diagrams — systems of nodes connected by signed directed edges. Users draw a model, inject signals, and watch the simulation propagate in real time.
 
-The goal of this rebuild is to reproduce Loopy's core interaction model on a maintainable, testable, extensible modern stack, and to extend it with richer stock and delay modelling suited to organisational systems thinking — particularly in the context of large-scale agile adoption and retrospective facilitation.
+The goal of this rebuild is to reproduce the core interaction model of Nicky Case's Loopy on a maintainable, testable, extensible modern stack, and to extend it with richer stock and delay modelling suited to organisational systems thinking — particularly in the context of large-scale agile adoption and retrospective facilitation.
 
-The original Loopy is the interaction and simulation reference point. Where this rebuild diverges — min/max bounds, delay levels, edge weight, undo history — those additions are deliberate and documented.
+The original Loopy is the interaction and simulation reference point. Where Swoopy diverges — min/max bounds, delay levels, edge weight, undo history — those additions are deliberate and documented.
 
 ### 1.1 Modelling philosophy
 
@@ -160,7 +160,7 @@ Tertiary users are developers building on or extending the tool.
 | GE-20 | In Select mode, Tab key cycles focus through nodes; arrow keys nudge the focused node; Delete key removes it |
 | GE-21 | Ctrl+Z undoes and Ctrl+Shift+Z redoes regardless of active mode; all graph mutations (add, delete, move, configure) are recorded in the linear undo stack |
 | GE-22 | Undo history is session-only and is not persisted to localStorage |
-| GE-23 | User can create a constraint edge by holding a modifier key while dragging from node to node in Add Edge mode; on release a choice is offered: ceiling or floor constraint; constraint edges are visually distinct from causal edges (dashed line, no arrowhead) and labelled ⌈ or ⌊ accordingly |
+| GE-23 | User can create a constraint edge by holding Alt and dragging from node to node in any mode; on release a choice is offered: ceiling or floor constraint; constraint edges are visually distinct from causal edges (dashed line, no arrowhead) and labelled ⌈ or ⌊ accordingly |
 | GE-24 | Ceiling constraint edges set `effective_max = min(target.max, source.value)` each step; floor constraint edges set `effective_min = max(target.min, source.value)` each step; if active constraints produce a state where effective_min > effective_max, floor wins and the node is pinned to effective_min |
 | GE-25 | A node may have multiple incoming constraint edges of either kind from different source nodes; all are resolved in combination before signal propagation each step |
 | GE-26 | User can delete an individual edge in Delete mode by clicking any hit region on that edge (polarity badge, delay region, or weight region) |
@@ -403,10 +403,10 @@ When non-linear transfer functions are introduced, candidates include sigmoid (s
 | SIGNAL_SPEED | 0.65 | Visually legible at typical edge lengths |
 | EMIT_THRESHOLD | 0.06 | Suppresses noise without masking weak signals |
 | INJECT_STRENGTH | 1.0 | One click = 1 unit = 10% of default 0–10 range; meaningful nudge without saturating immediately |
-| DELAY_TICKS_SHORT | TBD | Represents days — should feel brief but perceptible |
-| DELAY_TICKS_MEDIUM | TBD | Represents weeks — noticeably deferred |
-| DELAY_TICKS_LONG | TBD | Represents months — consequence long after cause |
-| MAX_SIGNALS | TBD | Set by characterisation test (see §7.7) |
+| DELAY_TICKS_SHORT | 30 | Represents days — brief but perceptible at 60fps |
+| DELAY_TICKS_MEDIUM | 150 | Represents weeks — noticeably deferred |
+| DELAY_TICKS_LONG | 600 | Represents months — consequence long after cause |
+| MAX_SIGNALS | 30 | Set by characterisation test (§7.7): 6-node reinforcing graph, 600 ticks, 99th-percentile plateau |
 
 ### 7.7 Signal cap characterisation test
 

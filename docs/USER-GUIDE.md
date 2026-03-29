@@ -57,11 +57,11 @@ A new edge is reinforcing (`+`) by default. To configure it:
 |--------------------|---------------------|
 | Polarity badge (`+` / `−`) at the midpoint | Toggle reinforcing / balancing |
 | Delay marks (if any) — left of centre | Cycle delay: none → `‖` (days) → `‖‖` (weeks) → `‖‖‖` (months) → none |
-| Weight region — right of centre | Open weight popover (0–1); lower weight = weaker signal |
+| Weight region — right of centre | Open weight popover (0–5); default 1.0; higher weight = stronger signal |
 
 ### Draw a constraint edge
 
-Hold **Alt** and drag from one node to another in **Add Edge** mode. On release, choose:
+Hold **Alt** and drag from one node to another (works in any mode). On release, choose:
 
 - **Ceiling ⌈** — the source node's current value becomes the upper limit of the target
 - **Floor ⌊** — the source node's current value becomes the lower limit of the target
@@ -134,12 +134,27 @@ A `⌈` label on a dashed line means ceiling constraint. A `⌊` means floor con
 
 ## Keyboard shortcuts
 
+### Mode shortcuts
+
+These work anywhere — no canvas focus required.
+
+| Key | Mode |
+|-----|------|
+| `S` | Select |
+| `N` | Add Node |
+| `E` | Add Edge |
+| `R` | Simulate (Run) |
+| `D` | Delete |
+
+### Canvas shortcuts
+
 These work when the canvas has focus (click the canvas first if shortcuts are not responding).
 
 | Key | Action |
 |-----|--------|
 | `Tab` | Cycle keyboard focus through nodes |
 | `Arrow keys` | Nudge the focused node |
+| `Enter` | Open the focused node's config popover |
 | `Delete` | Remove the focused node |
 | `Ctrl Z` | Undo |
 | `Ctrl Shift Z` | Redo |

@@ -66,6 +66,8 @@ Key exports:
 
 `LoopyRenderer` takes a canvas ref and a `getState()` callback. It manages its own lifecycle — React does not re-mount it on state changes. The RAF loop calls `getState()` every frame, ticks the sim if running, and redraws.
 
+When `dragPosition` is set in the store, the renderer draws the dragged node dimmed at its stored position and a ghost copy at the cursor coordinates. The ghost uses a dashed outer ring and 0.75 alpha to distinguish it from a committed position. This gives immediate visual feedback during a drag without committing to `moveNode` until `pointerup`.
+
 Indicator functions (`stockIndicator`, `timebombStrength`, `saturationAlpha`) are pure and tested independently of the canvas.
 
 ---
@@ -100,12 +102,13 @@ The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and write
 | `focusNextNode` | Cycle keyboard focus through nodes |
 | `setPendingConstraintEdge` | Open constraint choice dialog |
 | `confirmConstraintEdge(kind)` | Commit pending constraint edge as ceiling or floor |
+| `setDragPosition(nodeId, x, y)` | Record cursor position while dragging a node; cleared by `moveNode`; not in undo stack |
 
 ### UI components
 
 | Component | Responsibility |
 |-----------|---------------|
-| `Canvas.tsx` | Canvas mount, pointer events, keyboard nav, drag state machine |
+| `Canvas.tsx` | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode |
 | `Toolbar.tsx` | Pause/resume, reset, speed control, mode switcher |
 | `NodePopover.tsx` | Inline label/min/max/initial editor triggered by double-click |
 | `EdgeWeightPopover.tsx` | Inline weight editor triggered by double-click on edge weight region |
@@ -125,7 +128,7 @@ Share button: `serialize` → base64 → write to `?g=` param → copy URL to cl
 
 Pointer events are handled in `Canvas.tsx` directly on the native canvas element — not via React's synthetic event system. This avoids re-render pressure on every mouse move.
 
-Alt key state for the constraint drag gesture is tracked via document-level `keydown`/`keyup` listeners rather than pointer event properties. jsdom does not expose `PointerEvent` as a global, which means `fireEvent.pointerDown` in tests falls back to `window.Event` and loses modifier key properties. The document listener approach is both a functional workaround and the correct pattern for a modifier held across a gesture sequence.
+Alt key state for the constraint drag gesture is tracked two ways. A document-level `keydown`/`keyup` listener maintains a `constraintModifierHeld` boolean — the primary approach for a modifier held continuously across a drag sequence. Additionally, `e.altKey` is checked directly on the `pointerup` event as a belt-and-suspenders fallback for Mac, where document-level key events are sometimes not delivered during a pointer drag. Both conditions are OR'd in `onPointerUp()`. In jsdom tests, `PointerEvent` does not propagate `altKey` through `fireEvent`, so tests simulate the modifier via `fireEvent.keyDown(document, { key: 'Alt' })` before the drag sequence.
 
 ---
 
