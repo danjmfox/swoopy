@@ -49,7 +49,7 @@ export function Canvas() {
     document.addEventListener('keyup', onDocKeyUp)
 
     // Pointer events → hit test → mode-gated dispatch (GE-01/04/09, SI-02/03, GE-03/20/23)
-    // Operates in CSS pixels; no DPR scaling needed (DR--20260327--renderer--dpr-css-pixel-geometry)
+    // Operates in CSS pixels; no DPR scaling needed (docs/decisions/DR--20260327--renderer--dpr-css-pixel-geometry.md)
     function onPointerDown(e: PointerEvent) {
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
