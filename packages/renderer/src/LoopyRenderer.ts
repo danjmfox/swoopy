@@ -47,6 +47,11 @@ function activationColour(value: number, min: number, max: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
+export function arrowheadDimensions(weight: number): { len: number; half: number } {
+  const lw = 1 + weight * 1.5
+  return { len: Math.max(10, lw * 2.5), half: Math.max(5, lw * 1.2) }
+}
+
 function drawCurvedArrow(
   ctx: CanvasRenderingContext2D,
   x1: number,
@@ -64,23 +69,25 @@ function drawCurvedArrow(
       : base;
   const { cx, cy } = controlPoint(x1, y1, x2, y2, bow);
 
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.quadraticCurveTo(cx, cy, x2, y2);
-  ctx.strokeStyle = colour;
-  ctx.lineWidth = 1 + edge.weight * 1.5;
-  ctx.stroke();
-
-  // Arrowhead
+  // Arrowhead geometry computed first so stroke can end at base, not tip.
+  // This prevents the thick line cap from squaring off the arrowhead point.
+  const { len: headLen, half: headHalf } = arrowheadDimensions(edge.weight);
   const tlen = Math.hypot(x2 - cx, y2 - cy);
   const ux = (x2 - cx) / tlen;
   const uy = (y2 - cy) / tlen;
-  const ax = x2 - ux * 10;
-  const ay = y2 - uy * 10;
+  const ax = x2 - ux * headLen;
+  const ay = y2 - uy * headLen;
+
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.quadraticCurveTo(cx, cy, ax, ay);
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = 1 + edge.weight * 1.5;
+  ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(x2, y2);
-  ctx.lineTo(ax + uy * 5, ay - ux * 5);
-  ctx.lineTo(ax - uy * 5, ay + ux * 5);
+  ctx.lineTo(ax + uy * headHalf, ay - ux * headHalf);
+  ctx.lineTo(ax - uy * headHalf, ay + ux * headHalf);
   ctx.closePath();
   ctx.fillStyle = colour;
   ctx.fill();
