@@ -411,7 +411,7 @@ export const useStore = create<StoreState>((set, get) => ({
     url.searchParams.delete("g");
     url.searchParams.set("m", newId);
     history.replaceState(null, "", url.toString());
-    set({ graph: emptyGraph, modelId: newId, transient: false, past: [], future: [] });
+    set({ graph: emptyGraph, modelId: newId, transient: false, past: [], future: [], sim: makeInitialSim(emptyGraph) });
   },
   loadPersistedGraph: () => {
     // Legacy migration: single-slot key → scoped key
