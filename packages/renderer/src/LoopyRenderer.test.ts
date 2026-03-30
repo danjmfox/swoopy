@@ -22,6 +22,7 @@ function makeStore(tickSim = vi.fn()): () => RendererStore {
       pending: [],
       nodeValues: new Map(),
       prevNodeValues: new Map(),
+      displayPrevNodeValues: new Map(),
       tick: 0,
     },
   });
@@ -225,6 +226,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: node.id,
@@ -261,6 +263,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -287,6 +290,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -312,6 +316,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -338,6 +343,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -363,6 +369,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -392,6 +399,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -421,6 +429,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -447,6 +456,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -475,6 +485,7 @@ describe("LoopyRenderer", () => {
             pending: [],
             nodeValues: new Map(),
             prevNodeValues: new Map(),
+            displayPrevNodeValues: new Map(),
             tick: 0,
           },
           focusedNodeId: null,
@@ -546,6 +557,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -595,6 +607,7 @@ describe("LoopyRenderer", () => {
           pending: [],
           nodeValues: new Map(),
           prevNodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
           tick: 0,
         },
         focusedNodeId: null,
@@ -609,6 +622,58 @@ describe("LoopyRenderer", () => {
     expect(
       arcs().some((a) => a.x === 200 && a.y === 250 && a.r === nodeA.radius),
     ).toBe(true);
+  });
+
+  it("SI-12 draws ▲ trend arrow when displayPrevNodeValues is lower than current value", () => {
+    const { canvas, texts } = makeArcFillCanvas();
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: true,
+        simSpeed: 1,
+        graph: { nodes: [nodeA], edges: [] },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map([[nodeA.id, 7]]),
+          prevNodeValues: new Map([[nodeA.id, 7]]),
+          displayPrevNodeValues: new Map([[nodeA.id, 5]]),
+          tick: 1,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    expect(texts()).toContain("▲");
+  });
+
+  it("SI-12 draws ▼ trend arrow when displayPrevNodeValues is higher than current value", () => {
+    const { canvas, texts } = makeArcFillCanvas();
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: true,
+        simSpeed: 1,
+        graph: { nodes: [nodeA], edges: [] },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map([[nodeA.id, 3]]),
+          prevNodeValues: new Map([[nodeA.id, 3]]),
+          displayPrevNodeValues: new Map([[nodeA.id, 5]]),
+          tick: 1,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    expect(texts()).toContain("▼");
   });
 
   it("stop() halts the RAF loop", () => {

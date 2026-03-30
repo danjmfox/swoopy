@@ -19,6 +19,7 @@ export function makeInitialSim(graph: Graph): SimState {
     pending: [],
     nodeValues,
     prevNodeValues: new Map(nodeValues),
+    displayPrevNodeValues: new Map(nodeValues),
     tick: 0,
   }
 }
@@ -128,6 +129,7 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     pending: stillPending,
     nodeValues,
     prevNodeValues: new Map(nodeValues),
+    displayPrevNodeValues: new Map(sim.nodeValues),
     tick: sim.tick + 1,
   }
 }

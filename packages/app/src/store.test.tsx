@@ -661,6 +661,7 @@ describe("SI-09 pauseSim / resumeSim", () => {
         pending: [],
         nodeValues: new Map(),
         prevNodeValues: new Map(),
+        displayPrevNodeValues: new Map(),
         tick: 0,
       },
     });
@@ -890,6 +891,7 @@ describe("Zustand slice boundary — PRD §5.1, §6.2", () => {
         pending: [],
         nodeValues: new Map(),
         prevNodeValues: new Map(),
+        displayPrevNodeValues: new Map(),
         tick: 0,
       },
     });
