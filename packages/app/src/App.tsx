@@ -11,9 +11,12 @@ export function App() {
   const loadPersistedGraph = useStore((s) => s.loadPersistedGraph);
 
   useEffect(() => {
-    if (window.location.search.includes("g=")) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("g")) {
       loadFromUrl(window.location.search);
     } else {
+      const m = params.get("m");
+      if (m) useStore.setState({ modelId: m });
       loadPersistedGraph();
     }
   }, []);
