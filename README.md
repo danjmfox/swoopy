@@ -2,6 +2,11 @@
 
 A browser-based tool for building and running [causal loop diagrams](https://en.wikipedia.org/wiki/Causal_loop_diagram). Draw a model, inject signals, and watch the simulation propagate in real time.
 
+- Inspired by the legendary [Nicky Case](https://github.com/ncase)'s [Loopy](https://ncase.me/loopy/) ([github](https://github.com/ncase/loopy))
+- Extended to handle the Systems Thinking concepts described at [less.works](https://less.works/less/principles/systems-thinking)
+- Described by me and Claude Code
+- Built entirely by Claude Code
+
 Built for facilitators, coaches, and educators running systems thinking sessions — particularly in organisational change, agile adoption, and retrospective work.
 
 > **The primary value is the conversation while building.** Two people who disagree about how a system works will disagree about how to draw it. That disagreement is productive. The simulation then acts as a shared reference.
@@ -61,12 +66,31 @@ The simulation is deliberately imprecise. Node values are qualitative proxies, n
 
 ## Known limitations (v1)
 
-- Auto-save restore not yet active — closing and reopening the tab reloads the default example (fix: SE-07-fix)
-- Model identity and safe shared-link handling not yet implemented (SE-08, DR--20260329--app--model-identity-persistence)
+- Can't "Name" a model. Name should be reflected in the page title and on the Canvas
+- Auto mode switch, e.g. shift-mouse-down on node => Edge mode until released, creating edge if released on another node, to easily link nodes
 - No mobile touch optimisation
 - No export to image or data formats
-- No annotation layer (goals, assumptions, quick-fix markers) — v2 candidate
+- No annotation layer (goals, assumptions, quick-fix markers on Edges) — v2 candidate
 - No flow / rate-of-change constraints — v2 candidate
 - No multiplayer or shared sessions
+- Currently a fixed node colour range indicating "temperature (value/range)". Instead, offer multiple colours in node settings, so a user can show aspects visually e.g. green for "good things", red for "bad things"
+- notion of levers: some things you can't directly influence, but some you can, so mark levers explicitly, and prevent signal injection in non-levers.
+- All the annotations etc.
+- A welcome model with annotations describing how to use it
+- example models for each behaviour
+- zoom in/out of canvas
+- node sized to relative range max, ie. a max 5 node is smaller than a max 10 node
+- import from Loopy
+- batch entry for node names
+- auto-switch modes based on key-presses?
+- image export
+- mermaid export?
+- Activity/Debug logs?
+- Trend Charts
+- o ("opposing" syntax)
+- inclusion of running models in html pages, e.g. the MODELS page, sitting alongs supporting text discussion.
+- A Config screen, allowing edits for all current "constants"
+
+---
 
 See the [PRD](docs/PRD.md) for the full scope and design rationale.

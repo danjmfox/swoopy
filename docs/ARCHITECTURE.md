@@ -104,13 +104,15 @@ The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and write
 | `setPendingConstraintEdge`      | Open constraint choice dialog                                                          |
 | `confirmConstraintEdge(kind)`   | Commit pending constraint edge as ceiling or floor                                     |
 | `setDragPosition(nodeId, x, y)` | Record cursor position while dragging a node; cleared by `moveNode`; not in undo stack |
+| `newModel()`                    | Generate fresh UUID, set blank graph, persist, update `swoopy_current_model` + URL via `replaceState`; previous model preserved in localStorage (SE-09, DR--20260330--app--new-model-action) |
+| `shareGraph()`                  | Serialize graph → base64 → write `?g=` URL to clipboard (SE-06) |
 
 ### UI components
 
 | Component                    | Responsibility                                                                                                         |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `Canvas.tsx`                 | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode |
-| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher                                                                      |
+| `Toolbar.tsx`                | Bottom-centre: mode switcher, sim controls (conditional). Top-right bar: **+ New** and **Share** buttons with inline "Copied!" feedback. |
 | `NodePopover.tsx`            | Inline label/min/max/initial editor triggered by double-click                                                          |
 | `EdgeWeightPopover.tsx`      | Inline weight editor triggered by double-click on edge weight region                                                   |
 | `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor                                         |
@@ -128,7 +130,9 @@ On load:
 
 Implemented in SE-07-fix + SE-08 (DR--20260329--app--model-identity-persistence, accepted).
 
-Share button: `serialize` → base64 → write to `?g=` param → copy URL to clipboard. The `?m=` param is not included in shared URLs — recipients get a clean fork opportunity.
+Share button (`shareGraph`): `serialize` → base64 → write to `?g=` param → copy URL to clipboard. The `?m=` param is not included in shared URLs — recipients get a clean fork opportunity.
+
+New Model button (`newModel`): generates fresh UUID, sets blank graph, persists, writes `swoopy_current_model`, updates URL to `?m=<newId>` via `replaceState`. Previous model preserved in localStorage. No confirmation dialog — auto-save guarantees no data loss. Back-button recovery deferred (SE-09, DR--20260330--app--new-model-action).
 
 ---
 

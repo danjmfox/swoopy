@@ -1,9 +1,65 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, fireEvent, act } from '@testing-library/react'
 import { useStore } from './store.ts'
 import { seedGraph } from './seed.ts'
 import { Toolbar } from './Toolbar.tsx'
 import type { AppMode } from './store.ts'
+
+describe('SE-06/SE-09: model action bar (top-right)', () => {
+  let shareGraph: ReturnType<typeof vi.fn>
+  let newModel: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    shareGraph = vi.fn().mockResolvedValue(undefined)
+    newModel = vi.fn()
+    useStore.setState({
+      graph: seedGraph,
+      shareGraph,
+      newModel,
+    } as Parameters<typeof useStore.setState>[0])
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('renders a Share button', () => {
+    const { getByTitle } = render(<Toolbar />)
+    expect(getByTitle('Share')).toBeTruthy()
+  })
+
+  it('renders a New Model button', () => {
+    const { getByTitle } = render(<Toolbar />)
+    expect(getByTitle('New Model')).toBeTruthy()
+  })
+
+  it('clicking Share calls shareGraph', async () => {
+    const { getByTitle } = render(<Toolbar />)
+    await act(async () => {
+      fireEvent.click(getByTitle('Share'))
+    })
+    expect(shareGraph).toHaveBeenCalledOnce()
+  })
+
+  it('Share button shows "Copied!" feedback after click, then reverts', async () => {
+    vi.useFakeTimers()
+    const { getByTitle } = render(<Toolbar />)
+    await act(async () => {
+      fireEvent.click(getByTitle('Share'))
+    })
+    expect(getByTitle('Share').textContent).toContain('Copied')
+    await act(async () => { vi.advanceTimersByTime(2000) })
+    expect(getByTitle('Share').textContent).not.toContain('Copied')
+  })
+
+  it('clicking New Model calls newModel', async () => {
+    const { getByTitle } = render(<Toolbar />)
+    await act(async () => {
+      fireEvent.click(getByTitle('New Model'))
+    })
+    expect(newModel).toHaveBeenCalledOnce()
+  })
+})
 
 describe('Toolbar mode switcher', () => {
   let setMode: ReturnType<typeof vi.fn>

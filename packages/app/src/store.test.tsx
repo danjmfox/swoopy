@@ -11,6 +11,72 @@ function GraphView() {
   return <span data-testid="count">{nodeCount}</span>;
 }
 
+// SE-09 newModel
+describe("SE-09: newModel", () => {
+  afterEach(() => {
+    useStore.setState({ graph: seedGraph, transient: false });
+    localStorage.clear();
+  });
+
+  it("assigns a new UUID different from the current modelId", () => {
+    const oldId = useStore.getState().modelId;
+    useStore.getState().newModel();
+    expect(useStore.getState().modelId).not.toBe(oldId);
+    expect(useStore.getState().modelId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+
+  it("sets graph to an empty graph with no nodes or edges", () => {
+    useStore.setState({ graph: seedGraph });
+    useStore.getState().newModel();
+    const { graph } = useStore.getState();
+    expect(graph.nodes).toHaveLength(0);
+    expect(graph.edges).toHaveLength(0);
+  });
+
+  it("sets transient to false", () => {
+    useStore.setState({ transient: true });
+    useStore.getState().newModel();
+    expect(useStore.getState().transient).toBe(false);
+  });
+
+  it("clears undo/redo history", () => {
+    useStore.setState({
+      past: [{ nodes: [], edges: [] }],
+      future: [{ nodes: [], edges: [] }],
+    });
+    useStore.getState().newModel();
+    expect(useStore.getState().past).toHaveLength(0);
+    expect(useStore.getState().future).toHaveLength(0);
+  });
+
+  it("persists the empty graph to swoopy_graph_<newId>", () => {
+    useStore.getState().newModel();
+    const { modelId } = useStore.getState();
+    const raw = localStorage.getItem(`swoopy_graph_${modelId}`);
+    expect(raw).not.toBeNull();
+  });
+
+  it("writes the new modelId to swoopy_current_model", () => {
+    useStore.getState().newModel();
+    const { modelId } = useStore.getState();
+    expect(localStorage.getItem("swoopy_current_model")).toBe(modelId);
+  });
+
+  it("updates URL to ?m=<newId> via replaceState", () => {
+    useStore.getState().newModel();
+    const { modelId } = useStore.getState();
+    expect(window.location.search).toContain(`m=${modelId}`);
+  });
+
+  it("removes any ?g= param from the URL", () => {
+    history.replaceState(null, "", "?g=abc123");
+    useStore.getState().newModel();
+    expect(window.location.search).not.toContain("g=");
+  });
+});
+
 // GE-30 hover feedback
 describe("GE-30: hover feedback", () => {
   it("store initialises hoveredEdgeRegion as null", () => {

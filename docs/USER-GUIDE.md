@@ -161,9 +161,19 @@ These work when the canvas has focus (click the canvas first if shortcuts are no
 
 ---
 
-## Sharing a model
+## Model actions (top-right bar)
 
-The toolbar includes a **Share** button. Clicking it encodes the current graph into the URL and copies it to the clipboard. Send that URL to anyone and they will open the same model.
+The **+ New** and **Share** buttons appear in the top-right corner of the screen.
+
+### Starting a new model
+
+Click **+ New** to open a blank canvas. The previous model is automatically saved — it remains in your browser history and can be returned to by navigating to its `?m=...` URL. No data is lost.
+
+> There is no confirmation dialog. Since every change is auto-saved, there is nothing at risk of being lost when you start a new model.
+
+### Sharing a model
+
+Click **Share** to encode the current graph into the URL and copy it to the clipboard. The button briefly shows **Copied!** to confirm. Send that URL to anyone and they will open the same model.
 
 > The URL is generated on demand — it does not update automatically as you edit.
 
@@ -171,7 +181,7 @@ The toolbar includes a **Share** button. Clicking it encodes the current graph i
 
 Each model you work on is saved separately in your browser under its own URL (`?m=...`). Bookmarking that URL will return you to that specific model.
 
-> **Note:** auto-save restore is not yet active — closing and reopening the tab currently reloads the default example. This will be fixed in an upcoming release.
+> **Auto-save:** every change is saved automatically. There is no Save button — your work is never at risk.
 
 ---
 
