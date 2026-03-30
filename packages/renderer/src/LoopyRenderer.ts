@@ -37,6 +37,7 @@ export interface RendererStore {
   focusedNodeId: NodeId | null;
   mode: string;
   dragPosition?: { nodeId: NodeId; x: number; y: number } | null;
+  hoveredEdgeRegion?: { edgeId: string; region: "delay" | "weight" } | null;
 }
 
 function activationColour(value: number, min: number, max: number): string {
@@ -48,9 +49,12 @@ function activationColour(value: number, min: number, max: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
-export function arrowheadDimensions(weight: number): { len: number; half: number } {
-  const lw = 1 + weight * 1.5
-  return { len: Math.max(10, lw * 2.5), half: Math.max(5, lw * 1.2) }
+export function arrowheadDimensions(weight: number): {
+  len: number;
+  half: number;
+} {
+  const lw = 1 + weight * 1.5;
+  return { len: Math.max(10, lw * 2.5), half: Math.max(5, lw * 1.2) };
 }
 
 function drawCurvedArrow(
@@ -259,8 +263,9 @@ export class LoopyRenderer {
       );
     }
 
-    // GE-29: Select mode — dim affordance dots at delay and weight hit regions
+    // GE-29/GE-30: Select mode — affordance dots at delay and weight hit regions
     if (mode === "select") {
+      const hovered = state.hoveredEdgeRegion ?? null;
       for (const edge of causalEdges) {
         const from = nodeById.get(edge.from);
         const to = nodeById.get(edge.to);
@@ -275,12 +280,26 @@ export class LoopyRenderer {
         const x2 = to.x - ux * to.radius;
         const y2 = to.y - uy * to.radius;
         const { cx, cy } = controlPoint(x1, y1, x2, y2, BOW);
-        for (const t of [T_DELAY, T_WEIGHT]) {
+        for (const [t, region] of [
+          [T_DELAY, "delay"],
+          [T_WEIGHT, "weight"],
+        ] as [number, "delay" | "weight"][]) {
           const { x: px, y: py } = bezierPoint(x1, y1, cx, cy, x2, y2, t);
+          const isHovered =
+            hovered?.edgeId === edge.id && hovered?.region === region;
           ctx.beginPath();
-          ctx.arc(px, py, 4, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(148,163,184,0.25)";
+          ctx.arc(px, py, 8, 0, Math.PI * 2);
+          ctx.fillStyle = isHovered
+            ? "rgba(148,163,184,0.9)"
+            : "rgba(148,163,184,0.25)";
           ctx.fill();
+          if (isHovered) {
+            ctx.fillStyle = "rgba(148,163,184,0.9)";
+            ctx.font = "11px system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            ctx.fillText(region === "delay" ? "Delay" : "Weight", px, py - 12);
+          }
         }
       }
     }
@@ -322,7 +341,7 @@ export class LoopyRenderer {
 
     // Nodes
     for (const node of graph.nodes) {
-      const isDragging = dragPosition?.nodeId === node.id
+      const isDragging = dragPosition?.nodeId === node.id;
       const value = sim.nodeValues.get(node.id) ?? node.initial;
       const prevValue = sim.prevNodeValues.get(node.id) ?? node.initial;
       const { fill, trend } = stockIndicator(
@@ -333,7 +352,7 @@ export class LoopyRenderer {
       );
       const timebomb = timebombStrength(sim.pending, node.id, graph.edges);
 
-      if (isDragging) ctx.globalAlpha = 0.3
+      if (isDragging) ctx.globalAlpha = 0.3;
 
       // Base fill
       ctx.beginPath();
@@ -400,32 +419,32 @@ export class LoopyRenderer {
         ctx.fillText(arrow, node.x, node.y + 8);
       }
 
-      if (isDragging) ctx.globalAlpha = 1
+      if (isDragging) ctx.globalAlpha = 1;
     }
 
     // Ghost node — follows cursor during drag in select mode
     if (dragPosition) {
-      const node = graph.nodes.find((n) => n.id === dragPosition.nodeId)
+      const node = graph.nodes.find((n) => n.id === dragPosition.nodeId);
       if (node) {
-        const value = sim.nodeValues.get(node.id) ?? node.initial
-        ctx.globalAlpha = 0.75
-        ctx.beginPath()
-        ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2)
-        ctx.fillStyle = activationColour(value, node.min, node.max)
-        ctx.fill()
-        ctx.beginPath()
-        ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2)
-        ctx.strokeStyle = "#94a3b8"
-        ctx.lineWidth = 1.5
-        ctx.setLineDash([4, 4])
-        ctx.stroke()
-        ctx.setLineDash([])
-        ctx.fillStyle = "#f1f5f9"
-        ctx.font = "13px system-ui, sans-serif"
-        ctx.textAlign = "center"
-        ctx.textBaseline = "middle"
-        ctx.fillText(node.label, dragPosition.x, dragPosition.y)
-        ctx.globalAlpha = 1
+        const value = sim.nodeValues.get(node.id) ?? node.initial;
+        ctx.globalAlpha = 0.75;
+        ctx.beginPath();
+        ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2);
+        ctx.fillStyle = activationColour(value, node.min, node.max);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#f1f5f9";
+        ctx.font = "13px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(node.label, dragPosition.x, dragPosition.y);
+        ctx.globalAlpha = 1;
       }
     }
   }
