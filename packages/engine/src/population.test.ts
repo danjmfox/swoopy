@@ -168,3 +168,43 @@ describe('GE-13 edge weight', () => {
     expect(sim.nodeValues.get(birthsId)).toBeLessThan(0.1)
   })
 })
+
+// GE-SD-01, GE-SD-02: staggered-density model (DR--20260330--engine--staggered-density-signals)
+describe('GE-SD staggered-density signals', () => {
+  it('GE-SD-01: weight=3 balancing loop — node does not crash to floor after 300 ticks', () => {
+    const aId = makeNodeId('A')
+    const bId = makeNodeId('B')
+    const graph: Graph = {
+      nodes: [
+        { id: aId, label: 'A', x: 0, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: bId, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { kind: 'causal', id: makeEdgeId('a-b'), from: aId, to: bId, polarity: 1, weight: 3, delay: 'none', transferFn: 'linear' },
+        { kind: 'causal', id: makeEdgeId('b-a'), from: bId, to: aId, polarity: -1, weight: 3, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    let sim = makeInitialSim(graph)
+    sim = inject(sim, aId, INJECT_STRENGTH)
+    for (let i = 0; i < 300; i++) sim = step(graph, sim, 1 / 60)
+    expect(sim.nodeValues.get(aId)).toBeGreaterThan(0)
+  })
+
+  it('GE-SD-02: weight=5 edge emits 5 signals (1 travelling + 4 staggered-pending) after injection', () => {
+    const aId = makeNodeId('A')
+    const bId = makeNodeId('B')
+    const graph: Graph = {
+      nodes: [
+        { id: aId, label: 'A', x: 0, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: bId, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { kind: 'causal', id: makeEdgeId('a-b'), from: aId, to: bId, polarity: 1, weight: 5, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    let sim = makeInitialSim(graph)
+    sim = inject(sim, aId, INJECT_STRENGTH)
+    sim = step(graph, sim, 1 / 60)
+    expect(sim.signals.length + sim.pending.length).toBe(5)
+  })
+})

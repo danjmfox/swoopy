@@ -2,6 +2,10 @@
 // Provisional: visually legible at typical canvas edge lengths. (PRD §7.6)
 export const SIGNAL_SPEED = 0.65
 
+// Edge transit time in ticks at 60 fps. Used to space staggered signals evenly
+// along an edge so N signals appear as N equally-spaced particles. (PRD §7.2)
+export const EDGE_TRANSIT_TICKS = Math.round(1 / (SIGNAL_SPEED * (1 / 60))) // ≈ 92
+
 // Minimum |delta| before a node emits signals on outgoing edges.
 // Suppresses noise without masking weak signals. (PRD §7.6)
 export const EMIT_THRESHOLD = 0.06

@@ -1,5 +1,5 @@
 import type { Graph, SimState, NodeId, Signal, PendingSignal, CausalEdge, ConstraintEdge, Node } from './types.ts'
-import { EMIT_THRESHOLD, SIGNAL_SPEED, MAX_SIGNALS, DELAY_TICKS_SHORT, DELAY_TICKS_MEDIUM, DELAY_TICKS_LONG } from './constants.ts'
+import { EMIT_THRESHOLD, SIGNAL_SPEED, MAX_SIGNALS, EDGE_TRANSIT_TICKS, DELAY_TICKS_SHORT, DELAY_TICKS_MEDIUM, DELAY_TICKS_LONG } from './constants.ts'
 
 const DELAY_TICKS: Record<string, number> = {
   short: DELAY_TICKS_SHORT,
@@ -93,17 +93,42 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
   // §7.2 steps 8–9 — emit signals for nodes where |delta| >= EMIT_THRESHOLD.
   //    prevNodeValues captures end-of-last-step, so inject() deltas (nodeValues only)
   //    are included in the delta comparison here.
+  //    Staggered-density model (DR--20260330): weight=N emits N signals of strength
+  //    delta/N, staggered evenly across EDGE_TRANSIT_TICKS so they appear as N
+  //    equally-spaced particles. Total effect per emission = delta (weight-invariant).
   const newSignals: Signal[] = []
   const newPending: PendingSignal[] = []
   for (const node of graph.nodes) {
     const delta = (nodeValues.get(node.id) ?? node.initial) - (sim.prevNodeValues.get(node.id) ?? node.initial)
     if (Math.abs(delta) < EMIT_THRESHOLD) continue
     for (const edge of causalEdgesFrom.get(node.id) ?? []) {
-      const signal: Signal = { id: nextSignalId(), edgeId: edge.id, progress: 0, strength: delta * edge.weight }
-      if (edge.delay === 'none') {
-        newSignals.push(signal)
-      } else {
+      if (edge.delay !== 'none') {
+        // Delayed edges use the existing pending queue with named delay levels.
+        // Stagger is not applied to delayed edges — the delay dominates.
+        const signal: Signal = { id: nextSignalId(), edgeId: edge.id, progress: 0, strength: delta }
         newPending.push({ signal, ticksRemaining: DELAY_TICKS[edge.delay] })
+        continue
+      }
+      if (edge.weight === 0) continue
+      if (edge.weight < 1) {
+        // Sub-unit weight: single attenuated signal. Preserves weight-as-attenuation
+        // semantics in the 0–1 range (e.g. weight=0.5 → half-strength signal).
+        newSignals.push({ id: nextSignalId(), edgeId: edge.id, progress: 0, strength: delta * edge.weight })
+        continue
+      }
+      // weight ≥ 1: staggered-density model. Emit count=round(weight) signals each of
+      // strength delta/count, staggered evenly across the edge transit time.
+      // Total effect = delta regardless of count (weight controls visual density only).
+      const count = Math.round(edge.weight)
+      const staggerTicks = Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count))
+      const perSignalStrength = delta / count
+      for (let i = 0; i < count; i++) {
+        const signal: Signal = { id: nextSignalId(), edgeId: edge.id, progress: 0, strength: perSignalStrength }
+        if (i === 0) {
+          newSignals.push(signal)
+        } else {
+          newPending.push({ signal, ticksRemaining: i * staggerTicks })
+        }
       }
     }
   }
