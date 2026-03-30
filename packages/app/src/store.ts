@@ -83,6 +83,12 @@ interface StoreState {
   dragPosition: { nodeId: NodeId; x: number; y: number } | null;
   setDragPosition: (nodeId: NodeId, x: number, y: number) => void;
 
+  // Ephemeral hover state (not persisted)
+  hoveredEdgeRegion: { edgeId: EdgeId; region: "delay" | "weight" } | null;
+  setHoveredEdgeRegion: (
+    region: { edgeId: EdgeId; region: "delay" | "weight" } | null,
+  ) => void;
+
   // Constraint edge pending state
   pendingConstraintEdge: { from: NodeId; to: NodeId } | null;
   setPendingConstraintEdge: (from: NodeId, to: NodeId) => void;
@@ -137,6 +143,13 @@ export const useStore = create<StoreState>((set, get) => ({
   dragPosition: null as { nodeId: NodeId; x: number; y: number } | null,
   setDragPosition: (nodeId: NodeId, x: number, y: number) =>
     set({ dragPosition: { nodeId, x, y } }),
+  hoveredEdgeRegion: null as {
+    edgeId: EdgeId;
+    region: "delay" | "weight";
+  } | null,
+  setHoveredEdgeRegion: (
+    region: { edgeId: EdgeId; region: "delay" | "weight" } | null,
+  ) => set({ hoveredEdgeRegion: region }),
   pendingConstraintEdge: null as { from: NodeId; to: NodeId } | null,
   setPendingConstraintEdge: (from: NodeId, to: NodeId) =>
     set({ pendingConstraintEdge: { from, to } }),

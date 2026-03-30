@@ -11,6 +11,13 @@ function GraphView() {
   return <span data-testid="count">{nodeCount}</span>;
 }
 
+// GE-30 hover feedback
+describe("GE-30: hover feedback", () => {
+  it("store initialises hoveredEdgeRegion as null", () => {
+    expect(useStore.getState().hoveredEdgeRegion).toBeNull();
+  });
+});
+
 // SE-08 model identity
 describe("SE-08: model identity", () => {
   afterEach(() => {
