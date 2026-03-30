@@ -381,7 +381,9 @@ export const useStore = create<StoreState>((set, get) => ({
   setSimSpeed: (speed: number) => set({ simSpeed: speed }),
   shareGraph: async () => {
     const { graph } = get();
-    const encoded = btoa(JSON.stringify(serialize(graph)));
+    const json = JSON.stringify(serialize(graph));
+    const bytes = new TextEncoder().encode(json);
+    const encoded = btoa(String.fromCharCode(...bytes));
     const url = new URL(window.location.href);
     url.searchParams.set("g", encoded);
     await navigator.clipboard.writeText(url.toString());
@@ -390,7 +392,10 @@ export const useStore = create<StoreState>((set, get) => ({
     const encoded = new URLSearchParams(search).get("g");
     if (!encoded) return;
     try {
-      const graph = deserialize(JSON.parse(atob(encoded)));
+      const binary = atob(encoded);
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      const json = new TextDecoder().decode(bytes);
+      const graph = deserialize(JSON.parse(json));
       set({ graph, past: [], future: [], transient: true });
     } catch {
       // malformed param — leave current graph intact

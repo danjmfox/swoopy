@@ -28,3 +28,4 @@ export {
 
 export { makeInitialSim, step, inject } from './sim.ts'
 export { serialize, deserialize } from './serialisation.ts'
+export type { SerializedGraph } from './serialisation.ts'
