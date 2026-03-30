@@ -113,6 +113,7 @@ interface StoreState {
   loadPersistedGraph: () => void;
   shareGraph: () => Promise<void>;
   loadFromUrl: (search: string) => void;
+  newModel: () => void;
 }
 
 type Get = () => StoreState;
@@ -400,6 +401,17 @@ export const useStore = create<StoreState>((set, get) => ({
     } catch {
       // malformed param — leave current graph intact
     }
+  },
+  newModel: () => {
+    const newId = crypto.randomUUID();
+    const emptyGraph: Graph = { nodes: [], edges: [] };
+    persist(emptyGraph, newId);
+    localStorage.setItem("swoopy_current_model", newId);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("g");
+    url.searchParams.set("m", newId);
+    history.replaceState(null, "", url.toString());
+    set({ graph: emptyGraph, modelId: newId, transient: false, past: [], future: [], sim: makeInitialSim(emptyGraph) });
   },
   loadPersistedGraph: () => {
     // Legacy migration: single-slot key → scoped key

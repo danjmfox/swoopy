@@ -25,6 +25,7 @@ export function Toolbar() {
   const { pauseSim, resumeSim, resetSim, setSimSpeed, setMode } =
     useStore.getState();
   const [helpOpen, setHelpOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -40,9 +41,40 @@ export function Toolbar() {
     return () => document.removeEventListener("keydown", handler);
   }, []);
 
+  async function handleShare() {
+    await useStore.getState().shareGraph();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <>
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <div
+        style={{
+          position: "fixed",
+          top: 16,
+          right: 16,
+          display: "flex",
+          gap: 8,
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: 10,
+          padding: "6px 12px",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+        }}
+      >
+        <button
+          title="New Model"
+          onClick={() => useStore.getState().newModel()}
+          style={btn}
+        >
+          + New
+        </button>
+        <button title="Share" onClick={handleShare} style={btn}>
+          {copied ? "Copied!" : "Share"}
+        </button>
+      </div>
       <div
         style={{
           position: "fixed",
