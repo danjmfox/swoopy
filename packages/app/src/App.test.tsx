@@ -1,5 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from "vitest";
-import { render, act } from "@testing-library/react";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  type Mock,
+} from "vitest";
+import { render, act, screen } from "@testing-library/react";
 import { useStore } from "./store.ts";
 
 vi.mock("./Canvas.tsx", () => ({ Canvas: () => null }));
@@ -82,5 +90,90 @@ describe("SE-07: startup restore", () => {
     });
     expect(useStore.getState().modelId).toBe(savedId);
     expect(loadPersistedGraph).toHaveBeenCalledOnce();
+  });
+});
+
+describe("SE-10: welcome overlay", () => {
+  let loadFromUrl: ReturnType<typeof vi.fn>;
+  let loadPersistedGraph: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    loadFromUrl = vi.fn();
+    loadPersistedGraph = vi.fn();
+    useStore.setState({ loadFromUrl, loadPersistedGraph } as Parameters<
+      typeof useStore.setState
+    >[0]);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it("shows overlay on bare URL with no localStorage state", async () => {
+    vi.stubGlobal("location", { search: "" });
+    await act(async () => {
+      render(<App />);
+    });
+    expect(
+      screen.getByRole("button", { name: /start building/i }),
+    ).toBeTruthy();
+  });
+
+  it("does not show overlay when swoopy_welcomed is set", async () => {
+    localStorage.setItem("swoopy_welcomed", "true");
+    vi.stubGlobal("location", { search: "" });
+    await act(async () => {
+      render(<App />);
+    });
+    expect(
+      screen.queryByRole("button", { name: /start building/i }),
+    ).toBeNull();
+  });
+
+  it("does not show overlay when swoopy_current_model is set", async () => {
+    localStorage.setItem("swoopy_current_model", "some-id");
+    vi.stubGlobal("location", { search: "" });
+    await act(async () => {
+      render(<App />);
+    });
+    expect(
+      screen.queryByRole("button", { name: /start building/i }),
+    ).toBeNull();
+  });
+
+  it("does not show overlay when ?g= param is present", async () => {
+    vi.stubGlobal("location", { search: "?g=abc123" });
+    await act(async () => {
+      render(<App />);
+    });
+    expect(
+      screen.queryByRole("button", { name: /start building/i }),
+    ).toBeNull();
+  });
+
+  it("does not show overlay when ?m= param is present", async () => {
+    vi.stubGlobal("location", { search: "?m=some-id" });
+    await act(async () => {
+      render(<App />);
+    });
+    expect(
+      screen.queryByRole("button", { name: /start building/i }),
+    ).toBeNull();
+  });
+
+  it("dismissing overlay sets swoopy_welcomed and hides the overlay", async () => {
+    vi.stubGlobal("location", { search: "" });
+    await act(async () => {
+      render(<App />);
+    });
+    const btn = screen.getByRole("button", { name: /start building/i });
+    await act(async () => {
+      btn.click();
+    });
+    expect(
+      screen.queryByRole("button", { name: /start building/i }),
+    ).toBeNull();
+    expect(localStorage.getItem("swoopy_welcomed")).toBe("true");
   });
 });
