@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, act } from "@testing-library/react";
 import { useStore } from "./store.ts";
 import { seedGraph } from "./seed.ts";
@@ -10,6 +10,131 @@ function GraphView() {
   const nodeCount = useStore((s) => s.graph.nodes.length);
   return <span data-testid="count">{nodeCount}</span>;
 }
+
+// SE-08 model identity
+describe("SE-08: model identity", () => {
+  afterEach(() => {
+    useStore.setState({ graph: seedGraph, transient: false });
+    localStorage.clear();
+  });
+
+  it("initialises with a modelId that is a valid UUID", () => {
+    const { modelId } = useStore.getState();
+    expect(modelId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+
+  it("first mutation when transient: forks new modelId, sets transient false, updates URL to ?m=<id>", () => {
+    const originalId = useStore.getState().modelId;
+    useStore.setState({ transient: true });
+
+    useStore.getState().addNode(50, 50);
+
+    const { modelId, transient } = useStore.getState();
+    expect(transient).toBe(false);
+    expect(modelId).not.toBe(originalId);
+    expect(modelId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(window.location.search).toContain(`m=${modelId}`);
+  });
+
+  it("all mutations fork when transient (addEdge, deleteNode, deleteEdge, updateNode, moveNode, nudgeNode, togglePolarity, cycleDelay, setEdgeWeight, undo, redo)", () => {
+    // Set up a graph with nodes and edges for the mutations that need them
+    const { modelId: originalId } = useStore.getState();
+    useStore.setState({ graph: seedGraph, past: [], future: [] });
+
+    const mutations: Array<() => void> = [
+      // nodes[1]→nodes[0] (shortcuts→pressure) is not in seedGraph
+      () => {
+        useStore.setState({ transient: true });
+        useStore
+          .getState()
+          .addEdge(seedGraph.nodes[1].id, seedGraph.nodes[0].id);
+      },
+      () => {
+        useStore.setState({ transient: true });
+        useStore.getState().deleteNode(seedGraph.nodes[2].id);
+      },
+      () => {
+        useStore.setState({ graph: seedGraph, transient: true });
+        useStore.getState().deleteEdge(seedGraph.edges[0].id);
+      },
+      () => {
+        useStore.setState({ graph: seedGraph, transient: true });
+        useStore.getState().updateNode(seedGraph.nodes[0].id, { label: "X" });
+      },
+      () => {
+        useStore.setState({ graph: seedGraph, transient: true });
+        useStore.getState().moveNode(seedGraph.nodes[0].id, 1, 2);
+      },
+      () => {
+        useStore.setState({ graph: seedGraph, transient: true });
+        useStore.getState().nudgeNode(seedGraph.nodes[0].id, 1, 1);
+      },
+      () => {
+        useStore.setState({ graph: seedGraph, transient: true });
+        useStore.getState().togglePolarity(seedGraph.edges[0].id);
+      },
+      () => {
+        useStore.setState({ graph: seedGraph, transient: true });
+        useStore.getState().cycleDelay(seedGraph.edges[0].id);
+      },
+      () => {
+        useStore.setState({ graph: seedGraph, transient: true });
+        useStore.getState().setEdgeWeight(seedGraph.edges[0].id, 2);
+      },
+      () => {
+        useStore.setState({
+          graph: seedGraph,
+          past: [{ nodes: [], edges: [] }],
+          transient: true,
+        });
+        useStore.getState().undo();
+      },
+      () => {
+        useStore.setState({
+          graph: seedGraph,
+          future: [{ nodes: [], edges: [] }],
+          transient: true,
+        });
+        useStore.getState().redo();
+      },
+    ];
+
+    for (const mutate of mutations) {
+      useStore.setState({ modelId: originalId, transient: false });
+      mutate();
+      expect(useStore.getState().transient).toBe(false);
+      expect(useStore.getState().modelId).not.toBe(originalId);
+    }
+  });
+
+  it("non-transient mutations preserve modelId", () => {
+    const { modelId } = useStore.getState();
+    useStore.setState({ graph: { nodes: [], edges: [] }, transient: false });
+    useStore.getState().addNode(1, 2);
+    expect(useStore.getState().modelId).toBe(modelId);
+    expect(useStore.getState().transient).toBe(false);
+  });
+
+  it("loadFromUrl sets transient to true", () => {
+    const encoded = btoa(
+      JSON.stringify({ version: 1, graph: { nodes: [], edges: [] } }),
+    );
+    useStore.getState().loadFromUrl(`?g=${encoded}`);
+    expect(useStore.getState().transient).toBe(true);
+  });
+
+  it("persists to swoopy_graph_<modelId> after a mutation", () => {
+    useStore.setState({ graph: { nodes: [], edges: [] } });
+    const { modelId } = useStore.getState();
+    useStore.getState().addNode(100, 100);
+    expect(localStorage.getItem(`swoopy_graph_${modelId}`)).not.toBeNull();
+    expect(localStorage.getItem("swoopy_graph")).toBeNull();
+  });
+});
 
 // SI-07 prerequisite
 describe("store initialisation", () => {
@@ -231,7 +356,12 @@ describe("GE-22: redo", () => {
 describe("S5 — undo does not roll back sim state", () => {
   it("undo restores graph but leaves sim nodeValues unchanged", () => {
     const initialSim = makeInitialSim(seedGraph);
-    useStore.setState({ graph: seedGraph, past: [], future: [], sim: initialSim });
+    useStore.setState({
+      graph: seedGraph,
+      past: [],
+      future: [],
+      sim: initialSim,
+    });
     // Inject into first node via the engine function so sim state diverges from initial
     const node = seedGraph.nodes[0];
     const simAfterInject = inject(initialSim, node.id, 1);
@@ -239,10 +369,14 @@ describe("S5 — undo does not roll back sim state", () => {
     const injectedValue = useStore.getState().sim.nodeValues.get(node.id)!;
     // Make a graph mutation so undo has something to do
     useStore.getState().addNode(999, 999);
-    expect(useStore.getState().graph.nodes).toHaveLength(seedGraph.nodes.length + 1);
+    expect(useStore.getState().graph.nodes).toHaveLength(
+      seedGraph.nodes.length + 1,
+    );
     // Undo the addNode — graph reverts, sim must not
     useStore.getState().undo();
-    expect(useStore.getState().graph.nodes).toHaveLength(seedGraph.nodes.length);
+    expect(useStore.getState().graph.nodes).toHaveLength(
+      seedGraph.nodes.length,
+    );
     expect(useStore.getState().sim.nodeValues.get(node.id)).toBe(injectedValue);
   });
 });
@@ -257,12 +391,42 @@ describe("SE-07: localStorage auto-save", () => {
     });
   });
 
-  it('saves the graph to localStorage under "swoopy_graph" after each mutation', () => {
+  it("saves the graph to localStorage under swoopy_graph_<modelId> after each mutation", () => {
+    const { modelId } = useStore.getState();
     useStore.getState().addNode(100, 200);
-    const raw = localStorage.getItem("swoopy_graph");
+    const raw = localStorage.getItem(`swoopy_graph_${modelId}`);
     expect(raw).not.toBeNull();
     const parsed = JSON.parse(raw!);
     expect(parsed.graph.nodes).toHaveLength(1);
+  });
+
+  it("migrates legacy swoopy_graph key: new modelId assigned, data moved, old key deleted", () => {
+    const legacyGraph = {
+      nodes: [
+        {
+          id: "n1",
+          x: 1,
+          y: 2,
+          label: "A",
+          min: 0,
+          max: 10,
+          initial: 5,
+          radius: 50,
+        },
+      ],
+      edges: [],
+    };
+    localStorage.setItem(
+      "swoopy_graph",
+      JSON.stringify({ version: 1, graph: legacyGraph }),
+    );
+
+    useStore.getState().loadPersistedGraph();
+
+    const { modelId, graph } = useStore.getState();
+    expect(localStorage.getItem("swoopy_graph")).toBeNull();
+    expect(localStorage.getItem(`swoopy_graph_${modelId}`)).not.toBeNull();
+    expect(graph.nodes[0].label).toBe("A");
   });
 
   it("restores graph from localStorage when loadPersistedGraph is called and no URL param is present", () => {
@@ -298,9 +462,8 @@ describe("SE-02 / SE-06: shareGraph", () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledOnce();
     const url = new URL(
-      (
-        navigator.clipboard.writeText as ReturnType<typeof vi.fn>
-      ).mock.calls[0][0],
+      (navigator.clipboard.writeText as ReturnType<typeof vi.fn>).mock
+        .calls[0][0],
     );
     const encoded = url.searchParams.get("g");
     expect(encoded).not.toBeNull();
@@ -578,13 +741,22 @@ describe("GE-03/20 moveNode", () => {
 
 describe("dragPosition — ephemeral drag state", () => {
   beforeEach(() => {
-    useStore.setState({ graph: seedGraph, past: [], future: [], dragPosition: null });
+    useStore.setState({
+      graph: seedGraph,
+      past: [],
+      future: [],
+      dragPosition: null,
+    });
   });
 
   it("setDragPosition stores nodeId and coordinates", () => {
     const node = seedGraph.nodes[0];
     useStore.getState().setDragPosition(node.id, 123, 456);
-    expect(useStore.getState().dragPosition).toEqual({ nodeId: node.id, x: 123, y: 456 });
+    expect(useStore.getState().dragPosition).toEqual({
+      nodeId: node.id,
+      x: 123,
+      y: 456,
+    });
   });
 
   it("moveNode clears dragPosition", () => {

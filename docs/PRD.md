@@ -1,4 +1,5 @@
 # Product Requirements Document
+
 ## Swoopy — Causal Loop Diagram Simulator
 
 **Version:** 0.1
@@ -124,11 +125,11 @@ Tertiary users are developers building on or extending the tool.
 - Export to image or data formats
 - Mobile touch optimisation (canvas interactions are pointer-based)
 - Trend overlay (value-over-time chart per node)
-- Annotation layer: goals, assumptions, quick-fix markers, delay labels *(v2 candidate)*
-- Flow / rate-of-change constraints *(v2 candidate)*
-- Interaction effects / edge modulation *(v2/v3 candidate)*
-- Threshold reactions and goal modelling *(v2/v3 candidate)*
-- Measurement dysfunction modelling *(v3 candidate)*
+- Annotation layer: goals, assumptions, quick-fix markers, delay labels _(v2 candidate)_
+- Flow / rate-of-change constraints _(v2 candidate)_
+- Interaction effects / edge modulation _(v2/v3 candidate)_
+- Threshold reactions and goal modelling _(v2/v3 candidate)_
+- Measurement dysfunction modelling _(v3 candidate)_
 
 ---
 
@@ -136,86 +137,86 @@ Tertiary users are developers building on or extending the tool.
 
 ### 4.1 Graph editing
 
-| ID | Requirement |
-|----|-------------|
-| GE-01 | User can create a node by clicking empty canvas in Add Node mode |
-| GE-02 | Nodes are circular with a visible label |
-| GE-03 | User can drag a node to reposition it in Add Node or Select mode; drag is an undoable mutation |
-| GE-04 | User can create a directed edge by dragging from one node to another in Add Edge mode |
-| GE-05 | Edges are rendered as curves with an arrowhead indicating direction |
-| GE-06 | Each edge has a polarity: reinforcing (+) or balancing (−) |
-| GE-07 | Default polarity for a new edge is reinforcing (+) |
-| GE-08 | User can toggle edge polarity by double-clicking the polarity badge on the edge midpoint |
-| GE-09 | User can delete a node (and all its connected edges) in Delete mode |
-| GE-10 | Duplicate causal edges between the same node pair in the same direction are not permitted; duplicate constraint edges of the same kind (ceiling or floor) from the same source to the same target are not permitted; a ceiling and a floor constraint between the same pair are permitted |
-| GE-11 | Each node has a configurable min and max value (defaults: 0 and 10) |
-| GE-12 | Each node has a configurable initial value, used as the reset state (default: 0) |
-| GE-13 | Each edge has a configurable weight representing signal strength (default: 1.0, range: 0–5); weight is rendered as line thickness — weight 1 = standard width, weight 5 = maximum width; this allows relative scaling ("this edge is 3× the others") without editing every other edge |
-| GE-14 | Each edge has a configurable delay level: none, short (days), medium (weeks), long (months) |
-| GE-15 | Delay level is rendered as vertical bars on the edge curve: none = no marks, short = \|\|, medium = \|\|\|\|, long = \|\|\|\|\|\| |
-| GE-16 | A fixed-size hit region exists on the edge curve for delay cycling regardless of whether delay marks are currently visible; double-clicking this region cycles none → \|\| → \|\|\|\| → \|\|\|\|\|\| → none |
-| GE-17 | Polarity badge, delay hit region, and weight popover target are visually distinct and occupy non-overlapping hit regions along the edge curve |
-| GE-18 | Double-clicking a node in Select, Add Node, Add Edge, or Delete mode opens an inline popover for label, min, max, and initial value; double-clicking a node in Simulate mode has no effect |
-| GE-19 | Double-clicking the weight region of an edge (between polarity badge and arrowhead) opens an inline popover for weight configuration; active in Select, Add Node, Add Edge, and Delete modes |
-| GE-20 | In Select mode, Tab key cycles focus through nodes; arrow keys nudge the focused node; Delete key removes it |
-| GE-21 | Ctrl+Z undoes and Ctrl+Shift+Z redoes regardless of active mode; all graph mutations (add, delete, move, configure) are recorded in the linear undo stack |
-| GE-22 | Undo history is session-only and is not persisted to localStorage |
-| GE-23 | User can create a constraint edge by holding Alt and dragging from node to node in any mode; on release a choice is offered: ceiling or floor constraint; constraint edges are visually distinct from causal edges (dashed line, no arrowhead) and labelled ⌈ or ⌊ accordingly |
+| ID    | Requirement                                                                                                                                                                                                                                                                                                 |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GE-01 | User can create a node by clicking empty canvas in Add Node mode                                                                                                                                                                                                                                            |
+| GE-02 | Nodes are circular with a visible label                                                                                                                                                                                                                                                                     |
+| GE-03 | User can drag a node to reposition it in Add Node or Select mode; drag is an undoable mutation                                                                                                                                                                                                              |
+| GE-04 | User can create a directed edge by dragging from one node to another in Add Edge mode                                                                                                                                                                                                                       |
+| GE-05 | Edges are rendered as curves with an arrowhead indicating direction                                                                                                                                                                                                                                         |
+| GE-06 | Each edge has a polarity: reinforcing (+) or balancing (−)                                                                                                                                                                                                                                                  |
+| GE-07 | Default polarity for a new edge is reinforcing (+)                                                                                                                                                                                                                                                          |
+| GE-08 | User can toggle edge polarity by double-clicking the polarity badge on the edge midpoint                                                                                                                                                                                                                    |
+| GE-09 | User can delete a node (and all its connected edges) in Delete mode                                                                                                                                                                                                                                         |
+| GE-10 | Duplicate causal edges between the same node pair in the same direction are not permitted; duplicate constraint edges of the same kind (ceiling or floor) from the same source to the same target are not permitted; a ceiling and a floor constraint between the same pair are permitted                   |
+| GE-11 | Each node has a configurable min and max value (defaults: 0 and 10)                                                                                                                                                                                                                                         |
+| GE-12 | Each node has a configurable initial value, used as the reset state (default: 0)                                                                                                                                                                                                                            |
+| GE-13 | Each edge has a configurable weight representing signal strength (default: 1.0, range: 0–5); weight is rendered as line thickness — weight 1 = standard width, weight 5 = maximum width; this allows relative scaling ("this edge is 3× the others") without editing every other edge                       |
+| GE-14 | Each edge has a configurable delay level: none, short (days), medium (weeks), long (months)                                                                                                                                                                                                                 |
+| GE-15 | Delay level is rendered as vertical bars on the edge curve: none = no marks, short = \|\|, medium = \|\|\|\|, long = \|\|\|\|\|\|                                                                                                                                                                           |
+| GE-16 | A fixed-size hit region exists on the edge curve for delay cycling regardless of whether delay marks are currently visible; double-clicking this region cycles none → \|\| → \|\|\|\| → \|\|\|\|\|\| → none                                                                                                 |
+| GE-17 | Polarity badge, delay hit region, and weight popover target are visually distinct and occupy non-overlapping hit regions along the edge curve                                                                                                                                                               |
+| GE-18 | Double-clicking a node in Select, Add Node, Add Edge, or Delete mode opens an inline popover for label, min, max, and initial value; double-clicking a node in Simulate mode has no effect                                                                                                                  |
+| GE-19 | Double-clicking the weight region of an edge (between polarity badge and arrowhead) opens an inline popover for weight configuration; active in Select, Add Node, Add Edge, and Delete modes                                                                                                                |
+| GE-20 | In Select mode, Tab key cycles focus through nodes; arrow keys nudge the focused node; Delete key removes it                                                                                                                                                                                                |
+| GE-21 | Ctrl+Z undoes and Ctrl+Shift+Z redoes regardless of active mode; all graph mutations (add, delete, move, configure) are recorded in the linear undo stack                                                                                                                                                   |
+| GE-22 | Undo history is session-only and is not persisted to localStorage                                                                                                                                                                                                                                           |
+| GE-23 | User can create a constraint edge by holding Alt and dragging from node to node in any mode; on release a choice is offered: ceiling or floor constraint; constraint edges are visually distinct from causal edges (dashed line, no arrowhead) and labelled ⌈ or ⌊ accordingly                              |
 | GE-24 | Ceiling constraint edges set `effective_max = min(target.max, source.value)` each step; floor constraint edges set `effective_min = max(target.min, source.value)` each step; if active constraints produce a state where effective_min > effective_max, floor wins and the node is pinned to effective_min |
-| GE-25 | A node may have multiple incoming constraint edges of either kind from different source nodes; all are resolved in combination before signal propagation each step |
-| GE-26 | User can delete an individual edge in Delete mode by clicking any hit region on that edge (polarity badge, delay region, or weight region) |
-| GE-27 | In Select mode, pressing Enter/Return while a node is focused opens its node editor popover |
-| GE-28 | Each mode has a keyboard shortcut (S = Select, N = Add Node, E = Add Edge, R = Run/Simulate, D = Delete); the Toolbar button for each mode displays its shortcut key; the active mode is visually highlighted |
-| GE-29 | In Select mode, the delay hit region and weight hit region on each edge are rendered with a subtle visible indicator (e.g. a dim translucent dot) so users can discover they are interactive without hovering |
-| GE-30 | In Select mode, hovering over a delay hit region or weight hit region brightens the affordance indicator to signal the region is under the cursor and ready to interact with |
-| GE-31 | A `?` button in the toolbar opens a modal overlay showing mode descriptions and keyboard shortcuts reference; the modal is dismissible via the button, an explicit close button, pressing Escape, or pressing `?` again (toggle) |
+| GE-25 | A node may have multiple incoming constraint edges of either kind from different source nodes; all are resolved in combination before signal propagation each step                                                                                                                                          |
+| GE-26 | User can delete an individual edge in Delete mode by clicking any hit region on that edge (polarity badge, delay region, or weight region)                                                                                                                                                                  |
+| GE-27 | In Select mode, pressing Enter/Return while a node is focused opens its node editor popover                                                                                                                                                                                                                 |
+| GE-28 | Each mode has a keyboard shortcut (S = Select, N = Add Node, E = Add Edge, R = Run/Simulate, D = Delete); the Toolbar button for each mode displays its shortcut key; the active mode is visually highlighted                                                                                               |
+| GE-29 | In Select mode, the delay hit region and weight hit region on each edge are rendered with a subtle visible indicator (e.g. a dim translucent dot) so users can discover they are interactive without hovering                                                                                               |
+| GE-30 | In Select mode, hovering over a delay hit region or weight hit region brightens the affordance indicator to signal the region is under the cursor and ready to interact with                                                                                                                                |
+| GE-31 | A `?` button in the toolbar opens a modal overlay showing mode descriptions and keyboard shortcuts reference; the modal is dismissible via the button, an explicit close button, pressing Escape, or pressing `?` again (toggle)                                                                            |
 
 ### 4.2 Simulation
 
-| ID | Requirement |
-|----|-------------|
-| SI-01 | Simulation runs continuously at 60fps via requestAnimationFrame |
-| SI-02 | User can inject a positive signal into a node by clicking it in Simulate mode |
-| SI-03 | User can inject a negative signal by shift-clicking a node in Simulate mode |
-| SI-04 | Injected signal propagates along outgoing edges as animated particles |
-| SI-05 | Signal polarity is inverted when it traverses a balancing (−) edge |
+| ID    | Requirement                                                                                                                                                                                                                                                     |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SI-01 | Simulation runs continuously at 60fps via requestAnimationFrame                                                                                                                                                                                                 |
+| SI-02 | User can inject a positive signal into a node by clicking it in Simulate mode                                                                                                                                                                                   |
+| SI-03 | User can inject a negative signal by shift-clicking a node in Simulate mode                                                                                                                                                                                     |
+| SI-04 | Injected signal propagates along outgoing edges as animated particles                                                                                                                                                                                           |
+| SI-05 | Signal polarity is inverted when it traverses a balancing (−) edge                                                                                                                                                                                              |
 | SI-06 | Node values are driven only by arriving signals. Stocks remain at whatever value signals have left them; there is no intrinsic decay. Only a genuine balancing loop — a negative-polarity feedback path — brings a stock back toward a lower value. See DR-001. |
-| SI-07 | Node visual state reflects current activation level (colour and glow) |
-| SI-08 | Signal particles are coloured to indicate positive or negative strength |
-| SI-09 | Simulation state can be paused and resumed |
-| SI-10 | Simulation state can be reset to initial values without clearing the graph |
-| SI-11 | Maximum concurrent signals are capped; when the cap is active, affected edges are visually dimmed or flash to indicate saturation |
-| SI-12 | Each node displays a stock indicator showing current value as a proportion of its **designed** [min, max] range — not the effective constrained range; this keeps the fill scale stable as constraint sources vary; exact visual form is TBD (see §10) |
-| SI-13 | Node values are clamped to [effective_min, effective_max] at the end of each step; signals that would exceed the bounds are absorbed silently |
-| SI-14 | Delayed edges hold emitted signals in a pending queue at the source node for a number of ticks corresponding to the delay level before releasing them to travel |
-| SI-15 | Signals pending in a delay queue are visually indicated on the source node as a 'charged' or 'primed' state — the timebomb indicator — distinct from active node value; exact visual form is TBD (see §10) |
-| SI-16 | Delay tick counts are derived from simulation time units mapped to days/weeks/months scale; the mapping is a named constant, not a magic number |
-| SI-17 | A global simulation speed multiplier is always visible in the toolbar, allowing the modeller to compress or expand perceived time without changing delay constants |
+| SI-07 | Node visual state reflects current activation level (colour and glow)                                                                                                                                                                                           |
+| SI-08 | Signal particles are coloured to indicate positive or negative strength                                                                                                                                                                                         |
+| SI-09 | Simulation state can be paused and resumed                                                                                                                                                                                                                      |
+| SI-10 | Simulation state can be reset to initial values without clearing the graph                                                                                                                                                                                      |
+| SI-11 | Maximum concurrent signals are capped; when the cap is active, affected edges are visually dimmed or flash to indicate saturation                                                                                                                               |
+| SI-12 | Each node displays a stock indicator showing current value as a proportion of its **designed** [min, max] range — not the effective constrained range; this keeps the fill scale stable as constraint sources vary; exact visual form is TBD (see §10)          |
+| SI-13 | Node values are clamped to [effective_min, effective_max] at the end of each step; signals that would exceed the bounds are absorbed silently                                                                                                                   |
+| SI-14 | Delayed edges hold emitted signals in a pending queue at the source node for a number of ticks corresponding to the delay level before releasing them to travel                                                                                                 |
+| SI-15 | Signals pending in a delay queue are visually indicated on the source node as a 'charged' or 'primed' state — the timebomb indicator — distinct from active node value; exact visual form is TBD (see §10)                                                      |
+| SI-16 | Delay tick counts are derived from simulation time units mapped to days/weeks/months scale; the mapping is a named constant, not a magic number                                                                                                                 |
+| SI-17 | A global simulation speed multiplier is always visible in the toolbar, allowing the modeller to compress or expand perceived time without changing delay constants                                                                                              |
 
 ### 4.3 Serialisation
 
-| ID | Requirement |
-|----|-------------|
-| SE-01 | Graph structure is serialisable to a JSON-compatible value type |
-| SE-02 | Serialised graph is base64-encoded; it is written to the URL query string only on an explicit Share action, not on every mutation |
-| SE-03 | Loading a URL with a valid encoded graph restores the graph exactly |
-| SE-04 | Serialisation format is versioned |
-| SE-05 | Deserialisation of an unknown version produces a descriptive error, not a crash |
-| SE-06 | A Share button generates the encoded URL and copies it to the clipboard; the URL does not update automatically on mutation |
-| SE-07 | The current graph is auto-saved to localStorage on every mutation; on load, if no URL-encoded graph is present, the last saved graph is restored — **bug: startup restore hook not yet wired; always loads seed graph (SE-07-fix)** |
+| ID    | Requirement                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SE-01 | Graph structure is serialisable to a JSON-compatible value type                                                                                                                                                                                                                                                                                                                                                                         |
+| SE-02 | Serialised graph is base64-encoded; it is written to the URL query string only on an explicit Share action, not on every mutation                                                                                                                                                                                                                                                                                                       |
+| SE-03 | Loading a URL with a valid encoded graph restores the graph exactly                                                                                                                                                                                                                                                                                                                                                                     |
+| SE-04 | Serialisation format is versioned                                                                                                                                                                                                                                                                                                                                                                                                       |
+| SE-05 | Deserialisation of an unknown version produces a descriptive error, not a crash                                                                                                                                                                                                                                                                                                                                                         |
+| SE-06 | A Share button generates the encoded URL and copies it to the clipboard; the URL does not update automatically on mutation                                                                                                                                                                                                                                                                                                              |
+| SE-07 | The current graph is auto-saved to localStorage on every mutation; on load, if no URL-encoded graph is present, the last saved graph is restored                                                                                                                                                                                                                                                                                        |
 | SE-08 | Each model is assigned a UUID on creation; localStorage key is `swoopy_graph_<id>`; the active model ID is reflected in the URL as `?m=<id>`; opening a `?g=...` shared link loads transiently — the first mutation forks a new local model (new UUID, new `?m=` param) without touching the opener's saved work; legacy `swoopy_graph` key is migrated to a generated ID on first load (DR--20260329--app--model-identity-persistence) |
 
 ### 4.4 Modes
 
 The editor operates in one of five mutually exclusive modes. Mode is always visible in the toolbar.
 
-| Mode | Behaviour |
-|------|-----------|
-| Select | Click to select a node or edge. Drag a node to reposition it. Double-click a node to open its config popover. Double-click an edge badge/region to configure polarity, delay, or weight. |
-| Add Node | Click empty canvas to create a node. Double-click an existing node to open its config popover. |
-| Add Edge | Drag from node to node to create an edge. Double-click edge regions to configure. |
-| Simulate | Click node to inject positive signal. Shift-click to inject negative. Double-click has no effect. |
-| Delete | Click a node to remove it and its edges. Click an edge to remove it. |
+| Mode     | Behaviour                                                                                                                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Select   | Click to select a node or edge. Drag a node to reposition it. Double-click a node to open its config popover. Double-click an edge badge/region to configure polarity, delay, or weight. |
+| Add Node | Click empty canvas to create a node. Double-click an existing node to open its config popover.                                                                                           |
+| Add Edge | Drag from node to node to create an edge. Double-click edge regions to configure.                                                                                                        |
+| Simulate | Click node to inject positive signal. Shift-click to inject negative. Double-click has no effect.                                                                                        |
+| Delete   | Click a node to remove it and its edges. Click an edge to remove it.                                                                                                                     |
 
 ---
 
@@ -252,7 +253,7 @@ The editor operates in one of five mutually exclusive modes. Mode is always visi
 
 ### 6.1 Package structure
 
-```
+```plaintext
 packages/
   engine/     Pure TS. Graph types, step(), inject(), serialize(), deserialize(), geometry.
   renderer/   Canvas 2D + RAF loop. LoopyRenderer class. Hit testing bridge to store.
@@ -272,7 +273,7 @@ The RAF loop must never trigger React re-renders. React must never own simulatio
 
 The renderer is instantiated once on canvas mount, receives a canvas ref and the store, and manages its own lifecycle. React does not re-mount the renderer on prop or state changes.
 
-```
+```plaintext
 LoopyRenderer
   start()           begin RAF loop
   stop()            cancel RAF loop
@@ -293,14 +294,14 @@ Graph serialisation lives entirely in the engine package. The app's URL sync hoo
 
 ```ts
 interface Node {
-  readonly id: NodeId
-  readonly label: string
-  readonly x: number
-  readonly y: number
-  readonly radius: number
-  readonly min: number      // default 0
-  readonly max: number      // default 10
-  readonly initial: number  // reset value (used by makeInitialSim and Reset button); default 0
+  readonly id: NodeId;
+  readonly label: string;
+  readonly x: number;
+  readonly y: number;
+  readonly radius: number;
+  readonly min: number; // default 0
+  readonly max: number; // default 10
+  readonly initial: number; // reset value (used by makeInitialSim and Reset button); default 0
 }
 ```
 
@@ -313,12 +314,12 @@ interface Node {
    - `effective_min = max(target.min, ...source.value for all floor constraints)`
    - If `effective_min > effective_max`: floor wins — pin the node to `effective_min`
    - Otherwise clamp current value to `[effective_min, effective_max]`
-   - *(This pre-clamp ensures the node enters the step within its constrained range before arrivals are applied)*
+   - _(This pre-clamp ensures the node enters the step within its constrained range before arrivals are applied)_
 2. Advance all signal progress values by `SIGNAL_SPEED × dt`
 3. Collect arrived signals (progress ≥ 1)
 4. Apply arrived signals to destination node values (strength × edge.weight × edge.polarity)
 5. Clamp all node values to their effective max and min as recomputed from current constraint source values
-   - *(Re-clamping here is necessary: arrivals in step 4 may have pushed values outside the constrained range; constraint sources may also have changed value during this step)*
+   - _(Re-clamping here is necessary: arrivals in step 4 may have pushed values outside the constrained range; constraint sources may also have changed value during this step)_
 6. Cull values within 0.001 of `initial` back to `initial`
 7. Compare start-of-step node values against end-of-step values
 8. For each node where |delta| ≥ EMIT_THRESHOLD, emit signals per outgoing causal edge:
@@ -331,12 +332,12 @@ The pending queue is part of `SimState`, not `Graph`. Resetting the simulation c
 
 ### 7.3 Delay levels and tick mapping
 
-| Level | Marks | Simulation ticks | Human scale |
-|-------|-------|-----------------|-------------|
-| none  | —     | 0               | immediate   |
-| short | \|\|    | DELAY_TICKS_SHORT  | days        |
-| medium | \|\|\|\|  | DELAY_TICKS_MEDIUM | weeks       |
-| long  | \|\|\|\|\|\| | DELAY_TICKS_LONG   | months      |
+| Level  | Marks        | Simulation ticks   | Human scale |
+| ------ | ------------ | ------------------ | ----------- |
+| none   | —            | 0                  | immediate   |
+| short  | \|\|         | DELAY_TICKS_SHORT  | days        |
+| medium | \|\|\|\|     | DELAY_TICKS_MEDIUM | weeks       |
+| long   | \|\|\|\|\|\| | DELAY_TICKS_LONG   | months      |
 
 Tick constants are named and committed alongside a comment explaining the intended human-scale mapping. The simulation has no concept of real time — the mapping is a communication convention for the modeller, not a simulation invariant.
 
@@ -351,49 +352,50 @@ Non-linear relationships between variables are modelled as transfer functions on
 The edge type should be designed with all current and anticipated fields from v1:
 
 ```ts
-type DelayLevel = 'none' | 'short' | 'medium' | 'long'
-type EdgeKind = 'causal' | 'constraint'
-type ConstraintKind = 'ceiling' | 'floor'
+type DelayLevel = "none" | "short" | "medium" | "long";
+type EdgeKind = "causal" | "constraint";
+type ConstraintKind = "ceiling" | "floor";
 
 interface Signal {
-  readonly id: string
-  readonly edgeId: EdgeId
-  readonly progress: number   // 0–1 along the edge curve
-  readonly strength: number   // signed; positive or negative
+  readonly id: string;
+  readonly edgeId: EdgeId;
+  readonly progress: number; // 0–1 along the edge curve
+  readonly strength: number; // signed; positive or negative
 }
 
 interface CausalEdge {
-  readonly kind: 'causal'
-  readonly id: EdgeId
-  readonly from: NodeId
-  readonly to: NodeId
-  readonly polarity: 1 | -1
-  readonly weight: number       // 0–5, default 1.0; see DR-002
-  readonly delay: DelayLevel    // default 'none'
-  readonly transferFn: 'linear' // v1 only; extended in future
+  readonly kind: "causal";
+  readonly id: EdgeId;
+  readonly from: NodeId;
+  readonly to: NodeId;
+  readonly polarity: 1 | -1;
+  readonly weight: number; // 0–5; see DR--20260328--engine--weight-range-expansion
+  readonly delay: DelayLevel; // default 'none'
+  readonly transferFn: "linear"; // v1 only; extended in future
 }
 
 interface ConstraintEdge {
-  readonly kind: 'constraint'
-  readonly constraintKind: ConstraintKind  // 'ceiling' or 'floor'
-  readonly id: EdgeId
-  readonly from: NodeId
-  readonly to: NodeId
+  readonly kind: "constraint";
+  readonly constraintKind: ConstraintKind; // 'ceiling' or 'floor'
+  readonly id: EdgeId;
+  readonly from: NodeId;
+  readonly to: NodeId;
   // no polarity, weight, delay, or transferFn
 }
 
-type Edge = CausalEdge | ConstraintEdge
+type Edge = CausalEdge | ConstraintEdge;
 
 interface PendingSignal {
-  readonly signal: Signal
-  readonly ticksRemaining: number
+  readonly signal: Signal;
+  readonly ticksRemaining: number;
 }
 
 interface SimState {
-  readonly signals: ReadonlyArray<Signal>          // travelling
-  readonly pending: ReadonlyArray<PendingSignal>   // held at source
-  readonly nodeValues: ReadonlyMap<NodeId, number>
-  readonly tick: number
+  readonly signals: ReadonlyArray<Signal>; // travelling
+  readonly pending: ReadonlyArray<PendingSignal>; // held at source
+  readonly nodeValues: ReadonlyMap<NodeId, number>;
+  readonly prevNodeValues: ReadonlyMap<NodeId, number>; // baseline for delta detection
+  readonly tick: number;
 }
 ```
 
@@ -401,15 +403,15 @@ When non-linear transfer functions are introduced, candidates include sigmoid (s
 
 ### 7.6 Constants (subject to characterisation tests)
 
-| Constant | Provisional value | Rationale |
-|----------|------------------|-----------|
-| SIGNAL_SPEED | 0.65 | Visually legible at typical edge lengths |
-| EMIT_THRESHOLD | 0.06 | Suppresses noise without masking weak signals |
-| INJECT_STRENGTH | 1.0 | One click = 1 unit = 10% of default 0–10 range; meaningful nudge without saturating immediately |
-| DELAY_TICKS_SHORT | 30 | Represents days — brief but perceptible at 60fps |
-| DELAY_TICKS_MEDIUM | 150 | Represents weeks — noticeably deferred |
-| DELAY_TICKS_LONG | 600 | Represents months — consequence long after cause |
-| MAX_SIGNALS | 30 | Set by characterisation test (§7.7): 6-node reinforcing graph, 600 ticks, 99th-percentile plateau |
+| Constant           | Provisional value | Rationale                                                                                         |
+| ------------------ | ----------------- | ------------------------------------------------------------------------------------------------- |
+| SIGNAL_SPEED       | 0.65              | Visually legible at typical edge lengths                                                          |
+| EMIT_THRESHOLD     | 0.06              | Suppresses noise without masking weak signals                                                     |
+| INJECT_STRENGTH    | 1.0               | One click = 1 unit = 10% of default 0–10 range; meaningful nudge without saturating immediately   |
+| DELAY_TICKS_SHORT  | 30                | Represents days — brief but perceptible at 60fps                                                  |
+| DELAY_TICKS_MEDIUM | 150               | Represents weeks — noticeably deferred                                                            |
+| DELAY_TICKS_LONG   | 600               | Represents months — consequence long after cause                                                  |
+| MAX_SIGNALS        | 30                | Set by characterisation test (§7.7): 6-node reinforcing graph, 600 ticks, 99th-percentile plateau |
 
 ### 7.7 Signal cap characterisation test
 
@@ -419,13 +421,13 @@ Build a fully connected reinforcing graph of N nodes. Inject maximum strength. R
 
 ## 8. Test Strategy
 
-| Layer | Tool | Focus |
-|-------|------|-------|
-| engine | Vitest | Pure unit tests. Every exported function. Property-based tests for serialise/deserialise round-trip. Version migration. Constraint resolution: ceiling, floor, multiple sources, floor-wins tie-break, dynamic source variation. |
-| renderer/geometry | Vitest | Hit testing (all edge regions including invisible delay hit region), curve interpolation, arrowhead placement. No canvas required. |
-| app/store | Vitest | Zustand slice actions in isolation. Undo/redo stack: mutations record, undo restores, redo replays. localStorage read/write. |
-| app/ui | React Testing Library | Toolbar mode switching (five modes). Node popover open/close/commit. Share button clipboard write. Mock renderer. |
-| integration | Vitest | Seed graph scenarios. Canonical Population model. Signal cap behaviour. Delay queue release timing. Constraint ceiling pins node below designed max. Constraint floor lifts node above initial. Floor-wins when floor > ceiling. Round-trip: mutate → serialise → deserialise → assert graph identical. |
+| Layer             | Tool                  | Focus                                                                                                                                                                                                                                                                                                   |
+| ----------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| engine            | Vitest                | Pure unit tests. Every exported function. Property-based tests for serialise/deserialise round-trip. Version migration. Constraint resolution: ceiling, floor, multiple sources, floor-wins tie-break, dynamic source variation.                                                                        |
+| renderer/geometry | Vitest                | Hit testing (all edge regions including invisible delay hit region), curve interpolation, arrowhead placement. No canvas required.                                                                                                                                                                      |
+| app/store         | Vitest                | Zustand slice actions in isolation. Undo/redo stack: mutations record, undo restores, redo replays. localStorage read/write.                                                                                                                                                                            |
+| app/ui            | React Testing Library | Toolbar mode switching (five modes). Node popover open/close/commit. Share button clipboard write. Mock renderer.                                                                                                                                                                                       |
+| integration       | Vitest                | Seed graph scenarios. Canonical Population model. Signal cap behaviour. Delay queue release timing. Constraint ceiling pins node below designed max. Constraint floor lifts node above initial. Floor-wins when floor > ceiling. Round-trip: mutate → serialise → deserialise → assert graph identical. |
 
 No canvas drawing is tested. Visual correctness is validated by inspection against the prototype.
 
@@ -433,15 +435,15 @@ No canvas drawing is tested. Visual correctness is validated by inspection again
 
 ## 9. Risks and Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Reinforcing loops produce exponential signal growth | High | High | MAX_SIGNALS cap + characterisation test |
-| React re-renders during RAF causing frame drops | Medium | High | Strict Zustand slice boundary; no sim state in React state |
-| Serialisation format churn breaking shared URLs | Medium | Medium | Version field from day one; migration function per version |
-| Hit testing imprecision on high-DPR displays | Medium | Low | Hit test operates in CSS pixels; DPR applied only at draw time |
-| dt spike on tab wake causing simulation jump | Low | Medium | Cap dt at 50ms per frame |
-| Pending queue accumulates unboundedly on long-delay edges in reinforcing loops | Medium | High | Pending queue subject to same MAX_SIGNALS cap as travelling signals |
-| Delay tick constants feel wrong at different simulation speeds | Medium | Medium | Expose a global simulation speed multiplier so modellers can tune without changing constants |
+| Risk                                                                           | Likelihood | Impact | Mitigation                                                                                   |
+| ------------------------------------------------------------------------------ | ---------- | ------ | -------------------------------------------------------------------------------------------- |
+| Reinforcing loops produce exponential signal growth                            | High       | High   | MAX_SIGNALS cap + characterisation test                                                      |
+| React re-renders during RAF causing frame drops                                | Medium     | High   | Strict Zustand slice boundary; no sim state in React state                                   |
+| Serialisation format churn breaking shared URLs                                | Medium     | Medium | Version field from day one; migration function per version                                   |
+| Hit testing imprecision on high-DPR displays                                   | Medium     | Low    | Hit test operates in CSS pixels; DPR applied only at draw time                               |
+| dt spike on tab wake causing simulation jump                                   | Low        | Medium | Cap dt at 50ms per frame                                                                     |
+| Pending queue accumulates unboundedly on long-delay edges in reinforcing loops | Medium     | High   | Pending queue subject to same MAX_SIGNALS cap as travelling signals                          |
+| Delay tick constants feel wrong at different simulation speeds                 | Medium     | Medium | Expose a global simulation speed multiplier so modellers can tune without changing constants |
 
 ---
 
@@ -460,6 +462,7 @@ A two-point range slider would let users set min and max simultaneously with a n
 
 **Stock indicator visual form (SI-12)**
 Resolved: shows current fill level plus a trend indicator (rising / falling). Visual form is open. Candidates:
+
 - Water-level fill (arc or chord across the circle)
 - Concentric ring (outer ring fills like a dial)
 - Number overlay (current value, or normalised 0–100)
@@ -470,7 +473,6 @@ The trend indicator (delta direction) may be better as a separate overlay layer 
 **Timebomb indicator visual form (SI-15)**
 To be decided in prototype. Candidates: pulsing ring on source node; count + aggregate strength badge on the edge near source; fill arc around the node distinct from stock fill. Should show aggregate pending strength, not just signal count, to communicate magnitude of the deferred consequence.
 
-
 ---
 
 ## Appendix A — Seed Graph (canonical integration test fixture)
@@ -479,15 +481,15 @@ Population/Births/Deaths — a minimal Limits to Growth archetype.
 
 **Nodes** (all use default range unless stated):
 
-| Node | min | max | initial |
-|------|-----|-----|---------|
-| Population | 0 | 10 | 5 |
-| Births | 0 | 10 | 0 |
-| Deaths | 0 | 10 | 0 |
+| Node       | min | max | initial |
+| ---------- | --- | --- | ------- |
+| Population | 0   | 10  | 5       |
+| Births     | 0   | 10  | 0       |
+| Deaths     | 0   | 10  | 0       |
 
 **Edges:**
 
-```
+```plaintext
 Population → Births     (causal, polarity: +, weight: 1.0, delay: none)
 Births     → Population (causal, polarity: +, weight: 1.0, delay: none)  ← reinforcing loop
 Population → Deaths     (causal, polarity: +, weight: 1.0, delay: none)
@@ -497,11 +499,16 @@ Deaths     → Population (causal, polarity: −, weight: 1.0, delay: none)  ←
 Population starts at 5 (mid-range) so both positive and negative injections produce observable behaviour without immediately hitting a boundary.
 
 **Expected behaviour on positive injection into Population:**
+
 - Births amplify the signal (reinforcing loop)
 - Deaths progressively damp the reinforcing effect (balancing loop)
 - System reaches a plateau rather than diverging indefinitely
 
 **Expected behaviour on negative injection into Population:**
+
+- Births reduce (reinforcing loop damps further)
+- Deaths reduce (balancing loop reduces drag)
+- System stabilises at a lower plateau
 - Births reduce (reinforcing loop damps further)
 - Deaths reduce (balancing loop reduces drag)
 - System stabilises at a lower plateau

@@ -2,7 +2,7 @@
 
 ## Package structure
 
-```
+```plaintext
 packages/
   engine/     Pure TypeScript. No browser or framework dependencies.
   renderer/   Canvas 2D + RAF loop. Browser only.
@@ -19,18 +19,18 @@ The simulation core. Every function is pure: same inputs, same outputs, no side 
 
 Key exports:
 
-| Export | Purpose |
-|--------|---------|
-| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types |
-| `NodeId`, `EdgeId` | Branded primitive types — prevent accidental string substitution |
-| `SimState` | Snapshot of simulation state: node values, travelling signals, pending queue |
-| `makeInitialSim(graph)` | Create a clean `SimState` from a graph |
-| `step(graph, sim, dt)` | Advance simulation by `dt` seconds; returns new `SimState` |
-| `inject(sim, nodeId, strength)` | Return new `SimState` with node value nudged; clamping deferred to next `step()` |
-| `serialize(graph)` | `Graph` → versioned JSON-compatible value |
-| `deserialize(raw)` | Versioned value → `Graph`; throws on unknown version |
-| `hitTest(graph, x, y)` | Return `HitTarget | null` for canvas coordinates |
-| `bezierPoint`, `controlPoint` | Geometry helpers for curve rendering and hit testing |
+| Export                                          | Purpose                                                                                      |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------- |
+| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types                                                                                 |
+| `NodeId`, `EdgeId`                              | Branded primitive types — prevent accidental string substitution                             |
+| `SimState`                                      | Snapshot of simulation state: node values, prevNodeValues, travelling signals, pending queue |
+| `makeInitialSim(graph)`                         | Create a clean `SimState` from a graph                                                       |
+| `step(graph, sim, dt)`                          | Advance simulation by `dt` seconds; returns new `SimState`                                   |
+| `inject(sim, nodeId, strength)`                 | Return new `SimState` with node value nudged; clamping deferred to next `step()`             |
+| `serialize(graph)`                              | `Graph` → versioned JSON-compatible value                                                    |
+| `deserialize(raw)`                              | Versioned value → `Graph`; throws on unknown version                                         |
+| `hitTest(graph, x, y)`                          | Return `HitTarget                                                                            | null` for canvas coordinates |
+| `bezierPoint`, `controlPoint`                   | Geometry helpers for curve rendering and hit testing                                         |
 
 ### Simulation step
 
@@ -41,7 +41,7 @@ Key exports:
 3. Collect arrived signals (progress ≥ 1)
 4. Apply arrivals to destination node values (`strength × weight × polarity`)
 5. Re-clamp to effective bounds (arrivals may have pushed values out of range)
-6. Cull values within 0.001 of `initial` back to `initial`
+6. Noise suppression: values within 0.001 of `initial` are snapped back to `initial`
 7. Diff start vs end values; emit signals on outgoing edges where |delta| ≥ EMIT_THRESHOLD
 8. Decrement pending queue counters; release zero-count entries into the travelling queue
 9. Cap travelling signal count at `MAX_SIGNALS`, preferring highest-progress signals
@@ -56,13 +56,13 @@ Owns the canvas draw loop and hit testing. Browser-only — not imported by test
 
 Key exports:
 
-| Export | Purpose |
-|--------|---------|
-| `LoopyRenderer` | Class managing the RAF loop and canvas draw |
-| `hitTest` | Re-exported from engine; used by `Canvas.tsx` for pointer handling |
-| `stockIndicator(value, min, max, prevValue)` | Pure: fill ratio 0–1, trend direction |
-| `timebombStrength(pending, nodeId, edges)` | Pure: aggregate pending signal strength from a node |
-| `saturationAlpha(signalCount, maxSignals)` | Pure: edge opacity 1→0.3 as signal count approaches cap |
+| Export                                       | Purpose                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------ |
+| `LoopyRenderer`                              | Class managing the RAF loop and canvas draw                        |
+| `hitTest`                                    | Re-exported from engine; used by `Canvas.tsx` for pointer handling |
+| `stockIndicator(value, min, max, prevValue)` | Pure: fill ratio 0–1, trend direction                              |
+| `timebombStrength(pending, nodeId, edges)`   | Pure: aggregate pending signal strength from a node                |
+| `saturationAlpha(signalCount, maxSignals)`   | Pure: edge opacity 1→0.3 as signal count approaches cap            |
 
 `LoopyRenderer` takes a canvas ref and a `getState()` callback. It manages its own lifecycle — React does not re-mount it on state changes. The RAF loop calls `getState()` every frame, ticks the sim if running, and redraws.
 
@@ -81,6 +81,7 @@ React + Vite. Contains the Zustand store, UI components, and URL/localStorage pe
 A single flat Zustand store holds both graph state and simulation state. All mutations are synchronous and return new immutable values.
 
 The store is read in two ways:
+
 - React components subscribe via `useStore(selector)` — re-renders on graph structure changes
 - The RAF loop reads via `useStore.getState()` each frame — never triggers React re-renders
 
@@ -88,43 +89,44 @@ The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and write
 
 ### Key store actions
 
-| Action | Behaviour |
-|--------|-----------|
-| `addNode` | Push new node; record in undo stack |
-| `addEdge` | Push new causal edge; deduplicate; record in undo stack |
-| `addConstraintEdge` | Push new constraint edge; deduplicate by kind+pair; record in undo stack |
-| `deleteNode` | Remove node and all connected edges; record in undo stack |
-| `moveNode` | Update node position; record in undo stack |
-| `nudgeNode` | Offset node by dx/dy; record in undo stack |
-| `undo` / `redo` | Walk linear history stack |
-| `tickSim(dt)` | Advance sim via `step()`; does not record in undo stack |
-| `inject(nodeId, strength)` | Nudge node value; does not record in undo stack |
-| `focusNextNode` | Cycle keyboard focus through nodes |
-| `setPendingConstraintEdge` | Open constraint choice dialog |
-| `confirmConstraintEdge(kind)` | Commit pending constraint edge as ceiling or floor |
+| Action                          | Behaviour                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------- |
+| `addNode`                       | Push new node; record in undo stack                                                    |
+| `addEdge`                       | Push new causal edge; deduplicate; record in undo stack                                |
+| `addConstraintEdge`             | Push new constraint edge; deduplicate by kind+pair; record in undo stack               |
+| `deleteNode`                    | Remove node and all connected edges; record in undo stack                              |
+| `moveNode`                      | Update node position; record in undo stack                                             |
+| `nudgeNode`                     | Offset node by dx/dy; record in undo stack                                             |
+| `undo` / `redo`                 | Walk linear history stack                                                              |
+| `tickSim(dt)`                   | Advance sim via `step()`; does not record in undo stack                                |
+| `inject(nodeId, strength)`      | Nudge node value; does not record in undo stack                                        |
+| `focusNextNode`                 | Cycle keyboard focus through nodes                                                     |
+| `setPendingConstraintEdge`      | Open constraint choice dialog                                                          |
+| `confirmConstraintEdge(kind)`   | Commit pending constraint edge as ceiling or floor                                     |
 | `setDragPosition(nodeId, x, y)` | Record cursor position while dragging a node; cleared by `moveNode`; not in undo stack |
 
 ### UI components
 
-| Component | Responsibility |
-|-----------|---------------|
-| `Canvas.tsx` | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode |
-| `Toolbar.tsx` | Pause/resume, reset, speed control, mode switcher |
-| `NodePopover.tsx` | Inline label/min/max/initial editor triggered by double-click |
-| `EdgeWeightPopover.tsx` | Inline weight editor triggered by double-click on edge weight region |
-| `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor |
+| Component                    | Responsibility                                                                                                         |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `Canvas.tsx`                 | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode |
+| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher                                                                      |
+| `NodePopover.tsx`            | Inline label/min/max/initial editor triggered by double-click                                                          |
+| `EdgeWeightPopover.tsx`      | Inline weight editor triggered by double-click on edge weight region                                                   |
+| `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor                                         |
 
 ### Persistence
 
 On every graph mutation: `serialize(graph)` → `localStorage.setItem('swoopy_graph_<modelId>', ...)`.
 
-On load (target state — SE-07-fix + SE-08):
+On load:
+
 1. If `?g=` param present → deserialize as transient model (no ID, not persisted until first mutation forks it)
 2. Else if `?m=<id>` param present → restore `swoopy_graph_<id>` from localStorage
-3. Else if legacy `swoopy_graph` key exists → migrate to a new UUID, redirect to `?m=<id>`
+3. Else if legacy `swoopy_graph` key exists → migrate to a new UUID, update URL to `?m=<id>`
 4. Else → load seed graph (first visit)
 
-**Current state (bug):** startup restore is not wired; app always loads the seed graph regardless of localStorage content. Fix tracked as SE-07-fix; model identity as SE-08 (DR--20260329--app--model-identity-persistence).
+Implemented in SE-07-fix + SE-08 (DR--20260329--app--model-identity-persistence, accepted).
 
 Share button: `serialize` → base64 → write to `?g=` param → copy URL to clipboard. The `?m=` param is not included in shared URLs — recipients get a clean fork opportunity.
 
@@ -140,11 +142,11 @@ Alt key state for the constraint drag gesture is tracked two ways. A document-le
 
 ## Testing
 
-| Package | Test files | What they cover |
-|---------|------------|-----------------|
-| `engine` | `*.test.ts` | Pure function unit tests; `population.integration.test.ts` for full propagation scenario |
-| `renderer` | `indicators.test.ts` | Pure indicator functions; no canvas dependency |
-| `app` | `store.test.tsx` | Store actions, undo/redo, persistence; `Canvas.test.tsx` for pointer/keyboard; `persistence.integration.test.ts` for URL round-trip |
+| Package    | Test files           | What they cover                                                                                                                     |
+| ---------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `engine`   | `*.test.ts`          | Pure function unit tests; `population.integration.test.ts` for full propagation scenario                                            |
+| `renderer` | `indicators.test.ts` | Pure indicator functions; no canvas dependency                                                                                      |
+| `app`      | `store.test.tsx`     | Store actions, undo/redo, persistence; `Canvas.test.tsx` for pointer/keyboard; `persistence.integration.test.ts` for URL round-trip |
 
 The jsdom environment is used for app tests. `@testing-library/react` cleanup is registered explicitly in `test-setup.ts` (`afterEach(cleanup)`) because `globals: false` in the Vitest config means the library's own auto-registration path is not triggered.
 

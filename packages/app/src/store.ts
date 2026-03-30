@@ -27,15 +27,20 @@ import {
 const DELAY_CYCLE: DelayLevel[] = ["none", "short", "medium", "long"];
 import { seedGraph } from "./seed.ts";
 
-const LS_KEY = "swoopy_graph";
+const LS_KEY_PREFIX = "swoopy_graph_";
 
-function persist(graph: Graph) {
-  localStorage.setItem(LS_KEY, JSON.stringify(serialize(graph)));
+function persist(graph: Graph, id: string) {
+  localStorage.setItem(
+    `${LS_KEY_PREFIX}${id}`,
+    JSON.stringify(serialize(graph)),
+  );
 }
 
 interface StoreState {
   // graphSlice — React components subscribe to this
   graph: Graph;
+  modelId: string;
+  transient: boolean;
   past: Graph[];
   future: Graph[];
   simRunning: boolean;
@@ -104,8 +109,25 @@ interface StoreState {
   loadFromUrl: (search: string) => void;
 }
 
+type Get = () => StoreState;
+type Set = (partial: Partial<StoreState>) => void;
+
+function forkIfTransient(get: Get, set: Set): string {
+  const { transient, modelId } = get();
+  if (!transient) return modelId;
+  const newId = crypto.randomUUID();
+  set({ transient: false, modelId: newId });
+  const url = new URL(window.location.href);
+  url.searchParams.delete("g");
+  url.searchParams.set("m", newId);
+  history.replaceState(null, "", url.toString());
+  return newId;
+}
+
 export const useStore = create<StoreState>((set, get) => ({
   graph: seedGraph,
+  modelId: crypto.randomUUID(),
+  transient: false,
   past: [],
   future: [],
   simRunning: true,
@@ -151,6 +173,7 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   addNode: (x: number, y: number) => {
     const { graph, past } = get();
+    const id = forkIfTransient(get, set);
     const node = {
       id: makeNodeId(crypto.randomUUID()),
       label: "New Node",
@@ -163,7 +186,7 @@ export const useStore = create<StoreState>((set, get) => ({
     };
     const next = { ...graph, nodes: [...graph.nodes, node] };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, id);
   },
   addEdge: (from: NodeId, to: NodeId) => {
     const { graph, past } = get();
@@ -171,6 +194,7 @@ export const useStore = create<StoreState>((set, get) => ({
       (e) => e.kind === "causal" && e.from === from && e.to === to,
     );
     if (duplicate) return;
+    const id = forkIfTransient(get, set);
     const edge = {
       kind: "causal" as const,
       id: makeEdgeId(crypto.randomUUID()),
@@ -183,7 +207,7 @@ export const useStore = create<StoreState>((set, get) => ({
     };
     const next = { ...graph, edges: [...graph.edges, edge] };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, id);
   },
   addConstraintEdge: (
     from: NodeId,
@@ -199,6 +223,7 @@ export const useStore = create<StoreState>((set, get) => ({
         e.constraintKind === constraintKind,
     );
     if (duplicate) return;
+    const id = forkIfTransient(get, set);
     const edge = {
       kind: "constraint" as const,
       id: makeEdgeId(crypto.randomUUID()),
@@ -208,10 +233,11 @@ export const useStore = create<StoreState>((set, get) => ({
     };
     const next = { ...graph, edges: [...graph.edges, edge] };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, id);
   },
   togglePolarity: (edgeId) => {
     const { graph, past } = get();
+    const id = forkIfTransient(get, set);
     const next = {
       ...graph,
       edges: graph.edges.map((e) =>
@@ -221,10 +247,11 @@ export const useStore = create<StoreState>((set, get) => ({
       ),
     };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, id);
   },
   cycleDelay: (edgeId) => {
     const { graph, past } = get();
+    const id = forkIfTransient(get, set);
     const next = {
       ...graph,
       edges: graph.edges.map((e) => {
@@ -234,10 +261,11 @@ export const useStore = create<StoreState>((set, get) => ({
       }),
     };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, id);
   },
   setEdgeWeight: (edgeId, weight) => {
     const { graph, past } = get();
+    const id = forkIfTransient(get, set);
     const clamped = Math.min(5, Math.max(0, weight));
     const next = {
       ...graph,
@@ -246,10 +274,11 @@ export const useStore = create<StoreState>((set, get) => ({
       ),
     };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, id);
   },
   updateNode: (id: NodeId, patch) => {
     const { graph, past } = get();
+    const modelId = forkIfTransient(get, set);
     const next = {
       ...graph,
       nodes: graph.nodes.map((n) => {
@@ -264,19 +293,26 @@ export const useStore = create<StoreState>((set, get) => ({
       }),
     };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, modelId);
   },
   moveNode: (id: NodeId, x: number, y: number) => {
     const { graph, past } = get();
+    const modelId = forkIfTransient(get, set);
     const next = {
       ...graph,
       nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)),
     };
-    set({ past: [...past, graph], future: [], graph: next, dragPosition: null });
-    persist(next);
+    set({
+      past: [...past, graph],
+      future: [],
+      graph: next,
+      dragPosition: null,
+    });
+    persist(next, modelId);
   },
   nudgeNode: (id: NodeId, dx: number, dy: number) => {
     const { graph, past } = get();
+    const modelId = forkIfTransient(get, set);
     const next = {
       ...graph,
       nodes: graph.nodes.map((n) =>
@@ -284,40 +320,44 @@ export const useStore = create<StoreState>((set, get) => ({
       ),
     };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, modelId);
   },
   deleteNode: (id: NodeId) => {
     const { graph, past } = get();
+    const modelId = forkIfTransient(get, set);
     const next = {
       nodes: graph.nodes.filter((n) => n.id !== id),
       edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
     };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, modelId);
   },
   deleteEdge: (id: EdgeId) => {
     const { graph, past } = get();
+    const modelId = forkIfTransient(get, set);
     const next = { ...graph, edges: graph.edges.filter((e) => e.id !== id) };
     set({ past: [...past, graph], future: [], graph: next });
-    persist(next);
+    persist(next, modelId);
   },
   undo: () => {
     const { graph, past, future } = get();
     if (past.length === 0) return;
     const previous = past[past.length - 1];
+    const id = forkIfTransient(get, set);
     set({
       graph: previous,
       past: past.slice(0, -1),
       future: [graph, ...future],
     });
-    persist(previous);
+    persist(previous, id);
   },
   redo: () => {
     const { graph, past, future } = get();
     if (future.length === 0) return;
     const next = future[0];
+    const id = forkIfTransient(get, set);
     set({ graph: next, past: [...past, graph], future: future.slice(1) });
-    persist(next);
+    persist(next, id);
   },
   pauseSim: () => set({ simRunning: false }),
   resumeSim: () => set({ simRunning: true }),
@@ -338,13 +378,29 @@ export const useStore = create<StoreState>((set, get) => ({
     if (!encoded) return;
     try {
       const graph = deserialize(JSON.parse(atob(encoded)));
-      set({ graph, past: [], future: [] });
+      set({ graph, past: [], future: [], transient: true });
     } catch {
       // malformed param — leave current graph intact
     }
   },
   loadPersistedGraph: () => {
-    const raw = localStorage.getItem(LS_KEY);
+    // Legacy migration: single-slot key → scoped key
+    const legacy = localStorage.getItem("swoopy_graph");
+    if (legacy) {
+      const newId = crypto.randomUUID();
+      localStorage.setItem(`${LS_KEY_PREFIX}${newId}`, legacy);
+      localStorage.removeItem("swoopy_graph");
+      set({ modelId: newId });
+      try {
+        const graph = deserialize(JSON.parse(legacy));
+        set({ graph, past: [], future: [] });
+      } catch {
+        // corrupted legacy data — leave current graph intact
+      }
+      return;
+    }
+    const { modelId } = get();
+    const raw = localStorage.getItem(`${LS_KEY_PREFIX}${modelId}`);
     if (!raw) return;
     try {
       const graph = deserialize(JSON.parse(raw));

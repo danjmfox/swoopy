@@ -45,4 +45,15 @@ describe("SE-07: startup restore", () => {
     expect(loadPersistedGraph).toHaveBeenCalledOnce();
     expect(loadFromUrl).not.toHaveBeenCalled();
   });
+
+  it("sets modelId from ?m= param and calls loadPersistedGraph (not loadFromUrl)", async () => {
+    const testId = "11111111-1111-1111-1111-111111111111";
+    vi.stubGlobal("location", { search: `?m=${testId}` });
+    await act(async () => {
+      render(<App />);
+    });
+    expect(useStore.getState().modelId).toBe(testId);
+    expect(loadPersistedGraph).toHaveBeenCalledOnce();
+    expect(loadFromUrl).not.toHaveBeenCalled();
+  });
 });

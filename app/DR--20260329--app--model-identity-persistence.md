@@ -1,18 +1,19 @@
 ---
 id: DR--20260329--app--model-identity-persistence
-dateCreated: '2026-03-29'
+dateCreated: "2026-03-29"
 version: 1.0.0
-status: draft
+status: accepted
 changeType: creation
 domain: app
 slug: model-identity-persistence
 changelog:
-  - date: '2026-03-29'
+  - date: "2026-03-29"
     note: Initial creation
-  - date: '2026-03-29'
+  - date: "2026-03-29"
     note: Marked as draft
-lastEdited: '2026-03-29'
+lastEdited: "2026-03-29"
 ---
+
 # Model Identity and Persistence
 
 ## Context
@@ -27,11 +28,11 @@ work on the next reload. Once the startup hook is live, this becomes a real data
 
 ## Options Considered
 
-| Option | Description | Outcome | Rationale |
-|--------|-------------|---------|-----------|
-| A | Single slot; URL loads always transient (never call `persist` from `loadFromUrl`) | Rejected | Edits to shared models are silently lost on reload; confusing for users who work on a shared diagram for any length of time |
-| B | ID-scoped localStorage; fork-on-first-edit | Accepted | Eliminates clobber risk; invisible to users at v1; defers multi-model UI without painting us into a corner |
-| C | Prompt user on URL load ("open in new tab?") | Rejected | Adds friction to common share-link workflow; solves the immediate problem but not the underlying single-slot limitation |
+| Option | Description                                                                       | Outcome  | Rationale                                                                                                                   |
+| ------ | --------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------- |
+| A      | Single slot; URL loads always transient (never call `persist` from `loadFromUrl`) | Rejected | Edits to shared models are silently lost on reload; confusing for users who work on a shared diagram for any length of time |
+| B      | ID-scoped localStorage; fork-on-first-edit                                        | Accepted | Eliminates clobber risk; invisible to users at v1; defers multi-model UI without painting us into a corner                  |
+| C      | Prompt user on URL load ("open in new tab?")                                      | Rejected | Adds friction to common share-link workflow; solves the immediate problem but not the underlying single-slot limitation     |
 
 ## Decision
 
