@@ -2,7 +2,7 @@
 id: DR--20260330--app--new-model-action
 dateCreated: '2026-03-30'
 version: 1.0.0
-status: proposed
+status: accepted
 changeType: creation
 domain: app
 slug: new-model-action
@@ -13,7 +13,10 @@ changelog:
     note: Marked as draft
   - date: '2026-03-30'
     note: Marked as proposed
+  - date: '2026-03-30'
+    note: Marked as accepted
 lastEdited: '2026-03-30'
+dateAccepted: '2026-03-30'
 ---
 # DR--20260330--app--new-model-action
 
