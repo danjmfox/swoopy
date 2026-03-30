@@ -1,55 +1,59 @@
 /**
  * Characterisation script — PRD §7.7
- * Run with: pnpm tsx packages/engine/src/characterise.ts
+ * Run with: node --experimental-strip-types packages/engine/src/characterise.ts
  *
- * Builds a 6-node fully-connected reinforcing graph, injects maximum strength,
- * runs 600 ticks, records signal count per tick. MAX_SIGNALS = 99th percentile
- * of the plateau (ticks 120–600), not the initial spike.
+ * Builds fully-connected reinforcing graphs at realistic sizes and weights, injects
+ * maximum strength, runs 600 ticks. MAX_SIGNALS = peak count across all scenarios
+ * (staggered signals occupy both sim.signals and sim.pending — both are counted).
+ *
+ * Scenarios:
+ *   - 6-node  weight=1  (baseline — mirrors original characterisation)
+ *   - 12-node weight=1  (larger graph, single signals)
+ *   - 12-node weight=3  (larger graph, staggered density — realistic worst case)
  */
 import { makeNodeId, makeEdgeId, makeInitialSim, inject, step, INJECT_STRENGTH } from './index.ts'
 import type { Graph, CausalEdge, Node } from './types.ts'
 
-const N = 6
-const nodeIds = Array.from({ length: N }, (_, i) => makeNodeId(`n${i}`))
-const nodes: Node[] = nodeIds.map((id, i) => ({
-  id, label: `n${i}`, x: 0, y: 0, radius: 40, min: 0, max: 10, initial: 5,
-}))
-
-const edges: CausalEdge[] = []
-for (let i = 0; i < N; i++) {
-  for (let j = 0; j < N; j++) {
-    if (i === j) continue
-    edges.push({
-      kind: 'causal',
-      id: makeEdgeId(`e${i}-${j}`),
-      from: nodeIds[i],
-      to: nodeIds[j],
-      polarity: 1,
-      weight: 1.0,
-      delay: 'none',
-      transferFn: 'linear',
-    })
+function characterise(nodeCount: number, weight: number): { travelPeak: number; totalPeak: number } {
+  const nodeIds = Array.from({ length: nodeCount }, (_, i) => makeNodeId(`n${i}`))
+  const nodes: Node[] = nodeIds.map((id, i) => ({
+    id, label: `n${i}`, x: 0, y: 0, radius: 40, min: 0, max: 10, initial: 5,
+  }))
+  const edges: CausalEdge[] = []
+  for (let i = 0; i < nodeCount; i++) {
+    for (let j = 0; j < nodeCount; j++) {
+      if (i === j) continue
+      edges.push({
+        kind: 'causal', id: makeEdgeId(`e${i}-${j}`),
+        from: nodeIds[i], to: nodeIds[j],
+        polarity: 1, weight, delay: 'none', transferFn: 'linear',
+      })
+    }
   }
+  const graph: Graph = { nodes, edges }
+  let sim = makeInitialSim(graph)
+  for (const id of nodeIds) sim = inject(sim, id, INJECT_STRENGTH * 5)
+
+  let travelPeak = 0
+  let totalPeak = 0
+  for (let i = 0; i < 600; i++) {
+    sim = step(graph, sim, 1 / 60)
+    // travelling is capped by MAX_SIGNALS; pending holds staggered signals awaiting dispatch
+    travelPeak = Math.max(travelPeak, sim.signals.length)
+    totalPeak = Math.max(totalPeak, sim.signals.length + sim.pending.length)
+  }
+  return { travelPeak, totalPeak }
 }
 
-const graph: Graph = { nodes, edges }
-let sim = makeInitialSim(graph)
-// Inject max into all nodes
-for (const id of nodeIds) sim = inject(sim, id, INJECT_STRENGTH * 5)
+const scenarios = [
+  { nodes: 6,  weight: 1, label: '6-node  w=1 (baseline)' },
+  { nodes: 12, weight: 1, label: '12-node w=1' },
+  { nodes: 12, weight: 3, label: '12-node w=3 (worst case)' },
+]
 
-const counts: number[] = []
-const TICKS = 600
-for (let i = 0; i < TICKS; i++) {
-  sim = step(graph, sim, 1 / 60)
-  counts.push(sim.signals.length)
+console.log('Scenario                      travel-peak  total-peak')
+for (const s of scenarios) {
+  const { travelPeak, totalPeak } = characterise(s.nodes, s.weight)
+  console.log(`${s.label.padEnd(30)}  ${String(travelPeak).padStart(11)}  ${String(totalPeak).padStart(10)}`)
 }
-
-// Plateau = ticks 120–600 (skip initial spike)
-const plateau = counts.slice(120)
-plateau.sort((a, b) => a - b)
-const p99 = plateau[Math.floor(plateau.length * 0.99)]
-const max = Math.max(...counts)
-
-console.log(`Peak signal count: ${max}`)
-console.log(`99th percentile (plateau ticks 120-600): ${p99}`)
-console.log(`Suggested MAX_SIGNALS: ${p99}`)
+console.log('\nNote: travel-peak drives MAX_SIGNALS; total-peak includes stagger-pending buffer.')
