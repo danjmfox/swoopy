@@ -16,8 +16,19 @@ export function App() {
       loadFromUrl(window.location.search);
     } else {
       const m = params.get("m");
-      if (m) useStore.setState({ modelId: m });
+      if (m) {
+        useStore.setState({ modelId: m });
+      } else {
+        const saved = localStorage.getItem("swoopy_current_model");
+        if (saved) useStore.setState({ modelId: saved });
+      }
       loadPersistedGraph();
+      if (!m) {
+        const { modelId } = useStore.getState();
+        const search = new URLSearchParams(window.location.search);
+        search.set("m", modelId);
+        history.replaceState(null, "", `?${search.toString()}`);
+      }
     }
   }, []);
 

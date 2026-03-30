@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from "vitest";
 import { render, act } from "@testing-library/react";
 import { useStore } from "./store.ts";
 
@@ -26,6 +26,7 @@ describe("SE-07: startup restore", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    localStorage.clear();
   });
 
   it("calls loadFromUrl with search string when ?g= param is present", async () => {
@@ -55,5 +56,31 @@ describe("SE-07: startup restore", () => {
     expect(useStore.getState().modelId).toBe(testId);
     expect(loadPersistedGraph).toHaveBeenCalledOnce();
     expect(loadFromUrl).not.toHaveBeenCalled();
+  });
+
+  it("sets ?m=<modelId> in URL via replaceState when no ?m= param is present", async () => {
+    const replaceState = vi.fn();
+    vi.stubGlobal("history", { replaceState });
+    vi.stubGlobal("location", { search: "" });
+    await act(async () => {
+      render(<App />);
+    });
+    const { modelId } = useStore.getState();
+    expect(replaceState).toHaveBeenCalledWith(
+      null,
+      "",
+      expect.stringContaining(`m=${modelId}`),
+    );
+  });
+
+  it("restores modelId from swoopy_current_model when no ?m= param is present", async () => {
+    const savedId = "22222222-2222-2222-2222-222222222222";
+    localStorage.setItem("swoopy_current_model", savedId);
+    vi.stubGlobal("location", { search: "" });
+    await act(async () => {
+      render(<App />);
+    });
+    expect(useStore.getState().modelId).toBe(savedId);
+    expect(loadPersistedGraph).toHaveBeenCalledOnce();
   });
 });
