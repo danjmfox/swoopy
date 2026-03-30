@@ -19,18 +19,18 @@ The simulation core. Every function is pure: same inputs, same outputs, no side 
 
 Key exports:
 
-| Export                                          | Purpose                                                                                      |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------- |
-| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types                                                                                 |
-| `NodeId`, `EdgeId`                              | Branded primitive types — prevent accidental string substitution                             |
-| `SimState`                                      | Snapshot of simulation state: node values, prevNodeValues, travelling signals, pending queue |
-| `makeInitialSim(graph)`                         | Create a clean `SimState` from a graph                                                       |
-| `step(graph, sim, dt)`                          | Advance simulation by `dt` seconds; returns new `SimState`                                   |
-| `inject(sim, nodeId, strength)`                 | Return new `SimState` with node value nudged; clamping deferred to next `step()`             |
-| `serialize(graph)`                              | `Graph` → versioned JSON-compatible value                                                    |
-| `deserialize(raw)`                              | Versioned value → `Graph`; throws on unknown version                                         |
-| `hitTest(graph, x, y)`                          | Return `HitTarget                                                                            | null` for canvas coordinates |
-| `bezierPoint`, `controlPoint`                   | Geometry helpers for curve rendering and hit testing                                         |
+| Export                                          | Purpose                                                                                      | Details                |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------- |
+| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types                                                                                 |                        |
+| `NodeId`, `EdgeId`                              | Branded primitive types — prevent accidental string substitution                             |                        |
+| `SimState`                                      | Snapshot of simulation state: node values, prevNodeValues, travelling signals, pending queue |                        |
+| `makeInitialSim(graph)`                         | Create a clean `SimState` from a graph                                                       |                        |
+| `step(graph, sim, dt)`                          | Advance simulation by `dt` seconds; returns new `SimState`                                   |                        |
+| `inject(sim, nodeId, strength)`                 | Return new `SimState` with node value nudged; clamping deferred to next `step()`             |                        |
+| `serialize(graph)`                              | `Graph` → versioned JSON-compatible value                                                    |                        |
+| `deserialize(raw)`                              | Versioned value → `Graph`; throws on unknown version                                         |                        |
+| `hitTest(graph, x, y)`                          | Return `HitTarget` or `null`                                                                 | For canvas coordinates |
+| `bezierPoint`, `controlPoint`                   | Geometry helpers for curve rendering and hit testing                                         |                        |
 
 ### Simulation step
 
@@ -39,14 +39,22 @@ Key exports:
 1. Resolve constraint edges → compute `effective_min` / `effective_max` per node; pre-clamp values
 2. Advance all signal progress by `SIGNAL_SPEED × dt`
 3. Collect arrived signals (progress ≥ 1)
-4. Apply arrivals to destination node values (`strength × weight × polarity`)
+4. Apply arrivals to destination node values (`strength × polarity`)
 5. Re-clamp to effective bounds (arrivals may have pushed values out of range)
 6. Noise suppression: values within 0.001 of `initial` are snapped back to `initial`
-7. Diff start vs end values; emit signals on outgoing edges where |delta| ≥ EMIT_THRESHOLD
+7. Diff start vs end values; for each node where |delta| ≥ EMIT_THRESHOLD, emit signals
+   per outgoing causal edge using the **staggered-density model** (DR--20260330):
+   - `weight=0`: no signal
+   - `weight < 1`: 1 signal of `strength = delta × weight` (attenuation)
+   - `weight ≥ 1`: `count = round(weight)` signals of `strength = delta / count` each;
+     signal 0 enters travelling immediately, signals 1…N-1 enter pending staggered by
+     `floor(EDGE_TRANSIT_TICKS / count)` ticks — they appear as equally-spaced particles
+   - Delayed edges: 1 signal of `strength = delta` into pending at the named delay level
 8. Decrement pending queue counters; release zero-count entries into the travelling queue
-9. Cap travelling signal count at `MAX_SIGNALS`, preferring highest-progress signals
+9. Cap travelling signal count at `MAX_SIGNALS` (132), preferring highest-progress signals
 
-The pending queue holds signals from delayed edges before they are released. Constraint edges are resolved fresh each step — they are not part of either queue.
+The pending queue holds both delayed-edge signals and stagger-offset signals from
+weight ≥ 1 edges. Constraint edges are resolved fresh each step — not part of either queue.
 
 ---
 
@@ -104,15 +112,13 @@ The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and write
 | `setPendingConstraintEdge`      | Open constraint choice dialog                                                          |
 | `confirmConstraintEdge(kind)`   | Commit pending constraint edge as ceiling or floor                                     |
 | `setDragPosition(nodeId, x, y)` | Record cursor position while dragging a node; cleared by `moveNode`; not in undo stack |
-| `newModel()`                    | Generate fresh UUID, set blank graph, persist, update `swoopy_current_model` + URL via `replaceState`; previous model preserved in localStorage (SE-09, DR--20260330--app--new-model-action) |
-| `shareGraph()`                  | Serialize graph → base64 → write `?g=` URL to clipboard (SE-06) |
 
 ### UI components
 
 | Component                    | Responsibility                                                                                                         |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `Canvas.tsx`                 | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode |
-| `Toolbar.tsx`                | Bottom-centre: mode switcher, sim controls (conditional). Top-right bar: **+ New** and **Share** buttons with inline "Copied!" feedback. |
+| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher                                                                      |
 | `NodePopover.tsx`            | Inline label/min/max/initial editor triggered by double-click                                                          |
 | `EdgeWeightPopover.tsx`      | Inline weight editor triggered by double-click on edge weight region                                                   |
 | `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor                                         |
@@ -130,9 +136,7 @@ On load:
 
 Implemented in SE-07-fix + SE-08 (DR--20260329--app--model-identity-persistence, accepted).
 
-Share button (`shareGraph`): `serialize` → base64 → write to `?g=` param → copy URL to clipboard. The `?m=` param is not included in shared URLs — recipients get a clean fork opportunity.
-
-New Model button (`newModel`): generates fresh UUID, sets blank graph, persists, writes `swoopy_current_model`, updates URL to `?m=<newId>` via `replaceState`. Previous model preserved in localStorage. No confirmation dialog — auto-save guarantees no data loss. Back-button recovery deferred (SE-09, DR--20260330--app--new-model-action).
+Share button: `serialize` → base64 → write to `?g=` param → copy URL to clipboard. The `?m=` param is not included in shared URLs — recipients get a clean fork opportunity.
 
 ---
 
