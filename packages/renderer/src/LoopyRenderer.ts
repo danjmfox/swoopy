@@ -343,7 +343,7 @@ export class LoopyRenderer {
     for (const node of graph.nodes) {
       const isDragging = dragPosition?.nodeId === node.id;
       const value = sim.nodeValues.get(node.id) ?? node.initial;
-      const prevValue = sim.prevNodeValues.get(node.id) ?? node.initial;
+      const prevValue = sim.displayPrevNodeValues.get(node.id) ?? node.initial;
       const { fill, trend } = stockIndicator(
         value,
         node.min,

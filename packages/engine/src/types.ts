@@ -58,6 +58,10 @@ export interface SimState {
   // between steps. inject() updates nodeValues only; prevNodeValues stays fixed
   // until the next step() settles it.
   readonly prevNodeValues: ReadonlyMap<NodeId, number>;
+  // Snapshot of nodeValues at the beginning of the current step (post-inject),
+  // used by the renderer for trend display (▲/▼). Distinct from prevNodeValues
+  // which serves emission delta detection.
+  readonly displayPrevNodeValues: ReadonlyMap<NodeId, number>;
   readonly tick: number;
 }
 
