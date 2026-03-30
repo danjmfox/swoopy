@@ -404,6 +404,7 @@ export const useStore = create<StoreState>((set, get) => ({
       localStorage.setItem(`${LS_KEY_PREFIX}${newId}`, legacy);
       localStorage.removeItem("swoopy_graph");
       set({ modelId: newId });
+      localStorage.setItem("swoopy_current_model", newId);
       try {
         const graph = deserialize(JSON.parse(legacy));
         set({ graph, past: [], future: [] });
@@ -413,6 +414,7 @@ export const useStore = create<StoreState>((set, get) => ({
       return;
     }
     const { modelId } = get();
+    localStorage.setItem("swoopy_current_model", modelId);
     const raw = localStorage.getItem(`${LS_KEY_PREFIX}${modelId}`);
     if (!raw) return;
     try {

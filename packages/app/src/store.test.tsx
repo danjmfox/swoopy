@@ -448,6 +448,12 @@ describe("SE-07: localStorage auto-save", () => {
     expect(restored.nodes[0].x).toBe(42);
     expect(restored.nodes[0].y).toBe(99);
   });
+
+  it("loadPersistedGraph writes swoopy_current_model pointer to localStorage", () => {
+    const { modelId } = useStore.getState();
+    useStore.getState().loadPersistedGraph();
+    expect(localStorage.getItem("swoopy_current_model")).toBe(modelId);
+  });
 });
 
 describe("SE-02 / SE-06: shareGraph", () => {
