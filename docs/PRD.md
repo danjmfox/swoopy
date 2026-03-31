@@ -192,6 +192,8 @@ Tertiary users are developers building on or extending the tool.
 | SI-15 | Signals pending in a delay queue are visually indicated on the source node as a 'charged' or 'primed' state — the timebomb indicator — distinct from active node value; exact visual form is TBD (see §10)                                                      |
 | SI-16 | Delay tick counts are derived from simulation time units mapped to days/weeks/months scale; the mapping is a named constant, not a magic number                                                                                                                 |
 | SI-17 | A global simulation speed multiplier is always visible in the toolbar, allowing the modeller to compress or expand perceived time without changing delay constants                                                                                              |
+| SI-18 | Each node displays a persistent trend indicator (▲/▼/blank) in a fixed position below the node label; the label position does not shift between stable and active trend states — emerged from use 2026-03-31                                                 |
+| SI-19 | Delay queue state is visualised as an arc on the left side of the node, mirroring the stock arc on the right; the arc encodes pending signal mass and replaces the timebomb dot — emerged from use 2026-03-31                                                |
 
 ### 4.3 Serialisation
 

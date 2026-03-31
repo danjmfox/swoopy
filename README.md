@@ -67,13 +67,13 @@ The simulation is deliberately imprecise. Node values are qualitative proxies, n
 ## Known limitations (v1)
 
 - Can't "Name" a model. Name should be reflected in the page title and on the Canvas
-- Auto mode switch, e.g. shift-mouse-down on node => Edge mode until released, creating edge if released on another node, to easily link nodes
+- Rather than the timebomb as a dot inside the node, lets visual the wait state as a sized arc on the left of the node, mirroring the function of the stock arc on the right
 - No mobile touch optimisation
 - No export to image or data formats
 - No annotation layer (goals, assumptions, quick-fix markers on Edges) — v2 candidate
 - No flow / rate-of-change constraints — v2 candidate
 - No multiplayer or shared sessions
-- Currently a fixed node colour range indicating "temperature (value/range)". Instead, offer multiple colours in node settings, so a user can show aspects visually e.g. green for "good things", red for "bad things"
+- Currently a fixed node colour range indicating "temperature (value/range)". Instead, offer multiple colours in node settings, so a user can show aspects visually e.g. green for "good things", red for "bad things". Keep the dynamic temperature aspect (brighter/darker or similar)
 - notion of levers: some things you can't directly influence, but some you can, so mark levers explicitly, and prevent signal injection in non-levers.
 - All the annotations etc.
 - A welcome model with annotations describing how to use it

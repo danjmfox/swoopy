@@ -17,6 +17,45 @@ export function saturationAlpha(signalCount: number, maxSignals: number): number
   return Math.max(0.3, 1 - (signalCount / maxSignals) * 0.7)
 }
 
+export class TrendTracker {
+  private readonly holdMs: number
+  private state = new Map<NodeId, { direction: 'up' | 'down'; expiresAt: number }>()
+
+  constructor(holdMs = 2000) {
+    this.holdMs = holdMs
+  }
+
+  update(nodeId: NodeId, rawTrend: 'up' | 'down' | 'stable', nowMs: number): 'up' | 'down' | 'stable' {
+    if (rawTrend !== 'stable') {
+      this.state.set(nodeId, { direction: rawTrend, expiresAt: nowMs + this.holdMs })
+      return rawTrend
+    }
+    const held = this.state.get(nodeId)
+    if (held && nowMs < held.expiresAt) {
+      return held.direction
+    }
+    return 'stable'
+  }
+}
+
+export interface DelayQueueIndicator {
+  readonly fraction: number
+  readonly overflow: boolean
+}
+
+export function delayQueueIndicator(
+  pending: ReadonlyArray<PendingSignal>,
+  nodeId: NodeId,
+  edges: ReadonlyArray<Edge>,
+  nodeMax: number,
+): DelayQueueIndicator {
+  const mass = timebombStrength(pending, nodeId, edges)
+  return {
+    fraction: nodeMax > 0 ? Math.min(1, mass / nodeMax) : 0,
+    overflow: mass > nodeMax,
+  }
+}
+
 export function timebombStrength(
   pending: ReadonlyArray<PendingSignal>,
   nodeId: NodeId,
