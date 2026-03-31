@@ -8,7 +8,7 @@ import type {
 import { MAX_SIGNALS } from "@swoopy/engine";
 import {
   stockIndicator,
-  timebombStrength,
+  delayQueueIndicator,
   saturationAlpha,
 } from "./indicators.ts";
 import {
@@ -350,8 +350,6 @@ export class LoopyRenderer {
         node.max,
         prevValue,
       );
-      const timebomb = timebombStrength(sim.pending, node.id, graph.edges);
-
       if (isDragging) ctx.globalAlpha = 0.3;
 
       // Base fill
@@ -376,18 +374,23 @@ export class LoopyRenderer {
         ctx.stroke();
       }
 
-      // SI-15: timebomb badge — pulsing orange dot when pending > threshold
-      if (timebomb > 0.1) {
+      // SI-19: delay queue arc — mirrors stock arc on the left side
+      const { fraction: queueFraction, overflow: queueOverflow } = delayQueueIndicator(
+        sim.pending, node.id, graph.edges, node.max,
+      );
+      if (queueFraction > 0) {
         ctx.beginPath();
         ctx.arc(
-          node.x + node.radius * 0.6,
-          node.y - node.radius * 0.6,
-          6,
-          0,
-          Math.PI * 2,
+          node.x,
+          node.y,
+          node.radius - 4,
+          -Math.PI / 2,
+          -Math.PI / 2 - queueFraction * 2 * Math.PI,
+          true,
         );
-        ctx.fillStyle = `rgba(251,146,60,${Math.min(1, timebomb)})`;
-        ctx.fill();
+        ctx.strokeStyle = queueOverflow ? "#f87171" : "#fb923c";
+        ctx.lineWidth = 3;
+        ctx.stroke();
       }
 
       // Outer ring
@@ -412,7 +415,7 @@ export class LoopyRenderer {
       ctx.font = "13px system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(node.label, node.x, node.y - (arrow ? 6 : 0));
+      ctx.fillText(node.label, node.x, node.y - 6);
       if (arrow) {
         ctx.font = "10px system-ui, sans-serif";
         ctx.fillStyle = trend === "up" ? "#4ade80" : "#f87171";

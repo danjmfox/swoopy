@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { stockIndicator, timebombStrength, saturationAlpha } from './indicators.ts'
+import { stockIndicator, timebombStrength, saturationAlpha, delayQueueIndicator } from './indicators.ts'
 import { makeNodeId, makeEdgeId } from '@swoopy/engine'
 
 describe('SI-12 stockIndicator', () => {
@@ -52,6 +52,40 @@ describe('SI-15 timebombStrength', () => {
     ]
     // nodeB is the destination, not the source
     expect(timebombStrength(pending, nodeB, edges)).toBe(0)
+  })
+})
+
+describe('SI-19 delayQueueIndicator', () => {
+  const nodeA = makeNodeId('A')
+  const nodeB = makeNodeId('B')
+  const edgeAB = makeEdgeId('AB')
+  const edges = [
+    { kind: 'causal' as const, id: edgeAB, from: nodeA, to: nodeB, polarity: 1 as const, weight: 1, delay: 'short' as const, transferFn: 'linear' as const },
+  ]
+
+  it('returns fraction 0 and no overflow when no pending signals', () => {
+    const result = delayQueueIndicator([], nodeA, edges, 10)
+    expect(result.fraction).toBe(0)
+    expect(result.overflow).toBe(false)
+  })
+
+  it('returns fraction 0.5 when mass is half of nodeMax', () => {
+    const pending = [
+      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 5 }, ticksRemaining: 3 },
+    ]
+    const result = delayQueueIndicator(pending, nodeA, edges, 10)
+    expect(result.fraction).toBeCloseTo(0.5)
+    expect(result.overflow).toBe(false)
+  })
+
+  it('returns fraction 1 and overflow true when mass exceeds nodeMax', () => {
+    const pending = [
+      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 8 }, ticksRemaining: 3 },
+      { signal: { id: '2', edgeId: edgeAB, progress: 0, strength: 5 }, ticksRemaining: 2 },
+    ]
+    const result = delayQueueIndicator(pending, nodeA, edges, 10)
+    expect(result.fraction).toBe(1)
+    expect(result.overflow).toBe(true)
   })
 })
 

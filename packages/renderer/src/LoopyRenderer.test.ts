@@ -676,6 +676,174 @@ describe("LoopyRenderer", () => {
     expect(texts()).toContain("▼");
   });
 
+  it("SI-18 label renders at node.y - 6 when trend is stable", () => {
+    const fillTexts: { text: string; x: number; y: number }[] = [];
+    const ctx = {
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(),
+      arc: vi.fn(), fill: vi.fn(), stroke: vi.fn(), moveTo: vi.fn(),
+      lineTo: vi.fn(), quadraticCurveTo: vi.fn(), closePath: vi.fn(),
+      setLineDash: vi.fn(), scale: vi.fn(),
+      fillText: vi.fn().mockImplementation((text: string, x: number, y: number) => {
+        fillTexts.push({ text, x, y });
+      }),
+      fillStyle: "" as string, strokeStyle: "" as string,
+      lineWidth: 1 as number, globalAlpha: 1 as number,
+      font: "" as string, textAlign: "" as string, textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800, clientHeight: 600, width: 0, height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // stable: value === displayPrevValue
+    const getState = () => ({
+      tickSim: vi.fn(), simRunning: false, simSpeed: 1,
+      graph: { nodes: [nodeA], edges: [] },
+      sim: {
+        signals: [], pending: [],
+        nodeValues: new Map([[nodeA.id, 5]]),
+        prevNodeValues: new Map([[nodeA.id, 5]]),
+        displayPrevNodeValues: new Map([[nodeA.id, 5]]),
+        tick: 0,
+      },
+      focusedNodeId: null, mode: "select",
+    }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    const labelCall = fillTexts.find((t) => t.text === nodeA.label);
+    expect(labelCall).toBeDefined();
+    expect(labelCall!.y).toBe(nodeA.y - 6);
+  });
+
+  it("SI-18 label renders at node.y - 6 when trend is active (no layout shift)", () => {
+    const fillTexts: { text: string; x: number; y: number }[] = [];
+    const ctx = {
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(),
+      arc: vi.fn(), fill: vi.fn(), stroke: vi.fn(), moveTo: vi.fn(),
+      lineTo: vi.fn(), quadraticCurveTo: vi.fn(), closePath: vi.fn(),
+      setLineDash: vi.fn(), scale: vi.fn(),
+      fillText: vi.fn().mockImplementation((text: string, x: number, y: number) => {
+        fillTexts.push({ text, x, y });
+      }),
+      fillStyle: "" as string, strokeStyle: "" as string,
+      lineWidth: 1 as number, globalAlpha: 1 as number,
+      font: "" as string, textAlign: "" as string, textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800, clientHeight: 600, width: 0, height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // rising: value > displayPrevValue
+    const getState = () => ({
+      tickSim: vi.fn(), simRunning: false, simSpeed: 1,
+      graph: { nodes: [nodeA], edges: [] },
+      sim: {
+        signals: [], pending: [],
+        nodeValues: new Map([[nodeA.id, 7]]),
+        prevNodeValues: new Map([[nodeA.id, 5]]),
+        displayPrevNodeValues: new Map([[nodeA.id, 5]]),
+        tick: 1,
+      },
+      focusedNodeId: null, mode: "select",
+    }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    const labelCall = fillTexts.find((t) => t.text === nodeA.label);
+    expect(labelCall).toBeDefined();
+    expect(labelCall!.y).toBe(nodeA.y - 6);
+  });
+
+  it("SI-19 delay arc strokes in amber when pending mass is within nodeMax", () => {
+    const strokes: { style: string }[] = [];
+    const ctx = {
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(),
+      arc: vi.fn(), fill: vi.fn(),
+      stroke: vi.fn().mockImplementation(function (this: typeof ctx) {
+        strokes.push({ style: ctx.strokeStyle as string });
+      }),
+      moveTo: vi.fn(), lineTo: vi.fn(), quadraticCurveTo: vi.fn(), closePath: vi.fn(),
+      fillText: vi.fn(), setLineDash: vi.fn(), scale: vi.fn(),
+      fillStyle: "" as string, strokeStyle: "" as string,
+      lineWidth: 1 as number, globalAlpha: 1 as number,
+      font: "" as string, textAlign: "" as string, textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800, clientHeight: 600, width: 0, height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // mass = 5, nodeA.max = 10 → fraction 0.5, no overflow
+    const getState = () => ({
+      tickSim: vi.fn(), simRunning: false, simSpeed: 1,
+      graph: { nodes: [nodeA], edges: [edgeAB] },
+      sim: {
+        signals: [],
+        pending: [{ signal: { id: "p1", edgeId: edgeAB.id, progress: 0, strength: 5 }, ticksRemaining: 3 }],
+        nodeValues: new Map([[nodeA.id, 5]]),
+        prevNodeValues: new Map([[nodeA.id, 5]]),
+        displayPrevNodeValues: new Map([[nodeA.id, 5]]),
+        tick: 0,
+      },
+    }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    expect(strokes.some((s) => s.style === "#fb923c")).toBe(true);
+  });
+
+  it("SI-19 delay arc strokes in red when pending mass exceeds nodeMax", () => {
+    const strokes: { style: string }[] = [];
+    const ctx = {
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(),
+      arc: vi.fn(), fill: vi.fn(),
+      stroke: vi.fn().mockImplementation(function (this: typeof ctx) {
+        strokes.push({ style: ctx.strokeStyle as string });
+      }),
+      moveTo: vi.fn(), lineTo: vi.fn(), quadraticCurveTo: vi.fn(), closePath: vi.fn(),
+      fillText: vi.fn(), setLineDash: vi.fn(), scale: vi.fn(),
+      fillStyle: "" as string, strokeStyle: "" as string,
+      lineWidth: 1 as number, globalAlpha: 1 as number,
+      font: "" as string, textAlign: "" as string, textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800, clientHeight: 600, width: 0, height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // mass = 12, nodeA.max = 10 → overflow
+    const getState = () => ({
+      tickSim: vi.fn(), simRunning: false, simSpeed: 1,
+      graph: { nodes: [nodeA], edges: [edgeAB] },
+      sim: {
+        signals: [],
+        pending: [{ signal: { id: "p1", edgeId: edgeAB.id, progress: 0, strength: 12 }, ticksRemaining: 3 }],
+        nodeValues: new Map([[nodeA.id, 5]]),
+        prevNodeValues: new Map([[nodeA.id, 5]]),
+        displayPrevNodeValues: new Map([[nodeA.id, 5]]),
+        tick: 0,
+      },
+    }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    expect(strokes.some((s) => s.style === "#f87171")).toBe(true);
+  });
+
   it("stop() halts the RAF loop", () => {
     const tickSim = vi.fn();
     const renderer = new LoopyRenderer(makeCanvas(), makeStore(tickSim));
