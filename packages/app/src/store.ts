@@ -15,6 +15,10 @@ export type AppMode =
   | "add-edge"
   | "simulate"
   | "delete";
+
+// previousMode is non-null while a spring-loaded sub-mode is active.
+// Distinct from `transient` (which means "URL-loaded graph, not yet locally saved").
+
 import {
   makeInitialSim,
   makeNodeId,
@@ -46,7 +50,10 @@ interface StoreState {
   simRunning: boolean;
   simSpeed: number;
   mode: AppMode;
+  previousMode: AppMode | null;
   setMode: (mode: AppMode) => void;
+  enterSpringMode: (mode: AppMode) => void;
+  exitSpringMode: () => void;
 
   // simSlice — RAF reads via getState() each frame; React does NOT subscribe
   sim: SimState;
@@ -140,7 +147,17 @@ export const useStore = create<StoreState>((set, get) => ({
   simRunning: true,
   simSpeed: 1,
   mode: "select" as AppMode,
-  setMode: (m: AppMode) => set({ mode: m }),
+  previousMode: null as AppMode | null,
+  setMode: (m: AppMode) => set({ mode: m, previousMode: null }),
+  enterSpringMode: (m: AppMode) => {
+    const { mode } = get();
+    set({ previousMode: mode, mode: m });
+  },
+  exitSpringMode: () => {
+    const { previousMode } = get();
+    if (previousMode === null) return;
+    set({ mode: previousMode, previousMode: null });
+  },
   dragPosition: null as { nodeId: NodeId; x: number; y: number } | null,
   setDragPosition: (nodeId: NodeId, x: number, y: number) =>
     set({ dragPosition: { nodeId, x, y } }),
@@ -411,7 +428,14 @@ export const useStore = create<StoreState>((set, get) => ({
     url.searchParams.delete("g");
     url.searchParams.set("m", newId);
     history.replaceState(null, "", url.toString());
-    set({ graph: emptyGraph, modelId: newId, transient: false, past: [], future: [], sim: makeInitialSim(emptyGraph) });
+    set({
+      graph: emptyGraph,
+      modelId: newId,
+      transient: false,
+      past: [],
+      future: [],
+      sim: makeInitialSim(emptyGraph),
+    });
   },
   loadPersistedGraph: () => {
     // Legacy migration: single-slot key → scoped key

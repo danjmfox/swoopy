@@ -15,6 +15,7 @@ export function Canvas() {
 
     // Drag state machine
     let dragNodeId: import("@swoopy/engine").NodeId | null = null;
+    let hasDragged = false; // true once pointermove fires after a pointerdown
     let constraintModifierHeld = false;
     let shiftHeld = false;
 
@@ -41,7 +42,29 @@ export function Canvas() {
         active instanceof HTMLTextAreaElement
       )
         return;
-      const { setMode } = useStore.getState();
+      const {
+        setMode,
+        previousMode,
+        exitSpringMode,
+        simRunning,
+        pauseSim,
+        resumeSim,
+      } = useStore.getState();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (previousMode !== null) exitSpringMode();
+        else useStore.setState({ mode: "select", previousMode: null });
+        return;
+      }
+      if (e.key === " ") {
+        e.preventDefault();
+        const { mode: currentMode } = useStore.getState();
+        if (currentMode !== "simulate")
+          useStore.setState({ mode: "simulate", previousMode: null });
+        if (simRunning) pauseSim();
+        else resumeSim();
+        return;
+      }
       if (e.key === "s") {
         e.preventDefault();
         setMode("select");
@@ -70,7 +93,11 @@ export function Canvas() {
     }
     function onDocKeyUp(e: KeyboardEvent) {
       if (e.key === "Alt") constraintModifierHeld = false;
-      if (e.key === "Shift") shiftHeld = false;
+      if (e.key === "Shift") {
+        shiftHeld = false;
+        const { previousMode, exitSpringMode } = useStore.getState();
+        if (previousMode !== null) exitSpringMode();
+      }
     }
     document.addEventListener("keydown", onDocKeyDown);
     document.addEventListener("keyup", onDocKeyUp);
@@ -81,8 +108,30 @@ export function Canvas() {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const { graph, mode, addNode, deleteNode } = useStore.getState();
+      const {
+        graph,
+        mode,
+        previousMode,
+        addNode,
+        deleteNode,
+        enterSpringMode,
+        exitSpringMode,
+      } = useStore.getState();
       const hit = hitTest(graph, x, y);
+
+      // Spring-loading: Shift held, not already in a spring, not in simulate mode
+      if (shiftHeld && previousMode === null && mode !== "simulate") {
+        if (hit?.kind === "node") {
+          enterSpringMode("add-edge");
+          dragNodeId = hit.id;
+          hasDragged = false;
+          return;
+        }
+        if (!hit) {
+          addNode(x, y); // create node immediately on Shift+blank
+          return;
+        }
+      }
 
       if (mode === "add-node") {
         if (!hit) addNode(x, y);
@@ -111,6 +160,7 @@ export function Canvas() {
         // select / add-edge — track drag source; select mode also sets keyboard focus
         if (hit?.kind === "node") {
           dragNodeId = hit.id;
+          hasDragged = false;
           if (mode === "select") useStore.getState().setFocusedNode(hit.id);
         } else if (mode === "select") {
           useStore.getState().setFocusedNode(null);
@@ -123,6 +173,7 @@ export function Canvas() {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       if (dragNodeId !== null) {
+        hasDragged = true;
         const { mode, setDragPosition } = useStore.getState();
         if (mode === "select") setDragPosition(dragNodeId, x, y);
         return;
@@ -146,10 +197,12 @@ export function Canvas() {
       const {
         graph,
         mode,
+        previousMode,
         addEdge,
         setPendingConstraintEdge,
         moveNode,
         setDragPosition,
+        exitSpringMode,
       } = useStore.getState();
       const releaseHit = hitTest(graph, x, y);
       const releasedOnDifferentNode =
@@ -161,11 +214,18 @@ export function Canvas() {
           releaseHit!.id as import("@swoopy/engine").NodeId,
         );
         useStore.setState({ dragPosition: null });
+        if (previousMode !== null) exitSpringMode();
       } else if (mode === "add-edge" && releasedOnDifferentNode) {
         addEdge(dragNodeId, releaseHit!.id as import("@swoopy/engine").NodeId);
         useStore.setState({ dragPosition: null });
+        if (previousMode !== null) exitSpringMode();
       } else {
-        moveNode(dragNodeId, x, y); // clears dragPosition in store
+        if (hasDragged) {
+          moveNode(dragNodeId, x, y); // clears dragPosition in store
+        } else {
+          useStore.setState({ dragPosition: null }); // click — no reposition
+        }
+        if (previousMode !== null) exitSpringMode(); // cancel spring if no valid target
       }
       dragNodeId = null;
     }
