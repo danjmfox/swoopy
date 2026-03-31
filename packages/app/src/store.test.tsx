@@ -15,7 +15,11 @@ function GraphView() {
 // SE-09 newModel
 describe("SE-09: newModel", () => {
   afterEach(() => {
-    useStore.setState({ graph: seedGraph, transient: false, sim: makeInitialSim(seedGraph) });
+    useStore.setState({
+      graph: seedGraph,
+      transient: false,
+      sim: makeInitialSim(seedGraph),
+    });
     localStorage.clear();
   });
 
@@ -550,8 +554,9 @@ describe("SE-02 / SE-06: shareGraph", () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledOnce();
     const url = new URL(
-      (navigator.clipboard.writeText as ReturnType<typeof vi.fn>).mock
-        .calls[0][0],
+      (
+        navigator.clipboard.writeText as ReturnType<typeof vi.fn>
+      ).mock.calls[0][0],
     );
     const encoded = url.searchParams.get("g");
     expect(encoded).not.toBeNull();
@@ -1020,5 +1025,36 @@ describe("GE-22 undo scope — sim state is excluded from undo history", () => {
     for (const [id, value] of simValuesAfterTick) {
       expect(simValuesAfterUndo.get(id)).toBe(value);
     }
+  });
+});
+
+describe("GE-32 spring-loaded mode state", () => {
+  beforeEach(() => {
+    useStore.setState({ mode: "select", previousMode: null } as Parameters<
+      typeof useStore.setState
+    >[0]);
+  });
+
+  it("previousMode is null initially", () => {
+    expect(useStore.getState().previousMode).toBeNull();
+  });
+
+  it("enterSpringMode sets mode and records previousMode", () => {
+    useStore.getState().enterSpringMode("add-edge");
+    expect(useStore.getState().mode).toBe("add-edge");
+    expect(useStore.getState().previousMode).toBe("select");
+  });
+
+  it("exitSpringMode restores previous mode and clears previousMode", () => {
+    useStore.getState().enterSpringMode("add-edge");
+    useStore.getState().exitSpringMode();
+    expect(useStore.getState().mode).toBe("select");
+    expect(useStore.getState().previousMode).toBeNull();
+  });
+
+  it("exitSpringMode is a no-op when previousMode is null", () => {
+    useStore.getState().exitSpringMode();
+    expect(useStore.getState().mode).toBe("select");
+    expect(useStore.getState().previousMode).toBeNull();
   });
 });

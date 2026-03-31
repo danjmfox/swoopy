@@ -22,6 +22,7 @@ export function Toolbar() {
   const simRunning = useStore((s) => s.simRunning);
   const simSpeed = useStore((s) => s.simSpeed);
   const mode = useStore((s) => s.mode);
+  const previousMode = useStore((s) => s.previousMode);
   const { pauseSim, resumeSim, resetSim, setSimSpeed, setMode } =
     useStore.getState();
   const [helpOpen, setHelpOpen] = useState(false);
@@ -98,8 +99,13 @@ export function Toolbar() {
             title={title}
             style={{
               ...btn,
-              background: mode === m ? "#334155" : "transparent",
+              background:
+                mode === m && previousMode === null ? "#334155" : "transparent",
               fontWeight: mode === m ? 700 : 400,
+              outline:
+                mode === m && previousMode !== null
+                  ? "2px solid #f59e0b"
+                  : undefined,
             }}
           >
             {label} {shortcut}

@@ -143,9 +143,12 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
   beforeEach(() => {
     moveNode = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, moveNode } as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      graph: seedGraph,
+      mode: "select",
+      previousMode: null,
+      moveNode,
+    } as Parameters<typeof useStore.setState>[0]);
   });
 
   it("drag from node produces exactly one moveNode call with final position", async () => {
@@ -161,6 +164,16 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
 
     expect(moveNode).toHaveBeenCalledTimes(1);
     expect(moveNode.mock.calls[0][0]).toBe(popNode.id);
+  });
+
+  it("click on node (no drag) does NOT call moveNode", async () => {
+    mockHitTest.mockReturnValue({ kind: "node", id: popNode.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.pointerDown(canvas, { clientX: 100, clientY: 100 });
+    fireEvent.pointerUp(canvas, { clientX: 100, clientY: 100 });
+    expect(moveNode).not.toHaveBeenCalled();
   });
 
   it("pointermove while dragging in select mode calls setDragPosition", async () => {
@@ -911,5 +924,207 @@ describe("GE-30 hover feedback", () => {
       clientY: 0,
     });
     expect(useStore.getState().hoveredEdgeRegion).toBeNull();
+  });
+});
+
+describe("GE-32 spring-loaded modes — Canvas interaction", () => {
+  const [nodeA, nodeB] = seedGraph.nodes;
+
+  beforeEach(() => {
+    mockHitTest.mockReset();
+    useStore.setState({
+      graph: seedGraph,
+      mode: "select",
+      previousMode: null,
+    } as Parameters<typeof useStore.setState>[0]);
+  });
+
+  // Task 4 — Shift+pointerdown on node enters spring add-edge
+  it("Shift+pointerdown on a node enters spring add-edge mode", async () => {
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: "Shift" });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(useStore.getState().mode).toBe("add-edge");
+    expect(useStore.getState().previousMode).toBe("select");
+  });
+
+  // Task 6 — pointer-up on different node while spring add-edge → addEdge + exit spring
+  it("pointer-up on a different node in spring add-edge creates an edge and exits spring", async () => {
+    const addEdge = vi.fn();
+    useStore.setState({ addEdge } as Parameters<typeof useStore.setState>[0]);
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+    // enter spring mode
+    fireEvent.keyDown(document, { key: "Shift" });
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+    // release on a different node
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeB.id });
+    fireEvent.pointerUp(canvas, { clientX: 0, clientY: 0 });
+    expect(addEdge).toHaveBeenCalledWith(nodeA.id, nodeB.id);
+    expect(useStore.getState().previousMode).toBeNull();
+  });
+
+  // Task 8 — Shift-up while in spring add-edge → exitSpringMode
+  it("Shift-up while in spring mode exits spring without creating edge", async () => {
+    const addEdge = vi.fn();
+    useStore.setState({ addEdge } as Parameters<typeof useStore.setState>[0]);
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.keyDown(document, { key: "Shift" });
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+    fireEvent.keyUp(document, { key: "Shift" });
+    expect(useStore.getState().mode).toBe("select");
+    expect(useStore.getState().previousMode).toBeNull();
+    expect(addEdge).not.toHaveBeenCalled();
+  });
+
+  // Task 10/12 — Shift+pointerdown on blank → create node immediately (no spring intermediary)
+  it("Shift+pointerdown on blank canvas creates a node immediately", async () => {
+    const addNode = vi.fn();
+    useStore.setState({ addNode } as Parameters<typeof useStore.setState>[0]);
+    mockHitTest.mockReturnValue(null);
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: "Shift" });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 10,
+      clientY: 20,
+    });
+    expect(addNode).toHaveBeenCalledTimes(1);
+    // mode unchanged — no spring state entered
+    expect(useStore.getState().mode).toBe("select");
+    expect(useStore.getState().previousMode).toBeNull();
+  });
+
+  // Task 14 — Escape while in spring → exitSpringMode
+  it("Escape while in spring mode exits spring", async () => {
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.keyDown(document, { key: "Shift" });
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(useStore.getState().mode).toBe("select");
+    expect(useStore.getState().previousMode).toBeNull();
+  });
+
+  // Task 15 — Escape while NOT in spring → mode = "select"
+  it("Escape while not in spring mode returns to select", async () => {
+    useStore.setState({ mode: "add-node", previousMode: null } as Parameters<
+      typeof useStore.setState
+    >[0]);
+    render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(useStore.getState().mode).toBe("select");
+  });
+
+  // Task 17 — Space tap toggles simRunning
+  it("Space toggles simRunning from true to false", async () => {
+    useStore.setState({ simRunning: true } as Parameters<
+      typeof useStore.setState
+    >[0]);
+    render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: " " });
+    expect(useStore.getState().simRunning).toBe(false);
+  });
+
+  it("Space toggles simRunning from false to true", async () => {
+    useStore.setState({ simRunning: false } as Parameters<
+      typeof useStore.setState
+    >[0]);
+    render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: " " });
+    expect(useStore.getState().simRunning).toBe(true);
+  });
+
+  // Task 19 — simulate mode exempt from spring-loading
+  it("Shift+pointerdown on node while in simulate mode does NOT enter spring mode", async () => {
+    useStore.setState({ mode: "simulate", previousMode: null } as Parameters<
+      typeof useStore.setState
+    >[0]);
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: "Shift" });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(useStore.getState().mode).toBe("simulate");
+    expect(useStore.getState().previousMode).toBeNull();
+  });
+
+  // Task 20 — no double-spring
+  it("Shift+pointerdown while already in spring mode does not nest a second spring", async () => {
+    useStore.setState({
+      mode: "add-edge",
+      previousMode: "select",
+    } as Parameters<typeof useStore.setState>[0]);
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: "Shift" });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    // previousMode should still be "select", not overwritten
+    expect(useStore.getState().previousMode).toBe("select");
+  });
+
+  // Task 21 — Shift+Option in spring add-edge → constraint edge
+  it("pointer-up with Alt held in spring add-edge calls setPendingConstraintEdge", async () => {
+    const setPendingConstraintEdge = vi.fn();
+    useStore.setState({ setPendingConstraintEdge } as Parameters<
+      typeof useStore.setState
+    >[0]);
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.keyDown(document, { key: "Shift" });
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+    fireEvent.keyDown(document, { key: "Alt" }); // jsdom doesn't propagate altKey via PointerEvent init
+    mockHitTest.mockReturnValue({ kind: "node", id: nodeB.id });
+    fireEvent.pointerUp(canvas, { clientX: 0, clientY: 0 });
+    expect(setPendingConstraintEdge).toHaveBeenCalledWith(nodeA.id, nodeB.id);
+    expect(useStore.getState().previousMode).toBeNull();
+  });
+
+  // Bug fix — Space switches to simulate mode
+  it("Space switches to simulate mode when not already there", async () => {
+    useStore.setState({
+      mode: "select",
+      simRunning: false,
+    } as Parameters<typeof useStore.setState>[0]);
+    render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: " " });
+    expect(useStore.getState().mode).toBe("simulate");
+  });
+
+  it("Space does not change mode when already in simulate", async () => {
+    useStore.setState({
+      mode: "simulate",
+      simRunning: true,
+    } as Parameters<typeof useStore.setState>[0]);
+    render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: " " });
+    expect(useStore.getState().mode).toBe("simulate");
+    expect(useStore.getState().simRunning).toBe(false);
   });
 });
