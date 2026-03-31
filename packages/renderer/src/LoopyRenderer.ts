@@ -10,6 +10,7 @@ import {
   stockIndicator,
   delayQueueIndicator,
   saturationAlpha,
+  TrendTracker,
 } from "./indicators.ts";
 import {
   bezierPoint,
@@ -141,6 +142,7 @@ function drawCurvedArrow(
 export class LoopyRenderer {
   private rafId: number | null = null;
   private lastTime: number | null = null;
+  private readonly trendTracker = new TrendTracker(2000);
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -344,12 +346,13 @@ export class LoopyRenderer {
       const isDragging = dragPosition?.nodeId === node.id;
       const value = sim.nodeValues.get(node.id) ?? node.initial;
       const prevValue = sim.displayPrevNodeValues.get(node.id) ?? node.initial;
-      const { fill, trend } = stockIndicator(
+      const { fill, trend: rawTrend } = stockIndicator(
         value,
         node.min,
         node.max,
         prevValue,
       );
+      const trend = this.trendTracker.update(node.id, rawTrend, performance.now());
       if (isDragging) ctx.globalAlpha = 0.3;
 
       // Base fill

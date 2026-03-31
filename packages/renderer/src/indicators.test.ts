@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { stockIndicator, timebombStrength, saturationAlpha, delayQueueIndicator } from './indicators.ts'
+import { stockIndicator, timebombStrength, saturationAlpha, delayQueueIndicator, TrendTracker } from './indicators.ts'
 import { makeNodeId, makeEdgeId } from '@swoopy/engine'
 
 describe('SI-12 stockIndicator', () => {
@@ -100,5 +100,26 @@ describe('SI-11 saturationAlpha', () => {
 
   it('never drops below 0.3', () => {
     expect(saturationAlpha(100, 30)).toBeGreaterThanOrEqual(0.3)
+  })
+})
+
+describe('SI-18 TrendTracker', () => {
+  const nodeA = makeNodeId('A')
+
+  it('returns the raw trend direction when active', () => {
+    const tracker = new TrendTracker(2000)
+    expect(tracker.update(nodeA, 'up', 1000)).toBe('up')
+  })
+
+  it('holds the last active direction after raw trend returns to stable within holdMs', () => {
+    const tracker = new TrendTracker(2000)
+    tracker.update(nodeA, 'up', 1000)
+    expect(tracker.update(nodeA, 'stable', 1500)).toBe('up')
+  })
+
+  it('returns stable once holdMs has elapsed since the last active trend', () => {
+    const tracker = new TrendTracker(2000)
+    tracker.update(nodeA, 'up', 1000)
+    expect(tracker.update(nodeA, 'stable', 3001)).toBe('stable')
   })
 })
