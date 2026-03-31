@@ -366,7 +366,7 @@ export class LoopyRenderer {
           node.y,
           node.radius - 4,
           -Math.PI / 2,
-          -Math.PI / 2 + fill * 2 * Math.PI,
+          -Math.PI / 2 + fill * Math.PI,
         );
         ctx.strokeStyle =
           fill > 0.75 ? "#f97316" : fill > 0.25 ? "#facc15" : "#4ade80";
@@ -385,7 +385,7 @@ export class LoopyRenderer {
           node.y,
           node.radius - 4,
           -Math.PI / 2,
-          -Math.PI / 2 - queueFraction * 2 * Math.PI,
+          -Math.PI / 2 - queueFraction * Math.PI,
           true,
         );
         ctx.strokeStyle = queueOverflow ? "#f87171" : "#fb923c";

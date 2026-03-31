@@ -762,6 +762,91 @@ describe("LoopyRenderer", () => {
     expect(labelCall!.y).toBe(nodeA.y - 6);
   });
 
+  it("SI-12 stock arc end angle never exceeds start + π (constrained to right semicircle)", () => {
+    const arcCalls: { start: number; end: number }[] = [];
+    const ctx = {
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(),
+      arc: vi.fn().mockImplementation((_x: number, _y: number, _r: number, start: number, end: number) => {
+        arcCalls.push({ start, end });
+      }),
+      fill: vi.fn(), stroke: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(), closePath: vi.fn(), fillText: vi.fn(),
+      setLineDash: vi.fn(), scale: vi.fn(),
+      fillStyle: "" as string, strokeStyle: "" as string,
+      lineWidth: 1 as number, globalAlpha: 1 as number,
+      font: "" as string, textAlign: "" as string, textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800, clientHeight: 600, width: 0, height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // fill = 1 (value at max) — would produce a full circle under the old code
+    const getState = () => ({
+      tickSim: vi.fn(), simRunning: false, simSpeed: 1,
+      graph: { nodes: [nodeA], edges: [] },
+      sim: {
+        signals: [], pending: [],
+        nodeValues: new Map([[nodeA.id, 10]]),
+        prevNodeValues: new Map([[nodeA.id, 10]]),
+        displayPrevNodeValues: new Map([[nodeA.id, 10]]),
+        tick: 0,
+      },
+    }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    const stockArc = arcCalls.find((a) => a.end > a.start && a.end - a.start <= Math.PI + 0.001);
+    expect(stockArc).toBeDefined();
+    expect(stockArc!.end - stockArc!.start).toBeLessThanOrEqual(Math.PI);
+  });
+
+  it("SI-19 delay arc end angle never exceeds start − π (constrained to left semicircle)", () => {
+    const arcCalls: { start: number; end: number; ccw: boolean }[] = [];
+    const ctx = {
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(),
+      arc: vi.fn().mockImplementation((_x: number, _y: number, _r: number, start: number, end: number, ccw = false) => {
+        arcCalls.push({ start, end, ccw });
+      }),
+      fill: vi.fn(), stroke: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(), closePath: vi.fn(), fillText: vi.fn(),
+      setLineDash: vi.fn(), scale: vi.fn(),
+      fillStyle: "" as string, strokeStyle: "" as string,
+      lineWidth: 1 as number, globalAlpha: 1 as number,
+      font: "" as string, textAlign: "" as string, textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800, clientHeight: 600, width: 0, height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // fraction = 1 (mass >= nodeMax) — would produce a full circle under the old code
+    const getState = () => ({
+      tickSim: vi.fn(), simRunning: false, simSpeed: 1,
+      graph: { nodes: [nodeA], edges: [edgeAB] },
+      sim: {
+        signals: [],
+        pending: [{ signal: { id: "p1", edgeId: edgeAB.id, progress: 0, strength: 10 }, ticksRemaining: 3 }],
+        nodeValues: new Map([[nodeA.id, 5]]),
+        prevNodeValues: new Map([[nodeA.id, 5]]),
+        displayPrevNodeValues: new Map([[nodeA.id, 5]]),
+        tick: 0,
+      },
+    }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    const delayArc = arcCalls.find((a) => a.ccw);
+    expect(delayArc).toBeDefined();
+    expect(delayArc!.start - delayArc!.end).toBeLessThanOrEqual(Math.PI);
+  });
+
   it("SI-19 delay arc strokes in amber when pending mass is within nodeMax", () => {
     const strokes: { style: string }[] = [];
     const ctx = {
