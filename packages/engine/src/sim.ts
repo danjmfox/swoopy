@@ -18,9 +18,6 @@ import {
   DELAY_TICKS_LONG,
 } from "./constants.ts";
 
-// Retained locally until the delta-emission loop is removed in the relay rewrite.
-// DO NOT re-export; this constant is inlined for the v1 emission path only.
-const EMIT_THRESHOLD = 0.06;
 
 const DELAY_TICKS: Record<string, number> = {
   short: DELAY_TICKS_SHORT,
@@ -39,7 +36,6 @@ export function makeInitialSim(graph: Graph): SimState {
     signals: [],
     pending: [],
     nodeValues,
-    prevNodeValues: new Map(nodeValues),
     displayPrevNodeValues: new Map(nodeValues),
     tick: 0,
   };
@@ -152,7 +148,6 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     signals: cappedTravelling,
     pending: stillPending,
     nodeValues,
-    prevNodeValues: new Map(nodeValues), // retained until tasks 19/20 remove it
     displayPrevNodeValues,
     tick: sim.tick + 1,
   };

@@ -116,7 +116,7 @@ describe('step() — signal arrival', () => {
     expect(sim.nodeValues.get(nodeC)).toBeGreaterThan(initialC)
   })
 
-  it('signal arriving at B with hopsRemaining=0 does NOT emit relay signals', () => {
+  it('signal arriving at B with hopsRemaining=0 does NOT relay to C', () => {
     // Inject with strength=1, check that after B receives a hop=0 signal,
     // no further signals appear for C on a A→B→C chain
     const nodeC = makeNodeId('C2')
@@ -151,5 +151,106 @@ describe('step() — signal arrival', () => {
     // After enough ticks, C should NOT have changed (no relay)
     for (let i = 0; i < 200; i++) sim = step(chainGraph, sim, 1 / 60)
     expect(sim.nodeValues.get(nodeC)).toBe(initialC)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tasks 14–16: weight = fragment count (amplitude model)
+// ---------------------------------------------------------------------------
+
+describe('weight — amplitude fragments', () => {
+  it('relay on edge weight=3 emits 3 fragments immediately into signals', () => {
+    // inject A on a graph where A→B has weight=3
+    // inject() should emit 3 fragments for that edge
+    const heavyGraph: Graph = {
+      nodes: [
+        { id: nodeA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: edgeAB, kind: 'causal', from: nodeA, to: nodeB, polarity: 1, weight: 3, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1)
+    expect(sim1.signals.length).toBe(3)
+  })
+
+  it('each fragment on weight=3 edge carries full signal.strength (not divided)', () => {
+    const heavyGraph: Graph = {
+      nodes: [
+        { id: nodeA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: edgeAB, kind: 'causal', from: nodeA, to: nodeB, polarity: 1, weight: 3, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1)
+    for (const s of sim1.signals) {
+      expect(s.strength).toBe(1)
+    }
+  })
+
+  it('weight=3 fragments are staggered (progress values are not all zero)', () => {
+    const heavyGraph: Graph = {
+      nodes: [
+        { id: nodeA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: edgeAB, kind: 'causal', from: nodeA, to: nodeB, polarity: 1, weight: 3, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1)
+    const progressValues = sim1.signals.map(s => s.progress)
+    const uniqueProgress = new Set(progressValues)
+    expect(uniqueProgress.size).toBeGreaterThan(1)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tasks 17–18: relay fragment carries hopsRemaining = parent − 1
+// ---------------------------------------------------------------------------
+
+describe('signal aging — hopsRemaining', () => {
+  it('relay fragment has hopsRemaining = arrived signal hopsRemaining − 1', () => {
+    // Place a signal on A→B with hopsRemaining=3; when it arrives, B should emit
+    // relay fragments with hopsRemaining=2
+    const nodeC = makeNodeId('C3')
+    const edgeBC = makeEdgeId('BC3')
+    const chainGraph: Graph = {
+      nodes: [
+        { id: nodeA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeC, label: 'C', x: 200, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: edgeAB, kind: 'causal', from: nodeA, to: nodeB, polarity: 1, weight: 1, delay: 'none', transferFn: 'linear' },
+        { id: edgeBC, kind: 'causal', from: nodeB, to: nodeC, polarity: 1, weight: 1, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    const sim0 = makeInitialSim(chainGraph)
+    const simWithSignal = {
+      ...sim0,
+      signals: [{ id: 's-3hops', edgeId: edgeAB, progress: 0.99, strength: 1, hopsRemaining: 3 }],
+    }
+    // One step: signal arrives at B, relay emitted on B→C
+    const sim1 = step(chainGraph, simWithSignal, 1 / 60)
+    // A new signal should have been emitted on B→C
+    expect(sim1.signals.length).toBeGreaterThan(0)
+    const relaySignal = sim1.signals.find(s => s.edgeId === edgeBC)
+    expect(relaySignal).toBeDefined()
+    expect(relaySignal!.hopsRemaining).toBe(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tasks 19–20: prevNodeValues removed from SimState
+// ---------------------------------------------------------------------------
+
+describe('SimState — prevNodeValues removed', () => {
+  it('SimState does not have a prevNodeValues property', () => {
+    const sim = makeInitialSim(twoNodeGraph)
+    expect((sim as Record<string, unknown>).prevNodeValues).toBeUndefined()
   })
 })
