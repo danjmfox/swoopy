@@ -18,7 +18,6 @@ import {
   DELAY_TICKS_LONG,
 } from "./constants.ts";
 
-
 const DELAY_TICKS: Record<string, number> = {
   short: DELAY_TICKS_SHORT,
   medium: DELAY_TICKS_MEDIUM,
@@ -193,9 +192,18 @@ function emitRelayFragments(
     if (edge.weight === 0) continue;
     // Sub-unit weight: single attenuated fragment (preserves weight-as-attenuation 0–1).
     if (edge.weight < 1) {
-      const fragment = { id: nextSignalId(), edgeId: edge.id, progress: 0, strength: strength * edge.weight, hopsRemaining };
+      const fragment = {
+        id: nextSignalId(),
+        edgeId: edge.id,
+        progress: 0,
+        strength: strength * edge.weight,
+        hopsRemaining,
+      };
       if (edge.delay !== "none") {
-        pending.push({ signal: fragment, ticksRemaining: DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT });
+        pending.push({
+          signal: fragment,
+          ticksRemaining: DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT,
+        });
       } else {
         signals.push(fragment);
       }
@@ -204,21 +212,29 @@ function emitRelayFragments(
     const count = Math.round(edge.weight);
     if (edge.delay !== "none") {
       const delayTicks = DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT;
-      const staggerTicks = count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
+      const staggerTicks =
+        count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
       for (let i = 0; i < count; i++) {
         pending.push({
-          signal: { id: nextSignalId(), edgeId: edge.id, progress: 0, strength, hopsRemaining },
+          signal: {
+            id: nextSignalId(),
+            edgeId: edge.id,
+            progress: 0,
+            strength,
+            hopsRemaining,
+          },
           ticksRemaining: delayTicks + i * staggerTicks,
         });
       }
       continue;
     }
-    const staggerTicks = count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
+    const staggerTicks =
+      count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
     for (let i = 0; i < count; i++) {
       signals.push({
         id: nextSignalId(),
         edgeId: edge.id,
-        progress: staggerTicks > 0 ? Math.min((i / count), 0.99) : 0,
+        progress: staggerTicks > 0 ? Math.min(i / count, 0.99) : 0,
         strength,
         hopsRemaining,
       });

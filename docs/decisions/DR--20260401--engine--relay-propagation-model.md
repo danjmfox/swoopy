@@ -1,16 +1,17 @@
 ---
 id: DR--20260401--engine--relay-propagation-model
-dateCreated: '2026-04-01'
+dateCreated: "2026-04-01"
 version: 1.0.0
 status: accepted
 changeType: creation
 domain: engine
 slug: relay-propagation-model
 changelog:
-  - date: '2026-04-01'
+  - date: "2026-04-01"
     note: Initial creation — characterisation completed, MAX_HOPS=8 chosen, accepted
 supersedes: DR--20260330--engine--staggered-density-signals
 ---
+
 # DR--20260401--engine--relay-propagation-model
 
 ## 🧭 Context
@@ -28,6 +29,7 @@ multi-path propagation requirement.
 **Characterisation approach:** A script (`packages/engine/src/characterise-relay.ts`) was
 written to implement the relay model inline and test three scenarios across MAX_HOPS
 candidates {3, 5, 8, 13}:
+
 - Reinforcing loop A→B→A (+/+): expect saturation at max
 - Balancing loop A→B→A (+/-): expect correction, no runaway
 - Diamond A→B→D(+), A→C→D(-): expect both B and C to move
@@ -59,11 +61,11 @@ increases oscillation amplitude in balancing loops.
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-|--------|-------------|---------|-----------|
-| A | Keep staggered-density (delta-emission) | Rejected | Diamond propagation broken; prevNodeValues complexity retained |
-| B | Relay propagation — arrival triggers fan-out | **Accepted** | Correct diamond propagation; removes prevNodeValues/EMIT_THRESHOLD; weight = amplitude |
-| C | Relay with weight-as-density (strength/N per fragment) | Rejected | Returns to stability issues at high weight; amplitude model is simpler and correct |
+| Option | Description                                            | Outcome      | Rationale                                                                              |
+| ------ | ------------------------------------------------------ | ------------ | -------------------------------------------------------------------------------------- |
+| A      | Keep staggered-density (delta-emission)                | Rejected     | Diamond propagation broken; prevNodeValues complexity retained                         |
+| B      | Relay propagation — arrival triggers fan-out           | **Accepted** | Correct diamond propagation; removes prevNodeValues/EMIT_THRESHOLD; weight = amplitude |
+| C      | Relay with weight-as-density (strength/N per fragment) | Rejected     | Returns to stability issues at high weight; amplitude model is simpler and correct     |
 
 ## 🧠 Decision
 
