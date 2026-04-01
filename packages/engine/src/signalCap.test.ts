@@ -30,7 +30,7 @@ describe('SI-11 MAX_SIGNALS constant and cap', () => {
 
   it('travelling signal count never exceeds MAX_SIGNALS in a heavily loaded graph', () => {
     let sim = makeInitialSim(capGraph)
-    for (const id of nodeIds) sim = inject(sim, id, INJECT_STRENGTH * 5)
+    for (const id of nodeIds) sim = inject(sim, capGraph, id, INJECT_STRENGTH * 5)
     for (let i = 0; i < 300; i++) {
       sim = step(capGraph, sim, 1 / 60)
       expect(sim.signals.length).toBeLessThanOrEqual(MAX_SIGNALS)

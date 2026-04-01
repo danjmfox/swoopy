@@ -28,7 +28,7 @@ describe('step() displayPrevNodeValues — SI-12 trend display', () => {
 
   it('after inject() then step(), displayPrevNodeValues reflects the injected value', () => {
     const sim0 = makeInitialSim(graph)
-    const injected = inject(sim0, nodeA, 2)
+    const injected = inject(sim0, graph, nodeA, 2)
     const sim1 = step(graph, injected, 0.016)
     expect(sim1.displayPrevNodeValues.get(nodeA)).toBe(injected.nodeValues.get(nodeA))
   })
@@ -37,7 +37,7 @@ describe('step() displayPrevNodeValues — SI-12 trend display', () => {
 describe('step() dt clamp — PRD §9 risk 5', () => {
   it('a spike dt of 500ms advances in-flight signal progress no more than SIGNAL_SPEED × 0.1', () => {
     // inject → normal step to get a signal in-flight at progress ≈ 0
-    const sim0 = inject(makeInitialSim(graph), nodeA, INJECT_STRENGTH)
+    const sim0 = inject(makeInitialSim(graph), graph, nodeA, INJECT_STRENGTH)
     const sim1 = step(graph, sim0, 0.016) // normal 60fps frame; signal emitted at progress=0
     expect(sim1.signals.length).toBeGreaterThan(0)
 

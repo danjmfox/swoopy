@@ -44,7 +44,7 @@ describe('SI-14 delayed edge holds signals in pending queue', () => {
       edges: [causal('A-B', 'A', 'B', 'short')],
     }
     const sim0 = makeInitialSim(graph)
-    const sim1 = inject(sim0, makeNodeId('A'), INJECT_STRENGTH)
+    const sim1 = inject(sim0, graph, makeNodeId('A'), INJECT_STRENGTH)
     const sim2 = step(graph, sim1, 1 / 60)
     // Signal should be pending — not yet travelling
     expect(sim2.pending.length).toBeGreaterThan(0)
@@ -57,7 +57,7 @@ describe('SI-14 delayed edge holds signals in pending queue', () => {
       edges: [causal('A-B', 'A', 'B', 'short')],
     }
     let sim = makeInitialSim(graph)
-    sim = inject(sim, makeNodeId('A'), INJECT_STRENGTH)
+    sim = inject(sim, graph, makeNodeId('A'), INJECT_STRENGTH)
     // Run exactly DELAY_TICKS_SHORT steps — signal emitted and held in step 1,
     // decremented each step, released when ticksRemaining reaches 0.
     for (let i = 0; i < DELAY_TICKS_SHORT; i++) sim = step(graph, sim, 1 / 60)

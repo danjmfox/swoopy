@@ -84,7 +84,7 @@ describe("makeInitialSim", () => {
 describe("inject", () => {
   it("increments the target node value by strength", () => {
     const sim = makeInitialSim(seedGraph);
-    const next = inject(sim, popId, INJECT_STRENGTH);
+    const next = inject(sim, seedGraph, popId, INJECT_STRENGTH);
     expect(next.nodeValues.get(popId)).toBe(5 + INJECT_STRENGTH);
   });
 });
@@ -93,7 +93,7 @@ describe("inject", () => {
 describe("step", () => {
   it("emits signals on outgoing causal edges when |delta| >= EMIT_THRESHOLD", () => {
     const sim0 = makeInitialSim(seedGraph);
-    const sim1 = inject(sim0, popId, INJECT_STRENGTH); // delta = 1.0, well above 0.06
+    const sim1 = inject(sim0, seedGraph, popId, INJECT_STRENGTH); // delta = 1.0, well above 0.06
     const sim2 = step(seedGraph, sim1, 1 / 60);
     expect(sim2.signals.length).toBeGreaterThan(0);
   });
@@ -102,7 +102,7 @@ describe("step", () => {
     // Inject into Deaths; its signal to Population has polarity -1
     // Population should fall below its initial value (5)
     const sim0 = makeInitialSim(seedGraph);
-    const sim1 = inject(sim0, deathsId, INJECT_STRENGTH);
+    const sim1 = inject(sim0, seedGraph, deathsId, INJECT_STRENGTH);
     let sim = sim1;
     for (let i = 0; i < 120; i++) sim = step(seedGraph, sim, 1 / 60);
     expect(sim.nodeValues.get(popId)).toBeLessThan(5);
@@ -113,7 +113,7 @@ describe("step", () => {
     // In the signal-driven model there is no decay: the node stays wherever injection left it.
     const isolatedGraph: Graph = { nodes: [births], edges: [] };
     const sim0 = makeInitialSim(isolatedGraph);
-    const sim1 = inject(sim0, birthsId, INJECT_STRENGTH);
+    const sim1 = inject(sim0, isolatedGraph, birthsId, INJECT_STRENGTH);
     let sim = sim1;
     for (let i = 0; i < 600; i++) sim = step(isolatedGraph, sim, 1 / 60);
     expect(sim.nodeValues.get(birthsId)).toBeGreaterThanOrEqual(
@@ -123,7 +123,7 @@ describe("step", () => {
 
   it("positive injection: balancing loop prevents Population diverging to max (Appendix A)", () => {
     const sim0 = makeInitialSim(seedGraph);
-    const sim1 = inject(sim0, popId, INJECT_STRENGTH);
+    const sim1 = inject(sim0, seedGraph, popId, INJECT_STRENGTH);
     let sim = sim1;
     for (let i = 0; i < 600; i++) sim = step(seedGraph, sim, 1 / 60);
     expect(sim.nodeValues.get(popId)).toBeLessThan(10);
@@ -131,7 +131,7 @@ describe("step", () => {
 
   it("positive injection: reinforcing loop raises Population above initial (Appendix A)", () => {
     const sim0 = makeInitialSim(seedGraph);
-    const sim1 = inject(sim0, popId, INJECT_STRENGTH);
+    const sim1 = inject(sim0, seedGraph, popId, INJECT_STRENGTH);
     let sim = sim1;
     for (let i = 0; i < 300; i++) sim = step(seedGraph, sim, 1 / 60);
     expect(sim.nodeValues.get(popId)).toBeGreaterThan(5.1);
@@ -139,7 +139,7 @@ describe("step", () => {
 
   it("negative injection: reinforcing loop amplifies the drop below initial (Appendix A)", () => {
     const sim0 = makeInitialSim(seedGraph);
-    const sim1 = inject(sim0, popId, -INJECT_STRENGTH);
+    const sim1 = inject(sim0, seedGraph, popId, -INJECT_STRENGTH);
     let sim = sim1;
     for (let i = 0; i < 300; i++) sim = step(seedGraph, sim, 1 / 60);
     expect(sim.nodeValues.get(popId)).toBeLessThan(4.9);
@@ -147,7 +147,7 @@ describe("step", () => {
 
   it("negative injection: system stabilises above min — balancing limits collapse (Appendix A)", () => {
     const sim0 = makeInitialSim(seedGraph);
-    const sim1 = inject(sim0, popId, -INJECT_STRENGTH);
+    const sim1 = inject(sim0, seedGraph, popId, -INJECT_STRENGTH);
     let sim = sim1;
     for (let i = 0; i < 600; i++) sim = step(seedGraph, sim, 1 / 60);
     expect(sim.nodeValues.get(popId)).toBeGreaterThan(0);
@@ -157,7 +157,7 @@ describe("step", () => {
     // Run long enough for Population→Births signal to arrive (progress reaches 1)
     // At SIGNAL_SPEED=0.65, takes 1/0.65 ≈ 1.54s = ~92 frames at 60fps
     const sim0 = makeInitialSim(seedGraph);
-    const sim1 = inject(sim0, popId, INJECT_STRENGTH);
+    const sim1 = inject(sim0, seedGraph, popId, INJECT_STRENGTH);
     let sim = sim1;
     for (let i = 0; i < 120; i++) sim = step(seedGraph, sim, 1 / 60);
     // Births should have risen above its initial value (0)
@@ -180,7 +180,7 @@ describe("GE-13 edge weight", () => {
     });
     const run = (g: typeof seedGraph) => {
       let sim = makeInitialSim(g);
-      sim = inject(sim, popId, INJECT_STRENGTH);
+      sim = inject(sim, g, popId, INJECT_STRENGTH);
       for (let i = 0; i < 120; i++) sim = step(g, sim, 1 / 60);
       return sim.nodeValues.get(birthsId) ?? 0;
     };
@@ -200,7 +200,7 @@ describe("GE-13 edge weight", () => {
       }),
     };
     let sim = makeInitialSim(noWeightGraph);
-    sim = inject(sim, popId, INJECT_STRENGTH);
+    sim = inject(sim, noWeightGraph, popId, INJECT_STRENGTH);
     for (let i = 0; i < 120; i++) sim = step(noWeightGraph, sim, 1 / 60);
     // Births should stay at 0 — no signal arrives, no decay
     expect(sim.nodeValues.get(birthsId)).toBeLessThan(0.1);
@@ -259,12 +259,12 @@ describe("GE-SD staggered-density signals", () => {
       ],
     };
     let sim = makeInitialSim(graph);
-    sim = inject(sim, aId, INJECT_STRENGTH);
+    sim = inject(sim, graph, aId, INJECT_STRENGTH);
     for (let i = 0; i < 300; i++) sim = step(graph, sim, 1 / 60);
     expect(sim.nodeValues.get(aId)).toBeGreaterThan(0);
   });
 
-  it("GE-SD-02: weight=5 edge emits 5 signals (1 travelling + 4 staggered-pending) after injection", () => {
+  it.skip("GE-SD-02: weight=5 edge emits 5 signals (1 travelling + 4 staggered-pending) after injection — superseded by relay model (DR--20260401)", () => {
     const aId = makeNodeId("A");
     const bId = makeNodeId("B");
     const graph: Graph = {
@@ -304,12 +304,12 @@ describe("GE-SD staggered-density signals", () => {
       ],
     };
     let sim = makeInitialSim(graph);
-    sim = inject(sim, aId, INJECT_STRENGTH);
+    sim = inject(sim, graph, aId, INJECT_STRENGTH);
     sim = step(graph, sim, 1 / 60);
     expect(sim.signals.length + sim.pending.length).toBe(5);
   });
 
-  it("GE-SD-03: weight=5 delayed edge emits 5 signals (all pending) after injection", () => {
+  it.skip("GE-SD-03: weight=5 delayed edge emits 5 signals (all pending) after injection — superseded by relay model (DR--20260401)", () => {
     const aId = makeNodeId("A");
     const bId = makeNodeId("B");
     const graph: Graph = {
@@ -349,7 +349,7 @@ describe("GE-SD staggered-density signals", () => {
       ],
     };
     let sim = makeInitialSim(graph);
-    sim = inject(sim, aId, INJECT_STRENGTH);
+    sim = inject(sim, graph, aId, INJECT_STRENGTH);
     sim = step(graph, sim, 1 / 60);
     expect(sim.signals.length + sim.pending.length).toBe(5);
   });

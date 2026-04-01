@@ -450,7 +450,7 @@ describe("S5 — undo does not roll back sim state", () => {
     });
     // Inject into first node via the engine function so sim state diverges from initial
     const node = seedGraph.nodes[0];
-    const simAfterInject = inject(initialSim, node.id, 1);
+    const simAfterInject = inject(initialSim, seedGraph, node.id, 1);
     useStore.setState({ sim: simAfterInject });
     const injectedValue = useStore.getState().sim.nodeValues.get(node.id)!;
     // Make a graph mutation so undo has something to do

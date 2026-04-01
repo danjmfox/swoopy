@@ -114,7 +114,7 @@ describe('GE-24 dynamic source variation', () => {
     const sim1 = step(graph, sim0, 1 / 60)
     expect(sim1.nodeValues.get(makeNodeId('B'))).toBeLessThanOrEqual(2)
 
-    const sim2 = inject(inject(sim1, makeNodeId('A'), 5), makeNodeId('B'), 3) // A→7, B→5
+    const sim2 = inject(inject(sim1, graph, makeNodeId('A'), 5), graph, makeNodeId('B'), 3) // A→7, B→5
     const sim3 = step(graph, sim2, 1 / 60)
     expect(sim3.nodeValues.get(makeNodeId('B'))).toBeGreaterThan(2)
   })

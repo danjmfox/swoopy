@@ -141,7 +141,7 @@ export function Canvas() {
           const doInject = () => {
             const strength = shiftHeld ? -INJECT_STRENGTH : INJECT_STRENGTH;
             useStore.setState((s) => ({
-              sim: inject(s.sim, nodeId, strength),
+              sim: inject(s.sim, s.graph, nodeId, strength),
             }));
           };
           doInject();

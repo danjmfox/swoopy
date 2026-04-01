@@ -32,7 +32,7 @@ function characterise(nodeCount: number, weight: number): { travelPeak: number; 
   }
   const graph: Graph = { nodes, edges }
   let sim = makeInitialSim(graph)
-  for (const id of nodeIds) sim = inject(sim, id, INJECT_STRENGTH * 5)
+  for (const id of nodeIds) sim = inject(sim, graph, id, INJECT_STRENGTH * 5)
 
   let travelPeak = 0
   let totalPeak = 0

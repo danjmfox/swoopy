@@ -11,6 +11,7 @@ import type {
 import {
   SIGNAL_SPEED,
   MAX_SIGNALS,
+  MAX_HOPS,
   EDGE_TRANSIT_TICKS,
   DELAY_TICKS_SHORT,
   DELAY_TICKS_MEDIUM,
@@ -217,10 +218,64 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
 
 export function inject(
   sim: SimState,
+  graph: Graph,
   nodeId: NodeId,
   strength: number,
 ): SimState {
   const nodeValues = new Map(sim.nodeValues);
   nodeValues.set(nodeId, (nodeValues.get(nodeId) ?? 0) + strength);
-  return { ...sim, nodeValues };
+  const causalEdgesFrom = new Map<string, CausalEdge[]>();
+  for (const e of graph.edges) {
+    if (e.kind === "causal") {
+      const list = causalEdgesFrom.get(e.from) ?? [];
+      list.push(e);
+      causalEdgesFrom.set(e.from, list);
+    }
+  }
+  const { signals: newSignals, pending: newPending } = emitRelayFragments(
+    causalEdgesFrom.get(nodeId) ?? [],
+    strength,
+    MAX_HOPS,
+  );
+  return {
+    ...sim,
+    nodeValues,
+    signals: [...sim.signals, ...newSignals],
+    pending: [...sim.pending, ...newPending],
+  };
+}
+
+function emitRelayFragments(
+  outgoingEdges: CausalEdge[],
+  strength: number,
+  hopsRemaining: number,
+): { signals: Signal[]; pending: PendingSignal[] } {
+  const signals: Signal[] = [];
+  const pending: PendingSignal[] = [];
+  for (const edge of outgoingEdges) {
+    if (edge.weight === 0) continue;
+    const count = Math.max(1, Math.round(edge.weight));
+    if (edge.delay !== "none") {
+      const delayTicks = DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT;
+      const staggerTicks = count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
+      for (let i = 0; i < count; i++) {
+        pending.push({
+          signal: { id: nextSignalId(), edgeId: edge.id, progress: 0, strength, hopsRemaining },
+          ticksRemaining: delayTicks + i * staggerTicks,
+        });
+      }
+      continue;
+    }
+    const staggerTicks = count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
+    for (let i = 0; i < count; i++) {
+      signals.push({
+        id: nextSignalId(),
+        edgeId: edge.id,
+        progress: staggerTicks > 0 ? Math.min((i / count), 0.99) : 0,
+        strength,
+        hopsRemaining,
+      });
+    }
+  }
+  return { signals, pending };
 }
