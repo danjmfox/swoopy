@@ -450,7 +450,7 @@ describe("S5 — undo does not roll back sim state", () => {
     });
     // Inject into first node via the engine function so sim state diverges from initial
     const node = seedGraph.nodes[0];
-    const simAfterInject = inject(initialSim, node.id, 1);
+    const simAfterInject = inject(initialSim, seedGraph, node.id, 1);
     useStore.setState({ sim: simAfterInject });
     const injectedValue = useStore.getState().sim.nodeValues.get(node.id)!;
     // Make a graph mutation so undo has something to do
@@ -740,7 +740,6 @@ describe("SI-09 pauseSim / resumeSim", () => {
         signals: [],
         pending: [],
         nodeValues: new Map(),
-        prevNodeValues: new Map(),
         displayPrevNodeValues: new Map(),
         tick: 0,
       },
@@ -970,7 +969,6 @@ describe("Zustand slice boundary — PRD §5.1, §6.2", () => {
         signals: [],
         pending: [],
         nodeValues: new Map(),
-        prevNodeValues: new Map(),
         displayPrevNodeValues: new Map(),
         tick: 0,
       },

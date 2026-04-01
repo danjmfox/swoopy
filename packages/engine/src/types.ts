@@ -42,6 +42,7 @@ export interface Signal {
   readonly edgeId: EdgeId;
   readonly progress: number;
   readonly strength: number;
+  readonly hopsRemaining: number;
 }
 
 export interface PendingSignal {
@@ -53,14 +54,8 @@ export interface SimState {
   readonly signals: ReadonlyArray<Signal>;
   readonly pending: ReadonlyArray<PendingSignal>;
   readonly nodeValues: ReadonlyMap<NodeId, number>;
-  // Snapshot of nodeValues at the end of the previous step, used by the next
-  // step() call to compute emit deltas — captures inject() changes that happen
-  // between steps. inject() updates nodeValues only; prevNodeValues stays fixed
-  // until the next step() settles it.
-  readonly prevNodeValues: ReadonlyMap<NodeId, number>;
-  // Snapshot of nodeValues at the beginning of the current step (post-inject),
-  // used by the renderer for trend display (▲/▼). Distinct from prevNodeValues
-  // which serves emission delta detection.
+  // Snapshot of nodeValues at the beginning of the current step, used by the
+  // renderer for trend display (▲/▼). Captured before arrivals mutate nodeValues.
   readonly displayPrevNodeValues: ReadonlyMap<NodeId, number>;
   readonly tick: number;
 }

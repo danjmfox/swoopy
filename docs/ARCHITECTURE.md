@@ -19,42 +19,54 @@ The simulation core. Every function is pure: same inputs, same outputs, no side 
 
 Key exports:
 
-| Export                                          | Purpose                                                                                      | Details                |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------- |
-| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types                                                                                 |                        |
-| `NodeId`, `EdgeId`                              | Branded primitive types — prevent accidental string substitution                             |                        |
-| `SimState`                                      | Snapshot of simulation state: node values, prevNodeValues, travelling signals, pending queue |                        |
-| `makeInitialSim(graph)`                         | Create a clean `SimState` from a graph                                                       |                        |
-| `step(graph, sim, dt)`                          | Advance simulation by `dt` seconds; returns new `SimState`                                   |                        |
-| `inject(sim, nodeId, strength)`                 | Return new `SimState` with node value nudged; clamping deferred to next `step()`             |                        |
-| `serialize(graph)`                              | `Graph` → versioned JSON-compatible value                                                    |                        |
-| `deserialize(raw)`                              | Versioned value → `Graph`; throws on unknown version                                         |                        |
-| `hitTest(graph, x, y)`                          | Return `HitTarget` or `null`                                                                 | For canvas coordinates |
-| `bezierPoint`, `controlPoint`                   | Geometry helpers for curve rendering and hit testing                                         |                        |
+| Export                                          | Purpose                                                                                             | Details                |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------- |
+| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types                                                                                        |                        |
+| `NodeId`, `EdgeId`                              | Branded primitive types — prevent accidental string substitution                                    |                        |
+| `SimState`                                      | Snapshot of simulation state: node values, displayPrevNodeValues, travelling signals, pending queue |                        |
+| `makeInitialSim(graph)`                         | Create a clean `SimState` from a graph                                                              |                        |
+| `step(graph, sim, dt)`                          | Advance simulation by `dt` seconds; returns new `SimState`                                          |                        |
+| `inject(sim, graph, nodeId, strength)`          | Return new `SimState` with node value changed and relay signals emitted on outgoing edges           |                        |
+| `serialize(graph)`                              | `Graph` → versioned JSON-compatible value                                                           |                        |
+| `deserialize(raw)`                              | Versioned value → `Graph`; throws on unknown version                                                |                        |
+| `hitTest(graph, x, y)`                          | Return `HitTarget` or `null`                                                                        | For canvas coordinates |
+| `bezierPoint`, `controlPoint`                   | Geometry helpers for curve rendering and hit testing                                                |                        |
 
 ### Simulation step
+
+**Relay propagation model** (DR--20260401). `inject()` starts the signal chain; `step()` advances it.
+
+`inject(sim, graph, nodeId, strength)`:
+
+1. Change node value by `strength` (unclamped — clamped at next step())
+2. Emit relay fragments on all outgoing causal edges with `hopsRemaining = MAX_HOPS`
 
 `step()` runs in this order each tick:
 
 1. Resolve constraint edges → compute `effective_min` / `effective_max` per node; pre-clamp values
-2. Advance all signal progress by `SIGNAL_SPEED × dt`
-3. Collect arrived signals (progress ≥ 1)
-4. Apply arrivals to destination node values (`strength × polarity`)
+2. Snapshot `nodeValues` as `displayPrevNodeValues` (for renderer trend arrows)
+3. Advance all travelling signal progress by `SIGNAL_SPEED × dt`
+4. For each arrived signal (progress ≥ 1):
+   - Apply to destination: `node.value += signal.strength × edge.polarity`
+   - If `signal.hopsRemaining > 0`: emit relay fragments on all outgoing causal edges of
+     the destination node with `hopsRemaining = signal.hopsRemaining - 1`
 5. Re-clamp to effective bounds (arrivals may have pushed values out of range)
-6. Noise suppression: values within 0.001 of `initial` are snapped back to `initial`
-7. Diff start vs end values; for each node where |delta| ≥ EMIT_THRESHOLD, emit signals
-   per outgoing causal edge using the **staggered-density model** (DR--20260330):
-   - `weight=0`: no signal
-   - `weight < 1`: 1 signal of `strength = delta × weight` (attenuation)
-   - `weight ≥ 1`: `count = round(weight)` signals of `strength = delta / count` each;
-     signal 0 enters travelling immediately, signals 1…N-1 enter pending staggered by
-     `floor(EDGE_TRANSIT_TICKS / count)` ticks — they appear as equally-spaced particles
-   - Delayed edges: 1 signal of `strength = delta` into pending at the named delay level
-8. Decrement pending queue counters; release zero-count entries into the travelling queue
-9. Cap travelling signal count at `MAX_SIGNALS` (132), preferring highest-progress signals
+6. Decrement pending queue counters; release zero-count entries into the travelling queue
+7. Cap travelling signal count at `MAX_SIGNALS` (132), preferring highest-progress signals
 
-The pending queue holds both delayed-edge signals and stagger-offset signals from
-weight ≥ 1 edges. Constraint edges are resolved fresh each step — not part of either queue.
+**Relay fragment emission** (shared by inject and step relay):
+
+- `weight=0`: no fragment
+- `weight < 1`: 1 fragment of `strength = signal.strength × weight` (attenuation)
+- `weight ≥ 1`: `count = round(weight)` fragments each of `strength = signal.strength`;
+  fragments staggered by `floor(EDGE_TRANSIT_TICKS / count)` via pre-advanced progress
+- Delayed edges: fragments enter pending queue at `DELAY_TICKS[delay] + i × staggerTicks`
+
+Weight is **amplitude**: `weight=N` means N× the effect per relay event (N fragments × full strength).
+`MAX_HOPS = 8` bounds propagation depth; each edge traversal decrements `hopsRemaining`.
+
+The pending queue holds stagger-offset signals and delayed-edge signals.
+Constraint edges are resolved fresh each step — not part of either queue.
 
 ---
 
