@@ -9,7 +9,6 @@ import type {
   Node,
 } from "./types.ts";
 import {
-  EMIT_THRESHOLD,
   SIGNAL_SPEED,
   MAX_SIGNALS,
   EDGE_TRANSIT_TICKS,
@@ -17,6 +16,10 @@ import {
   DELAY_TICKS_MEDIUM,
   DELAY_TICKS_LONG,
 } from "./constants.ts";
+
+// Retained locally until the delta-emission loop is removed in the relay rewrite.
+// DO NOT re-export; this constant is inlined for the v1 emission path only.
+const EMIT_THRESHOLD = 0.06;
 
 const DELAY_TICKS: Record<string, number> = {
   short: DELAY_TICKS_SHORT,

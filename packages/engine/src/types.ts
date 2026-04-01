@@ -42,6 +42,7 @@ export interface Signal {
   readonly edgeId: EdgeId;
   readonly progress: number;
   readonly strength: number;
+  readonly hopsRemaining: number;
 }
 
 export interface PendingSignal {
