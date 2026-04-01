@@ -254,3 +254,83 @@ describe('SimState — prevNodeValues removed', () => {
     expect((sim as Record<string, unknown>).prevNodeValues).toBeUndefined()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Tasks 21–24: integration scenarios
+// ---------------------------------------------------------------------------
+
+describe('integration — reinforcing loop', () => {
+  it('single inject on A in A→B→A loop saturates both nodes to max after enough ticks', () => {
+    const nodeLoopA = makeNodeId('LoopA')
+    const nodeLoopB = makeNodeId('LoopB')
+    const graph: Graph = {
+      nodes: [
+        { id: nodeLoopA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeLoopB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: makeEdgeId('la-lb'), kind: 'causal', from: nodeLoopA, to: nodeLoopB, polarity: 1, weight: 1, delay: 'none', transferFn: 'linear' },
+        { id: makeEdgeId('lb-la'), kind: 'causal', from: nodeLoopB, to: nodeLoopA, polarity: 1, weight: 1, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    let sim = inject(makeInitialSim(graph), graph, nodeLoopA, 1)
+    // MAX_HOPS=8 × EDGE_TRANSIT_TICKS=92 ≈ 736 ticks to propagate full chain + buffer
+    for (let i = 0; i < 900; i++) sim = step(graph, sim, 1 / 60)
+    expect(sim.nodeValues.get(nodeLoopA)).toBe(10)
+    expect(sim.nodeValues.get(nodeLoopB)).toBe(10)
+  })
+})
+
+describe('integration — balancing loop', () => {
+  it('single inject on A in A→B→A (+/-) loop corrects without runaway', () => {
+    const nodeBalA = makeNodeId('BalA')
+    const nodeBalB = makeNodeId('BalB')
+    const graph: Graph = {
+      nodes: [
+        { id: nodeBalA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeBalB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: makeEdgeId('ba-bb'), kind: 'causal', from: nodeBalA, to: nodeBalB, polarity:  1, weight: 1, delay: 'none', transferFn: 'linear' },
+        { id: makeEdgeId('bb-ba'), kind: 'causal', from: nodeBalB, to: nodeBalA, polarity: -1, weight: 1, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    let sim = inject(makeInitialSim(graph), graph, nodeBalA, 1)
+    for (let i = 0; i < 900; i++) sim = step(graph, sim, 1 / 60)
+    // Balancing loop: nodes should NOT both saturate (distinguishes from reinforcing loop).
+    // Characterisation showed hops=8 settles at A≈2, B≈10 — the correction pushes A down.
+    const aFinal = sim.nodeValues.get(nodeBalA) ?? 0
+    const bFinal = sim.nodeValues.get(nodeBalB) ?? 0
+    expect(aFinal === 10 && bFinal === 10).toBe(false)
+  })
+})
+
+describe('integration — diamond graph', () => {
+  it('A→B→D(+), A→C→D(-): D receives signals from BOTH paths (B and C both move)', () => {
+    const nodeDA = makeNodeId('DiamA')
+    const nodeDB = makeNodeId('DiamB')
+    const nodeDC = makeNodeId('DiamC')
+    const nodeDD = makeNodeId('DiamD')
+    const graph: Graph = {
+      nodes: [
+        { id: nodeDA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeDB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeDC, label: 'C', x: 100, y: 100, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeDD, label: 'D', x: 200, y: 50, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: makeEdgeId('da-db'), kind: 'causal', from: nodeDA, to: nodeDB, polarity:  1, weight: 1, delay: 'none', transferFn: 'linear' },
+        { id: makeEdgeId('da-dc'), kind: 'causal', from: nodeDA, to: nodeDC, polarity:  1, weight: 1, delay: 'none', transferFn: 'linear' },
+        { id: makeEdgeId('db-dd'), kind: 'causal', from: nodeDB, to: nodeDD, polarity:  1, weight: 1, delay: 'none', transferFn: 'linear' },
+        { id: makeEdgeId('dc-dd'), kind: 'causal', from: nodeDC, to: nodeDD, polarity: -1, weight: 1, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    let sim = inject(makeInitialSim(graph), graph, nodeDA, 1)
+    for (let i = 0; i < 400; i++) sim = step(graph, sim, 1 / 60)
+    // Both B and C should have moved (both paths propagated)
+    expect(sim.nodeValues.get(nodeDB)).toBeGreaterThan(5)
+    expect(sim.nodeValues.get(nodeDC)).toBeGreaterThan(5)
+    // D: +1 via B and -1 via C cancel out → should remain near 5
+    expect(sim.nodeValues.get(nodeDD)).toBeCloseTo(5, 0)
+  })
+})
