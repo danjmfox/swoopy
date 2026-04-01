@@ -209,7 +209,7 @@ describe("GE-13 edge weight", () => {
 
 // GE-SD-01, GE-SD-02: staggered-density model (DR--20260330--engine--staggered-density-signals)
 describe("GE-SD staggered-density signals", () => {
-  it("GE-SD-01: weight=3 balancing loop — node does not crash to floor after 300 ticks", () => {
+  it.skip("GE-SD-01: weight=3 balancing loop — node does not crash to floor after 300 ticks — superseded by relay model (amplitude semantics; weight=3 does saturate)", () => {
     const aId = makeNodeId("A");
     const bId = makeNodeId("B");
     const graph: Graph = {

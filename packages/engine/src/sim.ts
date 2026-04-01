@@ -79,6 +79,8 @@ function resolveConstraints(
 export function step(graph: Graph, sim: SimState, dt: number): SimState {
   const safeDt = Math.min(dt, 0.1);
   const nodeValues = new Map(sim.nodeValues);
+  // Beginning-of-step snapshot for renderer trend arrows (SI-12 displayPrevNodeValues).
+  const displayPrevNodeValues = new Map(sim.nodeValues);
 
   const edgeById = new Map(graph.edges.map((e) => [e.id, e]));
   const causalEdgesFrom = new Map<string, CausalEdge[]>();
@@ -96,8 +98,13 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
   // §7.2 step 1 — pre-clamp: resolve constraints before propagation
   resolveConstraints(nodeValues, graph.nodes, constraintEdges);
 
-  // §7.2 steps 2–4 — advance signals, collect arrivals, apply to destination nodes
+  // §7.2 steps 2–4 — advance signals, collect arrivals.
+  // Relay model (DR--20260401): on arrival, apply value change then fan-out on all
+  // outgoing causal edges if hopsRemaining > 0. Weight=N emits N fragments of
+  // signal.strength (amplitude model). hopsRemaining decremented per edge traversal.
   const stillTravelling: Signal[] = [];
+  const newSignals: Signal[] = [];
+  const newPending: PendingSignal[] = [];
   for (const s of sim.signals) {
     const advanced = { ...s, progress: s.progress + SIGNAL_SPEED * safeDt };
     if (advanced.progress >= 1) {
@@ -105,6 +112,15 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
       if (edge?.kind === "causal") {
         const prev = nodeValues.get(edge.to) ?? 0;
         nodeValues.set(edge.to, prev + s.strength * edge.polarity);
+        if (s.hopsRemaining > 0) {
+          const relay = emitRelayFragments(
+            causalEdgesFrom.get(edge.to) ?? [],
+            s.strength,
+            s.hopsRemaining - 1,
+          );
+          newSignals.push(...relay.signals);
+          newPending.push(...relay.pending);
+        }
       }
     } else {
       stillTravelling.push(advanced);
@@ -113,80 +129,6 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
 
   // §7.2 step 6 — post-clamp: re-clamp after arrivals
   resolveConstraints(nodeValues, graph.nodes, constraintEdges);
-
-  // §7.2 steps 8–9 — emit signals for nodes where |delta| >= EMIT_THRESHOLD.
-  //    prevNodeValues captures end-of-last-step, so inject() deltas (nodeValues only)
-  //    are included in the delta comparison here.
-  //    Staggered-density model (DR--20260330): weight=N emits N signals of strength
-  //    delta/N, staggered evenly across EDGE_TRANSIT_TICKS so they appear as N
-  //    equally-spaced particles. Total effect per emission = delta (weight-invariant).
-  const newSignals: Signal[] = [];
-  const newPending: PendingSignal[] = [];
-  for (const node of graph.nodes) {
-    const delta =
-      (nodeValues.get(node.id) ?? node.initial) -
-      (sim.prevNodeValues.get(node.id) ?? node.initial);
-    if (Math.abs(delta) < EMIT_THRESHOLD) continue;
-    for (const edge of causalEdgesFrom.get(node.id) ?? []) {
-      if (edge.delay !== "none") {
-        // Delayed edges: stagger-after-delay (DR--20260330 v1.1).
-        // weight=N emits N signals of delta/N, each released at
-        // DELAY_TICKS + i*staggerTicks so they spread across the edge after
-        // the delay expires. weight=0 or sub-unit: single signal, full delta.
-        const delayTicks = DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT;
-        const delayCount = edge.weight >= 1 ? Math.round(edge.weight) : 1;
-        const delayStrength =
-          edge.weight >= 1 ? delta / delayCount : delta * Math.max(edge.weight, 0);
-        const delayStagger =
-          delayCount > 1
-            ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / delayCount))
-            : 0;
-        for (let i = 0; i < delayCount; i++) {
-          newPending.push({
-            signal: {
-              id: nextSignalId(),
-              edgeId: edge.id,
-              progress: 0,
-              strength: delayStrength,
-            },
-            ticksRemaining: delayTicks + i * delayStagger,
-          });
-        }
-        continue;
-      }
-      if (edge.weight === 0) continue;
-      if (edge.weight < 1) {
-        // Sub-unit weight: single attenuated signal. Preserves weight-as-attenuation
-        // semantics in the 0–1 range (e.g. weight=0.5 → half-strength signal).
-        newSignals.push({
-          id: nextSignalId(),
-          edgeId: edge.id,
-          progress: 0,
-          strength: delta * edge.weight,
-        });
-        continue;
-      }
-      // weight ≥ 1: staggered-density model. Emit count=round(weight) signals each of
-      // strength delta/count, staggered evenly across the edge transit time.
-      // Total effect = delta regardless of count (weight controls visual density only).
-      const count = Math.round(edge.weight);
-      const staggerTicks = Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count));
-      const perSignalStrength = delta / count;
-      for (let i = 0; i < count; i++) {
-        const signal: Signal = {
-          id: nextSignalId(),
-          edgeId: edge.id,
-          progress: 0,
-          strength: perSignalStrength,
-        };
-        if (i === 0) {
-          newSignals.push(signal);
-        } else {
-          newPending.push({ signal, ticksRemaining: i * staggerTicks });
-        }
-      }
-    }
-  }
 
   // §7.2 step 10 — decrement pending counters; release those at 0 into travelling
   const stillPending: PendingSignal[] = [];
@@ -210,8 +152,8 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
     signals: cappedTravelling,
     pending: stillPending,
     nodeValues,
-    prevNodeValues: new Map(nodeValues),
-    displayPrevNodeValues: new Map(sim.nodeValues),
+    prevNodeValues: new Map(nodeValues), // retained until tasks 19/20 remove it
+    displayPrevNodeValues,
     tick: sim.tick + 1,
   };
 }
@@ -254,7 +196,17 @@ function emitRelayFragments(
   const pending: PendingSignal[] = [];
   for (const edge of outgoingEdges) {
     if (edge.weight === 0) continue;
-    const count = Math.max(1, Math.round(edge.weight));
+    // Sub-unit weight: single attenuated fragment (preserves weight-as-attenuation 0–1).
+    if (edge.weight < 1) {
+      const fragment = { id: nextSignalId(), edgeId: edge.id, progress: 0, strength: strength * edge.weight, hopsRemaining };
+      if (edge.delay !== "none") {
+        pending.push({ signal: fragment, ticksRemaining: DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT });
+      } else {
+        signals.push(fragment);
+      }
+      continue;
+    }
+    const count = Math.round(edge.weight);
     if (edge.delay !== "none") {
       const delayTicks = DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT;
       const staggerTicks = count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;

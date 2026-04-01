@@ -78,3 +78,78 @@ describe('inject() — relay emit', () => {
     expect(sim1.signals[0].hopsRemaining).toBe(constants.MAX_HOPS)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Tasks 10–12: step() arrival — value change + relay fan-out + hop termination
+// ---------------------------------------------------------------------------
+
+describe('step() — signal arrival', () => {
+  it('signal arriving at B changes B.value by signal.strength × polarity', () => {
+    // Inject A → signal travels A→B → B.value should increase by signal.strength
+    const sim0 = inject(makeInitialSim(twoNodeGraph), twoNodeGraph, nodeA, 1)
+    const initialB = sim0.nodeValues.get(nodeB) ?? 0
+    // Run enough steps for signal to arrive (transit = ~92 ticks at 1/60 dt)
+    let sim = sim0
+    for (let i = 0; i < 120; i++) sim = step(twoNodeGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(nodeB)).toBeGreaterThan(initialB)
+  })
+
+  it('signal arriving at B (hopsRemaining > 0) triggers relay signals on B outgoing edges', () => {
+    // Build A→B→C chain; inject A; after B receives, C should also receive
+    const nodeC = makeNodeId('C')
+    const edgeBC = makeEdgeId('BC')
+    const chainGraph: Graph = {
+      nodes: [
+        { id: nodeA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeC, label: 'C', x: 200, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: edgeAB, kind: 'causal', from: nodeA, to: nodeB, polarity: 1, weight: 1, delay: 'none', transferFn: 'linear' },
+        { id: edgeBC, kind: 'causal', from: nodeB, to: nodeC, polarity: 1, weight: 1, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    const initialC = 5
+    let sim = inject(makeInitialSim(chainGraph), chainGraph, nodeA, 1)
+    // Run enough ticks for signal to reach C (2 edge transits ≈ 185 ticks)
+    for (let i = 0; i < 250; i++) sim = step(chainGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(nodeC)).toBeGreaterThan(initialC)
+  })
+
+  it('signal arriving at B with hopsRemaining=0 does NOT emit relay signals', () => {
+    // Inject with strength=1, check that after B receives a hop=0 signal,
+    // no further signals appear for C on a A→B→C chain
+    const nodeC = makeNodeId('C2')
+    const edgeBC = makeEdgeId('BC2')
+    const chainGraph: Graph = {
+      nodes: [
+        { id: nodeA, label: 'A', x: 0,   y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeB, label: 'B', x: 100, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+        { id: nodeC, label: 'C', x: 200, y: 0, radius: 40, min: 0, max: 10, initial: 5 },
+      ],
+      edges: [
+        { id: edgeAB, kind: 'causal', from: nodeA, to: nodeB, polarity: 1, weight: 1, delay: 'none', transferFn: 'linear' },
+        { id: edgeBC, kind: 'causal', from: nodeB, to: nodeC, polarity: 1, weight: 1, delay: 'none', transferFn: 'linear' },
+      ],
+    }
+    // Manually place a signal on A→B with hopsRemaining=0
+    const sim0 = makeInitialSim(chainGraph)
+    const simWithSignal = {
+      ...sim0,
+      signals: [{
+        id: 's-zero',
+        edgeId: edgeAB,
+        progress: 0.99,   // about to arrive
+        strength: 1,
+        hopsRemaining: 0,
+      }],
+    }
+    const initialC = sim0.nodeValues.get(nodeC) ?? 5
+    let sim = step(chainGraph, simWithSignal, 1 / 60)
+    // B should have received the signal (value change)
+    expect(sim.nodeValues.get(nodeB)).toBeGreaterThan(5)
+    // After enough ticks, C should NOT have changed (no relay)
+    for (let i = 0; i < 200; i++) sim = step(chainGraph, sim, 1 / 60)
+    expect(sim.nodeValues.get(nodeC)).toBe(initialC)
+  })
+})
