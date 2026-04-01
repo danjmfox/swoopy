@@ -151,7 +151,7 @@ Tertiary users are developers building on or extending the tool.
 | GE-10 | Duplicate causal edges between the same node pair in the same direction are not permitted; duplicate constraint edges of the same kind (ceiling or floor) from the same source to the same target are not permitted; a ceiling and a floor constraint between the same pair are permitted                                                                        |
 | GE-11 | Each node has a configurable min and max value (defaults: 0 and 10)                                                                                                                                                                                                                                                                                              |
 | GE-12 | Each node has a configurable initial value, used as the reset state (default: 0)                                                                                                                                                                                                                                                                                 |
-| GE-13 | Each edge has a configurable weight representing coupling density (default: 1.0, range: 0–5); weight=N causes N signal particles to travel the edge per emission; weight is rendered as line thickness — weight 1 = standard width, weight 5 = maximum width; this allows relative visual emphasis ("this edge is more active") without changing system dynamics |
+| GE-13 | Each edge has a configurable weight representing coupling amplitude (default: 1.0, range: 0–5); weight=N causes N signal fragments to travel the edge per relay event, each carrying full signal strength — total effect = N × strength; weight is rendered as line thickness — weight 1 = standard width, weight 5 = maximum width; higher weight means both more visual activity and stronger causal influence |
 | GE-14 | Each edge has a configurable delay level: none, short (days), medium (weeks), long (months)                                                                                                                                                                                                                                                                      |
 | GE-15 | Delay level is rendered as vertical bars on the edge curve: none = no marks, short = \|\|, medium = \|\|\|\|, long = \|\|\|\|\|\|                                                                                                                                                                                                                                |
 | GE-16 | A fixed-size hit region exists on the edge curve for delay cycling regardless of whether delay marks are currently visible; double-clicking this region cycles none → \|\| → \|\|\|\| → \|\|\|\|\|\| → none                                                                                                                                                      |
@@ -343,26 +343,29 @@ interface Node {
    - If `effective_min > effective_max`: floor wins — pin the node to `effective_min`
    - Otherwise clamp current value to `[effective_min, effective_max]`
    - _(This pre-clamp ensures the node enters the step within its constrained range before arrivals are applied)_
-2. Advance all signal progress values by `SIGNAL_SPEED × dt`
-3. Collect arrived signals (progress ≥ 1)
-4. Apply arrived signals to destination node values (`strength × edge.polarity`)
+2. Snapshot `nodeValues` as `displayPrevNodeValues` (renderer trend arrows read this)
+3. Advance all signal progress values by `SIGNAL_SPEED × dt`
+4. For each arrived signal (progress ≥ 1):
+   - Apply to destination: `node.value += signal.strength × edge.polarity`
+   - If `signal.hopsRemaining > 0`: emit relay fragments on all outgoing causal edges of the
+     destination with `hopsRemaining = signal.hopsRemaining − 1` (relay propagation model —
+     DR--20260401--engine--relay-propagation-model)
 5. Clamp all node values to their effective max and min as recomputed from current constraint source values
-   - _(Re-clamping here is necessary: arrivals in step 4 may have pushed values outside the constrained range; constraint sources may also have changed value during this step)_
-6. Cull values within 0.001 of `initial` back to `initial`
-7. Compare start-of-step node values against end-of-step values
-8. For each node where |delta| ≥ EMIT_THRESHOLD, emit signals per outgoing causal edge
-   (staggered-density model — DR--20260330--engine--staggered-density-signals):
-   - If `edge.weight === 0`: skip — no signal emitted
-   - If `edge.weight < 1` (sub-unit attenuation): emit 1 signal of `strength = delta × edge.weight`
-   - If `edge.weight ≥ 1`: let `count = round(weight)`. Emit `count` signals each of
-     `strength = delta / count`. Signal 0 enters the travelling queue immediately; signals 1…N-1
-     enter the pending queue with `ticksRemaining = i × floor(EDGE_TRANSIT_TICKS / count)`,
-     so they depart staggered and appear as equally-spaced particles on the canvas.
-     Total effect = delta (weight controls visual density, not amplitude).
-   - Delayed edges (`edge.delay ≠ none`): emit 1 signal of `strength = delta` into the pending
-     queue with the named delay level tick count. Stagger is not applied.
-9. Decrement pending queue counters by 1; release signals whose counter reaches 0 into the travelling queue
-10. Cap total travelling signal count at MAX_SIGNALS, preferring signals with highest progress
+   - _(Re-clamping here is necessary: arrivals in step 4 may have pushed values outside the constrained range)_
+6. Decrement pending queue counters by 1; release signals whose counter reaches 0 into the travelling queue
+7. Cap total travelling signal count at MAX_SIGNALS, preferring signals with highest progress
+
+**Relay fragment emission** (shared by `inject()` and step arrival relay):
+- `weight === 0`: no fragment emitted
+- `weight < 1`: 1 fragment of `strength = signal.strength × weight` (attenuation)
+- `weight ≥ 1`: let `count = round(weight)`. Emit `count` fragments each of `strength = signal.strength`,
+  staggered by pre-advancing progress: fragment `i` starts at `progress = i / count × (SIGNAL_SPEED × EDGE_TRANSIT_TICKS / 60)`.
+  Total effect = `count × strength` (amplitude model — weight controls both visual density AND causal strength).
+- Delayed edges (`edge.delay ≠ none`): fragments enter pending queue at
+  `ticksRemaining = DELAY_TICKS[delay] + i × floor(EDGE_TRANSIT_TICKS / count)`
+
+`inject(sim, graph, nodeId, strength)` changes the node value and emits relay fragments immediately
+(before the next step); signals carry `hopsRemaining = MAX_HOPS`.
 
 The pending queue is part of `SimState`, not `Graph`. Resetting the simulation clears both queues. Constraint edges are not part of the signal queues — they are resolved fresh each step from current node values.
 
@@ -426,11 +429,19 @@ interface PendingSignal {
   readonly ticksRemaining: number;
 }
 
+interface Signal {
+  readonly id: string;
+  readonly edgeId: EdgeId;
+  readonly progress: number;
+  readonly strength: number;
+  readonly hopsRemaining: number; // decremented per edge traversal; relay stops at 0
+}
+
 interface SimState {
   readonly signals: ReadonlyArray<Signal>; // travelling
-  readonly pending: ReadonlyArray<PendingSignal>; // held at source
+  readonly pending: ReadonlyArray<PendingSignal>; // held at source (delay or stagger)
   readonly nodeValues: ReadonlyMap<NodeId, number>;
-  readonly prevNodeValues: ReadonlyMap<NodeId, number>; // baseline for delta detection
+  readonly displayPrevNodeValues: ReadonlyMap<NodeId, number>; // renderer trend arrows (SI-12)
   readonly tick: number;
 }
 ```
@@ -439,16 +450,16 @@ When non-linear transfer functions are introduced, candidates include sigmoid (s
 
 ### 7.6 Constants (subject to characterisation tests)
 
-| Constant           | Provisional value | Rationale                                                                                       |
-| ------------------ | ----------------- | ----------------------------------------------------------------------------------------------- |
-| SIGNAL_SPEED       | 0.65              | Visually legible at typical edge lengths                                                        |
-| EMIT_THRESHOLD     | 0.06              | Suppresses noise without masking weak signals                                                   |
-| INJECT_STRENGTH    | 1.0               | One click = 1 unit = 10% of default 0–10 range; meaningful nudge without saturating immediately |
-| EDGE_TRANSIT_TICKS | 92                | Edge transit time in ticks at 60fps; used to space staggered signals evenly along an edge       |
-| DELAY_TICKS_SHORT  | 30                | Represents days — brief but perceptible at 60fps                                                |
-| DELAY_TICKS_MEDIUM | 150               | Represents weeks — noticeably deferred                                                          |
-| DELAY_TICKS_LONG   | 600               | Represents months — consequence long after cause                                                |
-| MAX_SIGNALS        | 30                | Set by characterisation test (§7.7): 6-node weight=1 reinforcing graph, 600 ticks, peak count   |
+| Constant           | Value | Rationale                                                                                       |
+| ------------------ | ----- | ----------------------------------------------------------------------------------------------- |
+| SIGNAL_SPEED       | 0.65  | Visually legible at typical edge lengths                                                        |
+| INJECT_STRENGTH    | 1.0   | One click = 1 unit = 10% of default 0–10 range; meaningful nudge without saturating immediately |
+| EDGE_TRANSIT_TICKS | 92    | Edge transit time in ticks at 60fps; used to space staggered fragments evenly along an edge     |
+| MAX_HOPS           | 8     | Empirical: saturates a 2-node reinforcing loop (inject+8 hops); supports 8-edge causal chains. Set by characterise-relay.ts (DR--20260401) |
+| DELAY_TICKS_SHORT  | 30    | Represents days — brief but perceptible at 60fps                                                |
+| DELAY_TICKS_MEDIUM | 150   | Represents weeks — noticeably deferred                                                          |
+| DELAY_TICKS_LONG   | 600   | Represents months — consequence long after cause                                                |
+| MAX_SIGNALS        | 132   | Set by characterisation: 12-node fully-connected graph = 132 edges; ensures no silent signal drop at worst case |
 
 ### 7.7 Signal cap characterisation test
 
