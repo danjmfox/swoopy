@@ -104,7 +104,8 @@ describe("inject() — relay emit", () => {
 
   it("inject signal carries hopsRemaining = MAX_HOPS", () => {
     const sim1 = inject(makeInitialSim(twoNodeGraph), twoNodeGraph, nodeA, 1);
-    expect(sim1.signals[0].hopsRemaining).toBe(constants.MAX_HOPS);
+    const signal = sim1.signals[0]
+    expect(signal?.hopsRemaining).toBe(constants.MAX_HOPS);
   });
 });
 
@@ -506,7 +507,7 @@ describe("signal aging — hopsRemaining", () => {
 describe("SimState — prevNodeValues removed", () => {
   it("SimState does not have a prevNodeValues property", () => {
     const sim = makeInitialSim(twoNodeGraph);
-    expect((sim as Record<string, unknown>).prevNodeValues).toBeUndefined();
+    expect((sim as unknown as Record<string, unknown>).prevNodeValues).toBeUndefined();
   });
 });
 

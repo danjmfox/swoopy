@@ -18,7 +18,6 @@ export { makeNodeId, makeEdgeId } from "./ids.ts";
 
 export {
   SIGNAL_SPEED,
-  EMIT_THRESHOLD,
   INJECT_STRENGTH,
   MAX_SIGNALS,
   EDGE_TRANSIT_TICKS,

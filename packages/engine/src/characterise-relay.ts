@@ -254,7 +254,7 @@ function verdict(
 ): string {
   const final = result.finalValues;
   if (name === "reinforcing") {
-    const saturated = nodeIds.every((id) => final[id] >= 9.9);
+    const saturated = nodeIds.every((id) => (final[id] ?? 0) >= 9.9);
     return saturated
       ? "SATURATE ✓"
       : `PARTIAL  (A=${final.A?.toFixed(2)} B=${final.B?.toFixed(2)})`;

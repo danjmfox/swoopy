@@ -40,15 +40,15 @@ describe('SI-15 timebombStrength', () => {
 
   it('sums absolute strength of pending signals on edges from the given node', () => {
     const pending = [
-      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 0.8 }, ticksRemaining: 3 },
-      { signal: { id: '2', edgeId: edgeAB, progress: 0, strength: -0.5 }, ticksRemaining: 1 },
+      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 0.8, hopsRemaining: 8 }, ticksRemaining: 3 },
+      { signal: { id: '2', edgeId: edgeAB, progress: 0, strength: -0.5, hopsRemaining: 8 }, ticksRemaining: 1 },
     ]
     expect(timebombStrength(pending, nodeA, edges)).toBeCloseTo(1.3)
   })
 
   it('ignores pending signals on edges not from the given node', () => {
     const pending = [
-      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 0.8 }, ticksRemaining: 2 },
+      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 0.8, hopsRemaining: 8 }, ticksRemaining: 2 },
     ]
     // nodeB is the destination, not the source
     expect(timebombStrength(pending, nodeB, edges)).toBe(0)
@@ -71,7 +71,7 @@ describe('SI-19 delayQueueIndicator', () => {
 
   it('returns fraction 0.5 when mass is half of nodeMax', () => {
     const pending = [
-      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 5 }, ticksRemaining: 3 },
+      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 5, hopsRemaining: 8 }, ticksRemaining: 3 },
     ]
     const result = delayQueueIndicator(pending, nodeA, edges, 10)
     expect(result.fraction).toBeCloseTo(0.5)
@@ -80,8 +80,8 @@ describe('SI-19 delayQueueIndicator', () => {
 
   it('returns fraction 1 and overflow true when mass exceeds nodeMax', () => {
     const pending = [
-      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 8 }, ticksRemaining: 3 },
-      { signal: { id: '2', edgeId: edgeAB, progress: 0, strength: 5 }, ticksRemaining: 2 },
+      { signal: { id: '1', edgeId: edgeAB, progress: 0, strength: 8, hopsRemaining: 8 }, ticksRemaining: 3 },
+      { signal: { id: '2', edgeId: edgeAB, progress: 0, strength: 5, hopsRemaining: 8 }, ticksRemaining: 2 },
     ]
     const result = delayQueueIndicator(pending, nodeA, edges, 10)
     expect(result.fraction).toBe(1)
