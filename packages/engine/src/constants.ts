@@ -22,14 +22,16 @@ export const NODE_COLOURS: Record<
   ColourTier,
   { swatch: string; low: string; high: string }
 > = {
-  blue:   { swatch: "#3b82f6", low: "#254d90", high: "#3b82f6" },
-  green:  { swatch: "#22c55e", low: "#196e44", high: "#22c55e" },
-  red:    { swatch: "#ef4444", low: "#7f2e37", high: "#ef4444" },
-  orange: { swatch: "#f97316", low: "#844520", high: "#f97316" },
-  yellow: { swatch: "#facc15", low: "#857220", high: "#facc15" },
-  teal:   { swatch: "#14b8a6", low: "#126868", high: "#14b8a6" },
-  purple: { swatch: "#a855f7", low: "#5c3691", high: "#a855f7" },
-  grey:   { swatch: "#6b7280", low: "#3d4555", high: "#9ca3af" },
+  // Highs: max luminance ~0.27 so white text (#f1f5f9) achieves ≥3:1 (WCAG AA large text).
+  // Lows: dark Tailwind tiers; white text contrast ≥7:1.
+  blue:   { swatch: "#3b82f6", low: "#1e40af", high: "#3b82f6" },  // 800→500
+  green:  { swatch: "#16a34a", low: "#14532d", high: "#16a34a" },  // 900→600  (~3.0:1)
+  red:    { swatch: "#ef4444", low: "#991b1b", high: "#ef4444" },  // 800→500
+  orange: { swatch: "#ea580c", low: "#7c2d12", high: "#ea580c" },  // 900→600
+  yellow: { swatch: "#a16207", low: "#713f12", high: "#a16207" },  // 900→700 (amber)
+  teal:   { swatch: "#0d9488", low: "#134e4a", high: "#0d9488" },  // 950→600
+  purple: { swatch: "#a855f7", low: "#3b0764", high: "#a855f7" },  // 950→500
+  grey:   { swatch: "#64748b", low: "#334155", high: "#64748b" },  // 700→500
 };
 
 // Signal travel speed — fraction of edge traversed per second.

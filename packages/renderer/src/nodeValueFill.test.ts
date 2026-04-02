@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { nodeValueFill, textOnFill } from "./nodeValueFill.ts";
+import { nodeValueFill } from "./nodeValueFill.ts";
 
 describe("nodeValueFill", () => {
   it("returns the low colour at ratio 0", () => {
-    // blue low = #254d90
-    expect(nodeValueFill(0, "blue")).toBe("#254d90");
+    // blue low = #1e40af (blue-800)
+    expect(nodeValueFill(0, "blue")).toBe("#1e40af");
   });
 
   it("returns the high colour at ratio 1", () => {
-    // blue high = swatch #3b82f6
+    // blue high = #3b82f6 (blue-500)
     expect(nodeValueFill(1, "blue")).toBe("#3b82f6");
   });
 
@@ -26,32 +26,8 @@ describe("nodeValueFill", () => {
   });
 
   it("uses the correct tier palette", () => {
-    // grey low = #3d4555, grey high = #9ca3af
-    expect(nodeValueFill(0, "grey")).toBe("#3d4555");
-    expect(nodeValueFill(1, "grey")).toBe("#9ca3af");
-  });
-});
-
-describe("textOnFill", () => {
-  it("returns light text on dark fills", () => {
-    // blue low #254d90 is dark — white text
-    expect(textOnFill("#254d90")).toBe("#f1f5f9");
-  });
-
-  it("returns dark text on light fills", () => {
-    // yellow swatch #facc15 has L≈0.68 — dark text needed
-    expect(textOnFill("#facc15")).toBe("#0f172a");
-  });
-
-  it("returns dark text on grey high (#9ca3af)", () => {
-    expect(textOnFill("#9ca3af")).toBe("#0f172a");
-  });
-
-  it("returns light text on pure black", () => {
-    expect(textOnFill("#000000")).toBe("#f1f5f9");
-  });
-
-  it("returns dark text on pure white", () => {
-    expect(textOnFill("#ffffff")).toBe("#0f172a");
+    // grey low = #334155 (slate-700), grey high = #64748b (slate-500)
+    expect(nodeValueFill(0, "grey")).toBe("#334155");
+    expect(nodeValueFill(1, "grey")).toBe("#64748b");
   });
 });

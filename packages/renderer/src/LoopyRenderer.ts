@@ -12,7 +12,7 @@ import {
   saturationAlpha,
   TrendTracker,
 } from "./indicators.ts";
-import { nodeValueFill, textOnFill } from "./nodeValueFill.ts";
+import { nodeValueFill } from "./nodeValueFill.ts";
 import {
   bezierPoint,
   controlPoint,
@@ -415,7 +415,7 @@ export class LoopyRenderer {
 
       // SI-12: trend arrow
       const arrow = trend === "up" ? "▲" : trend === "down" ? "▼" : "";
-      ctx.fillStyle = textOnFill(nodeFill);
+      ctx.fillStyle = "#f1f5f9";
       ctx.font = nodeLabelFont(node.radius);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -450,7 +450,7 @@ export class LoopyRenderer {
         ctx.setLineDash([4, 4]);
         ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = textOnFill(dragFill);
+        ctx.fillStyle = "#f1f5f9";
         ctx.font = "13px system-ui, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
