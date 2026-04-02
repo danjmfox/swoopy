@@ -425,6 +425,18 @@ export class LoopyRenderer {
         ctx.fillText(arrow, node.x, node.y + 8);
       }
 
+      if (node.annotation) {
+        const text =
+          node.annotation.length > 24
+            ? node.annotation.slice(0, 24) + "…"
+            : node.annotation;
+        ctx.font = "10px system-ui, sans-serif";
+        ctx.fillStyle = "#94a3b8";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText(text, node.x, node.y + node.radius + 14);
+      }
+
       if (isDragging) ctx.globalAlpha = 1;
     }
 
