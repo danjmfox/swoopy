@@ -64,10 +64,21 @@ The simulation is deliberately imprecise. Node values are qualitative proxies, n
 
 ---
 
-## Known limitations (v1)
+## Known limitations
 
+Non-Linear Transfer Functions: Currently, relationships are linear (strength × weight). Implementing sigmoid or threshold-based transfer functions (as noted in PRD §7.5) would allow for modeling "tipping points" where a relationship only activates or saturates after a specific threshold is met.
+The Annotation Layer (v2 Candidate): There is a significant opportunity to add an "instructional" layer—static callouts for goals, "Quick Fix" (QF) markers, and mental model notes. This would bridge the gap between a pure simulator and a professional presentation tool.
+Trend Visualization: While nodes currently show a simple trend arrow (▲/▼), adding a "sparkline" or value-over-time overlay would help users visualize oscillations in balancing loops that might be moving too fast to track by eye.
+Interaction Effects (Edge Modulation): In complex systems, one variable often changes the strength of a relationship between two others (e.g., "Psychological Safety" moderating the link between "Mistakes" and "Learning"). Supporting edges that point to other edges would significantly increase the tool's modeling power.
+
+- A node emitting to 2 nodes, both emitting to a 4th node (but with opposing polarity) prevents any emits from the 4th node due to all edge transits taking the same duration
 - Can't "Name" a model. Name should be reflected in the page title and on the Canvas
-- Rather than the timebomb as a dot inside the node, lets visual the wait state as a sized arc on the left of the node, mirroring the function of the stock arc on the right
+- Delay indicators are lost in 5x edges. Need to scale or be otherwise distinct.
+- Run mode prevents model edits:
+- Delete should not work in Run mode
+- Change edge polarity should not work in Run mode.
+- note the sim stays running in other modes which do allow edits. this is good. Live edits on a running sim is good for discovery, especially with undo feature.
+- stock changes are allowed in run mode
 - No mobile touch optimisation
 - No export to image or data formats
 - No annotation layer (goals, assumptions, quick-fix markers on Edges) — v2 candidate
