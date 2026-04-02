@@ -3,8 +3,8 @@ import { nodeValueFill } from "./nodeValueFill.ts";
 
 describe("nodeValueFill", () => {
   it("returns the low colour at ratio 0", () => {
-    // blue low = #bfdbfe
-    expect(nodeValueFill(0, "blue")).toBe("#bfdbfe");
+    // blue low = #254d90
+    expect(nodeValueFill(0, "blue")).toBe("#254d90");
   });
 
   it("returns the high colour at ratio 1", () => {
@@ -26,8 +26,8 @@ describe("nodeValueFill", () => {
   });
 
   it("uses the correct tier palette", () => {
-    // grey low = #d1d5db, grey high = #4b5563
-    expect(nodeValueFill(0, "grey")).toBe("#d1d5db");
-    expect(nodeValueFill(1, "grey")).toBe("#4b5563");
+    // grey low = #3d4555, grey high = #9ca3af
+    expect(nodeValueFill(0, "grey")).toBe("#3d4555");
+    expect(nodeValueFill(1, "grey")).toBe("#9ca3af");
   });
 });

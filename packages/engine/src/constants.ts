@@ -22,14 +22,14 @@ export const NODE_COLOURS: Record<
   ColourTier,
   { swatch: string; low: string; high: string }
 > = {
-  blue:   { swatch: "#3b82f6", low: "#bfdbfe", high: "#2563eb" },
-  green:  { swatch: "#22c55e", low: "#bbf7d0", high: "#16a34a" },
-  red:    { swatch: "#ef4444", low: "#fecaca", high: "#dc2626" },
-  orange: { swatch: "#f97316", low: "#fed7aa", high: "#ea580c" },
-  yellow: { swatch: "#facc15", low: "#fef08a", high: "#ca8a04" },
-  teal:   { swatch: "#14b8a6", low: "#99f6e4", high: "#0d9488" },
-  purple: { swatch: "#a855f7", low: "#e9d5ff", high: "#9333ea" },
-  grey:   { swatch: "#6b7280", low: "#d1d5db", high: "#4b5563" },
+  blue:   { swatch: "#3b82f6", low: "#254d90", high: "#2563eb" },
+  green:  { swatch: "#22c55e", low: "#196e44", high: "#16a34a" },
+  red:    { swatch: "#ef4444", low: "#7f2e37", high: "#dc2626" },
+  orange: { swatch: "#f97316", low: "#844520", high: "#ea580c" },
+  yellow: { swatch: "#facc15", low: "#857220", high: "#ca8a04" },
+  teal:   { swatch: "#14b8a6", low: "#126868", high: "#0d9488" },
+  purple: { swatch: "#a855f7", low: "#5c3691", high: "#9333ea" },
+  grey:   { swatch: "#6b7280", low: "#3d4555", high: "#9ca3af" },
 };
 
 // Signal travel speed — fraction of edge traversed per second.
