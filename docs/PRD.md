@@ -2,8 +2,8 @@
 
 ## Swoopy — Causal Loop Diagram Simulator
 
-**Version:** 0.1
-**Status:** v1 feature-complete
+**Version:** 2.0
+**Status:** v2.0.0 — relay propagation engine
 **Stack:** TypeScript · pnpm workspaces · Vite · React · Zustand · Canvas 2D · Vitest
 
 ---
@@ -259,7 +259,7 @@ The toolbar mode buttons must reflect spring-loaded state with a visually distin
 ### 5.2 Correctness
 
 - Node values must be clamped to [min, max] after each step, including after signal arrival
-- Signal emission must detect deltas across the full step, including direct injections, not only signal arrivals
+- Relay propagation must fan out on all outgoing causal edges of the destination node when `hopsRemaining > 0`
 - Polarity inversion must be applied at the edge, not at the emitting node
 
 ### 5.3 Testability
@@ -381,9 +381,9 @@ The pending queue is part of `SimState`, not `Graph`. Resetting the simulation c
 
 Tick constants are named and committed alongside a comment explaining the intended human-scale mapping. The simulation has no concept of real time — the mapping is a communication convention for the modeller, not a simulation invariant.
 
-### 7.4 inject(sim, nodeId, strength) → SimState
+### 7.4 inject(sim, graph, nodeId, strength) → SimState
 
-Returns a new SimState with the node's value incremented by strength. Clamping to [min, max] is applied by the next `step()` call, not here — this preserves the delta signal that `step()` needs to detect.
+Returns a new SimState with the node's value incremented by strength and relay fragments emitted on all outgoing causal edges with `hopsRemaining = MAX_HOPS`. Clamping to [min, max] is applied at the end of the next `step()` call.
 
 ### 7.5 Transfer functions (future extension point)
 
@@ -395,13 +395,6 @@ The edge type should be designed with all current and anticipated fields from v1
 type DelayLevel = "none" | "short" | "medium" | "long";
 type EdgeKind = "causal" | "constraint";
 type ConstraintKind = "ceiling" | "floor";
-
-interface Signal {
-  readonly id: string;
-  readonly edgeId: EdgeId;
-  readonly progress: number; // 0–1 along the edge curve
-  readonly strength: number; // signed; positive or negative
-}
 
 interface CausalEdge {
   readonly kind: "causal";
@@ -509,18 +502,11 @@ Two distinct saturation states need visual differentiation: (a) natural saturati
 **Min / max / initial control in the popover**
 A two-point range slider would let users set min and max simultaneously with a natural gesture, with initial as a third point constrained between them. Default is **0–10, initial 0**; each click injection adds 1 unit — ten distinguishable states, one click is a meaningful nudge. False precision of 0–100 is inappropriate for qualitative organisational variables. To be validated in first facilitated use session; range is user-configurable per node so the default can be revised without architectural change.
 
-**Stock indicator visual form (SI-12)**
-Resolved: shows current fill level plus a trend indicator (rising / falling). Visual form is open. Candidates:
+**Stock indicator visual form (SI-12) — resolved**
+Stock arc (fill ratio 0–1, right side of node ring) + persistent trend arrow (▲/▼, held for 2s, below label). Implemented in SI-12, SI-18.
 
-- Water-level fill (arc or chord across the circle)
-- Concentric ring (outer ring fills like a dial)
-- Number overlay (current value, or normalised 0–100)
-- Combination
-
-The trend indicator (delta direction) may be better as a separate overlay layer in a future version, keeping the stock indicator itself clean. The rendering approach should not preclude adding the overlay later.
-
-**Timebomb indicator visual form (SI-15)**
-To be decided in prototype. Candidates: pulsing ring on source node; count + aggregate strength badge on the edge near source; fill arc around the node distinct from stock fill. Should show aggregate pending strength, not just signal count, to communicate magnitude of the deferred consequence.
+**Timebomb indicator visual form (SI-15) — resolved**
+Delay queue arc on the left side of the node ring, mirroring the stock arc. Encodes pending signal mass relative to node max. Implemented in SI-15, SI-19.
 
 ---
 
