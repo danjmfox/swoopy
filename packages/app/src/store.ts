@@ -27,6 +27,7 @@ import {
   serialize,
   deserialize,
   NODE_SIZE_RADII,
+  NODE_COLOURS,
 } from "@swoopy/engine";
 
 const DELAY_CYCLE: DelayLevel[] = ["none", "short", "medium", "long"];
@@ -73,7 +74,7 @@ interface StoreState {
   updateNode: (
     id: NodeId,
     patch: Partial<
-      Pick<Node, "label" | "min" | "max" | "initial" | "sizeTier">
+      Pick<Node, "label" | "min" | "max" | "initial" | "sizeTier" | "colourTier">
     >,
   ) => void;
   moveNode: (id: NodeId, x: number, y: number) => void;
@@ -215,6 +216,7 @@ export const useStore = create<StoreState>((set, get) => ({
       y,
       radius: NODE_SIZE_RADII.m,
       sizeTier: "m" as const,
+      colourTier: "blue" as const,
       min: 0,
       max: 10,
       initial: 5,

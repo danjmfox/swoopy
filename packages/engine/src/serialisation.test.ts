@@ -4,9 +4,9 @@ import { seedGraph } from "./population.test.ts";
 
 // SE-01, SE-04
 describe("serialize", () => {
-  it("emits version 2", () => {
+  it("emits version 3", () => {
     const blob = serialize(seedGraph);
-    expect(blob).toMatchObject({ version: 2 });
+    expect(blob).toMatchObject({ version: 3 });
   });
 });
 
@@ -30,9 +30,9 @@ describe("deserialize", () => {
     );
   });
 
-  it("throws for version 3 (future unknown version)", () => {
-    expect(() => deserialize({ version: 3, graph: seedGraph })).toThrow(
-      /version 3/,
+  it("throws for version 4 (future unknown version)", () => {
+    expect(() => deserialize({ version: 4, graph: seedGraph })).toThrow(
+      /version 4/,
     );
   });
 });
@@ -60,5 +60,32 @@ describe("deserialize v1 migration", () => {
     };
     const graph = deserialize(v1Blob);
     expect(graph.nodes[0]).toMatchObject({ sizeTier: "m" });
+  });
+});
+
+// GE-35: v2→v3 migration
+describe("deserialize v2 migration", () => {
+  it("adds colourTier: 'blue' to every node in a v2 blob", () => {
+    const v2Blob = {
+      version: 2,
+      graph: {
+        nodes: [
+          {
+            id: "n1",
+            label: "A",
+            x: 0,
+            y: 0,
+            radius: 30,
+            sizeTier: "m",
+            min: 0,
+            max: 10,
+            initial: 5,
+          },
+        ],
+        edges: [],
+      },
+    };
+    const graph = deserialize(v2Blob);
+    expect(graph.nodes[0]).toMatchObject({ colourTier: "blue" });
   });
 });

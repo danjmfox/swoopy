@@ -19,6 +19,7 @@ const node = (id: string, initial = 0, min = 0, max = 10): Node => ({
   y: 0,
   radius: 40,
   sizeTier: "m",
+  colourTier: "blue",
   min,
   max,
   initial,

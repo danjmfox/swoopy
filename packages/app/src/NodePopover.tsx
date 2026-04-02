@@ -1,10 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "./store.ts";
-import type { SizeTier } from "@swoopy/engine";
+import { NODE_COLOURS } from "@swoopy/engine";
+import type { SizeTier, ColourTier } from "@swoopy/engine";
 
 const SIZE_TIERS: SizeTier[] = ["xs", "s", "m", "l", "xl"];
 const SWATCH_BASE = 10; // px diameter for XS swatch
 const SWATCH_STEP = 4;
+
+const COLOUR_TIERS: ColourTier[] = [
+  "blue",
+  "green",
+  "red",
+  "orange",
+  "yellow",
+  "teal",
+  "purple",
+  "grey",
+];
 
 export function NodePopover() {
   const editingNodeId = useStore((s) => s.editingNodeId);
@@ -94,6 +106,36 @@ export function NodePopover() {
           onChange={(e) => setInitial(Number(e.target.value))}
           style={{ ...inputStyle, width: 60 }}
         />
+      </div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <label style={labelStyle}>Colour</label>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {COLOUR_TIERS.map((tier) => {
+            const active = node.colourTier === tier;
+            return (
+              <button
+                key={tier}
+                aria-label={tier}
+                onClick={() => {
+                  if (!editingNodeId) return;
+                  updateNode(editingNodeId, { colourTier: tier });
+                }}
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  background: NODE_COLOURS[tier].swatch,
+                  border: active
+                    ? "2px solid #f1f5f9"
+                    : "2px solid transparent",
+                  cursor: "pointer",
+                  padding: 0,
+                  flexShrink: 0,
+                }}
+              />
+            );
+          })}
+        </div>
       </div>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <label style={labelStyle}>Size</label>

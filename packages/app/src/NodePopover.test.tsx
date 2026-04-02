@@ -12,6 +12,29 @@ function setup() {
   return nodeId;
 }
 
+// GE-35: colour picker in NodePopover
+describe("NodePopover colour picker", () => {
+  beforeEach(setup);
+
+  it("renders 8 colour swatch buttons", () => {
+    render(<NodePopover />);
+    const swatches = screen.getAllByRole("button", {
+      name: /^(blue|green|red|orange|yellow|teal|purple|grey)$/i,
+    });
+    expect(swatches).toHaveLength(8);
+  });
+
+  it("clicking red calls updateNode with colourTier: 'red'", () => {
+    const spy = vi.spyOn(useStore.getState(), "updateNode");
+    render(<NodePopover />);
+    fireEvent.click(screen.getByRole("button", { name: /^red$/i }));
+    expect(spy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ colourTier: "red" }),
+    );
+  });
+});
+
 // GE-34: size picker in NodePopover
 describe("NodePopover size picker", () => {
   beforeEach(setup);

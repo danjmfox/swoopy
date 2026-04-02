@@ -8,6 +8,30 @@ export const NODE_SIZE_RADII: Record<SizeTier, number> = {
   xl: 38,
 };
 
+export type ColourTier =
+  | "blue"
+  | "green"
+  | "red"
+  | "orange"
+  | "yellow"
+  | "teal"
+  | "purple"
+  | "grey";
+
+export const NODE_COLOURS: Record<
+  ColourTier,
+  { swatch: string; low: string; high: string }
+> = {
+  blue:   { swatch: "#3b82f6", low: "#eff6ff", high: "#1d4ed8" },
+  green:  { swatch: "#22c55e", low: "#f0fdf4", high: "#15803d" },
+  red:    { swatch: "#ef4444", low: "#fef2f2", high: "#b91c1c" },
+  orange: { swatch: "#f97316", low: "#fff7ed", high: "#c2410c" },
+  yellow: { swatch: "#eab308", low: "#fefce8", high: "#a16207" },
+  teal:   { swatch: "#14b8a6", low: "#f0fdfa", high: "#0f766e" },
+  purple: { swatch: "#a855f7", low: "#faf5ff", high: "#7e22ce" },
+  grey:   { swatch: "#6b7280", low: "#f9fafb", high: "#374151" },
+};
+
 // Signal travel speed — fraction of edge traversed per second.
 // Provisional: visually legible at typical canvas edge lengths. (PRD §7.6)
 export const SIGNAL_SPEED = 0.65;
