@@ -12,6 +12,7 @@ import {
   saturationAlpha,
   TrendTracker,
 } from "./indicators.ts";
+import { nodeValueFill } from "./nodeValueFill.ts";
 import {
   bezierPoint,
   controlPoint,
@@ -40,15 +41,6 @@ export interface RendererStore {
   mode: string;
   dragPosition?: { nodeId: NodeId; x: number; y: number } | null;
   hoveredEdgeRegion?: { edgeId: string; region: "delay" | "weight" } | null;
-}
-
-function activationColour(value: number, min: number, max: number): string {
-  const t =
-    max > min ? Math.max(0, Math.min(1, (value - min) / (max - min))) : 0;
-  const r = Math.round(30 + t * 200);
-  const g = Math.round(30 + (1 - Math.abs(t - 0.5) * 2) * 80);
-  const b = Math.round(200 - t * 160);
-  return `rgb(${r},${g},${b})`;
 }
 
 export function arrowheadDimensions(weight: number): {
@@ -363,7 +355,11 @@ export class LoopyRenderer {
       // Base fill
       ctx.beginPath();
       ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-      ctx.fillStyle = activationColour(value, node.min, node.max);
+      const nodeFill = nodeValueFill(
+        node.max > node.min ? (value - node.min) / (node.max - node.min) : 0,
+        node.colourTier,
+      );
+      ctx.fillStyle = nodeFill;
       ctx.fill();
 
       // SI-12: stock fill arc — thin ring showing position in [min, max]
@@ -440,7 +436,11 @@ export class LoopyRenderer {
         ctx.globalAlpha = 0.75;
         ctx.beginPath();
         ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2);
-        ctx.fillStyle = activationColour(value, node.min, node.max);
+        const dragFill = nodeValueFill(
+          node.max > node.min ? (value - node.min) / (node.max - node.min) : 0,
+          node.colourTier,
+        );
+        ctx.fillStyle = dragFill;
         ctx.fill();
         ctx.beginPath();
         ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2);

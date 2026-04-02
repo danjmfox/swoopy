@@ -1,4 +1,4 @@
-import type { SizeTier } from "./constants.js";
+import type { ColourTier, SizeTier } from "./constants.js";
 
 export type NodeId = string & { readonly __brand: "NodeId" };
 export type EdgeId = string & { readonly __brand: "EdgeId" };
@@ -14,6 +14,7 @@ export interface Node {
   readonly y: number;
   readonly radius: number;
   readonly sizeTier: SizeTier;
+  readonly colourTier: ColourTier;
   readonly min: number;
   readonly max: number;
   readonly initial: number;

@@ -20,6 +20,7 @@ const nodes: Node[] = nodeIds.map((id, i) => ({
   y: 0,
   radius: 40,
   sizeTier: "m" as const,
+  colourTier: "blue" as const,
   min: 0,
   max: 10,
   initial: 5,

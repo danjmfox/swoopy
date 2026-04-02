@@ -19,6 +19,7 @@ function node(id: NodeId, label: string, x = 0, y = 0): Node {
     y,
     radius: 30,
     sizeTier: "m",
+    colourTier: "blue",
     min: 0,
     max: 10,
     initial: 5,
