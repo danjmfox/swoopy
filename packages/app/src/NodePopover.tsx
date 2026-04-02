@@ -28,6 +28,7 @@ export function NodePopover() {
     : null;
 
   const [label, setLabel] = useState("");
+  const [annotation, setAnnotation] = useState("");
   const [min, setMin] = useState(0);
   const [max, setMax] = useState(10);
   const [initial, setInitial] = useState(0);
@@ -36,6 +37,7 @@ export function NodePopover() {
   useEffect(() => {
     if (!node) return;
     setLabel(node.label);
+    setAnnotation(node.annotation ?? "");
     setMin(node.min);
     setMax(node.max);
     setInitial(node.initial);
@@ -46,7 +48,7 @@ export function NodePopover() {
 
   function commit() {
     if (!editingNodeId) return;
-    updateNode(editingNodeId, { label, min, max, initial });
+    updateNode(editingNodeId, { label, annotation: annotation || undefined, min, max, initial });
     closeNodeEditor();
   }
 
@@ -80,6 +82,12 @@ export function NodePopover() {
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         placeholder="Label"
+        style={inputStyle}
+      />
+      <input
+        value={annotation}
+        onChange={(e) => setAnnotation(e.target.value)}
+        placeholder="Annotation"
         style={inputStyle}
       />
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>

@@ -76,7 +76,7 @@ interface StoreState {
     patch: Partial<
       Pick<
         Node,
-        "label" | "min" | "max" | "initial" | "sizeTier" | "colourTier"
+        "label" | "min" | "max" | "initial" | "sizeTier" | "colourTier" | "annotation"
       >
     >,
   ) => void;

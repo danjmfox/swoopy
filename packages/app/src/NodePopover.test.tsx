@@ -35,6 +35,28 @@ describe("NodePopover colour picker", () => {
   });
 });
 
+// GE-36: annotation input in NodePopover
+describe("NodePopover annotation input", () => {
+  beforeEach(setup);
+
+  it("renders an annotation text input", () => {
+    render(<NodePopover />);
+    expect(screen.getByPlaceholderText("Annotation")).toBeDefined();
+  });
+
+  it("committing with annotation calls updateNode with annotation value", () => {
+    const spy = vi.spyOn(useStore.getState(), "updateNode");
+    render(<NodePopover />);
+    const input = screen.getByPlaceholderText("Annotation");
+    fireEvent.change(input, { target: { value: "GDP per capita" } });
+    fireEvent.click(screen.getByRole("button", { name: /ok/i }));
+    expect(spy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ annotation: "GDP per capita" }),
+    );
+  });
+});
+
 // GE-34: size picker in NodePopover
 describe("NodePopover size picker", () => {
   beforeEach(setup);
