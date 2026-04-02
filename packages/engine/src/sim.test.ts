@@ -10,8 +10,28 @@ const edgeAB = makeEdgeId();
 
 const graph: Graph = {
   nodes: [
-    { id: nodeA, label: "A", x: 0, y: 0, min: 0, max: 10, initial: 5 },
-    { id: nodeB, label: "B", x: 100, y: 0, min: 0, max: 10, initial: 5 },
+    {
+      id: nodeA,
+      label: "A",
+      x: 0,
+      y: 0,
+      radius: 30,
+      sizeTier: "m",
+      min: 0,
+      max: 10,
+      initial: 5,
+    },
+    {
+      id: nodeB,
+      label: "B",
+      x: 100,
+      y: 0,
+      radius: 30,
+      sizeTier: "m",
+      min: 0,
+      max: 10,
+      initial: 5,
+    },
   ],
   edges: [
     {

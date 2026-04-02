@@ -7,37 +7,30 @@
  */
 import { describe, it, expect } from "vitest";
 import { makeNodeId, makeEdgeId } from "./ids.ts";
-import type { Signal, Graph } from "./types.ts";
+import type { Signal, Graph, Node, NodeId } from "./types.ts";
 import * as constants from "./constants.ts";
 import { makeInitialSim, inject, step } from "./sim.ts";
+
+function node(id: NodeId, label: string, x = 0, y = 0): Node {
+  return {
+    id,
+    label,
+    x,
+    y,
+    radius: 30,
+    sizeTier: "m",
+    min: 0,
+    max: 10,
+    initial: 5,
+  };
+}
 
 const nodeA = makeNodeId("A");
 const nodeB = makeNodeId("B");
 const edgeAB = makeEdgeId("AB");
 
 const twoNodeGraph: Graph = {
-  nodes: [
-    {
-      id: nodeA,
-      label: "A",
-      x: 0,
-      y: 0,
-      radius: 40,
-      min: 0,
-      max: 10,
-      initial: 5,
-    },
-    {
-      id: nodeB,
-      label: "B",
-      x: 100,
-      y: 0,
-      radius: 40,
-      min: 0,
-      max: 10,
-      initial: 5,
-    },
-  ],
+  nodes: [node(nodeA, "A"), node(nodeB, "B", 100)],
   edges: [
     {
       id: edgeAB,
@@ -104,7 +97,7 @@ describe("inject() — relay emit", () => {
 
   it("inject signal carries hopsRemaining = MAX_HOPS", () => {
     const sim1 = inject(makeInitialSim(twoNodeGraph), twoNodeGraph, nodeA, 1);
-    const signal = sim1.signals[0]
+    const signal = sim1.signals[0];
     expect(signal?.hopsRemaining).toBe(constants.MAX_HOPS);
   });
 });
@@ -129,38 +122,7 @@ describe("step() — signal arrival", () => {
     const nodeC = makeNodeId("C");
     const edgeBC = makeEdgeId("BC");
     const chainGraph: Graph = {
-      nodes: [
-        {
-          id: nodeA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeC,
-          label: "C",
-          x: 200,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-      ],
+      nodes: [node(nodeA, "A"), node(nodeB, "B", 100), node(nodeC, "C", 200)],
       edges: [
         {
           id: edgeAB,
@@ -197,38 +159,7 @@ describe("step() — signal arrival", () => {
     const nodeC = makeNodeId("C2");
     const edgeBC = makeEdgeId("BC2");
     const chainGraph: Graph = {
-      nodes: [
-        {
-          id: nodeA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeC,
-          label: "C",
-          x: 200,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-      ],
+      nodes: [node(nodeA, "A"), node(nodeB, "B", 100), node(nodeC, "C", 200)],
       edges: [
         {
           id: edgeAB,
@@ -285,28 +216,7 @@ describe("weight — amplitude fragments", () => {
     // inject A on a graph where A→B has weight=3
     // inject() should emit 3 fragments for that edge
     const heavyGraph: Graph = {
-      nodes: [
-        {
-          id: nodeA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-      ],
+      nodes: [node(nodeA, "A"), node(nodeB, "B", 100)],
       edges: [
         {
           id: edgeAB,
@@ -326,28 +236,7 @@ describe("weight — amplitude fragments", () => {
 
   it("each fragment on weight=3 edge carries full signal.strength (not divided)", () => {
     const heavyGraph: Graph = {
-      nodes: [
-        {
-          id: nodeA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-      ],
+      nodes: [node(nodeA, "A"), node(nodeB, "B", 100)],
       edges: [
         {
           id: edgeAB,
@@ -369,28 +258,7 @@ describe("weight — amplitude fragments", () => {
 
   it("weight=3 fragments are staggered (progress values are not all zero)", () => {
     const heavyGraph: Graph = {
-      nodes: [
-        {
-          id: nodeA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-      ],
+      nodes: [node(nodeA, "A"), node(nodeB, "B", 100)],
       edges: [
         {
           id: edgeAB,
@@ -422,38 +290,7 @@ describe("signal aging — hopsRemaining", () => {
     const nodeC = makeNodeId("C3");
     const edgeBC = makeEdgeId("BC3");
     const chainGraph: Graph = {
-      nodes: [
-        {
-          id: nodeA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeC,
-          label: "C",
-          x: 200,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-      ],
+      nodes: [node(nodeA, "A"), node(nodeB, "B", 100), node(nodeC, "C", 200)],
       edges: [
         {
           id: edgeAB,
@@ -507,7 +344,9 @@ describe("signal aging — hopsRemaining", () => {
 describe("SimState — prevNodeValues removed", () => {
   it("SimState does not have a prevNodeValues property", () => {
     const sim = makeInitialSim(twoNodeGraph);
-    expect((sim as unknown as Record<string, unknown>).prevNodeValues).toBeUndefined();
+    expect(
+      (sim as unknown as Record<string, unknown>).prevNodeValues,
+    ).toBeUndefined();
   });
 });
 
@@ -520,28 +359,7 @@ describe("integration — reinforcing loop", () => {
     const nodeLoopA = makeNodeId("LoopA");
     const nodeLoopB = makeNodeId("LoopB");
     const graph: Graph = {
-      nodes: [
-        {
-          id: nodeLoopA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeLoopB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-      ],
+      nodes: [node(nodeLoopA, "A"), node(nodeLoopB, "B", 100)],
       edges: [
         {
           id: makeEdgeId("la-lb"),
@@ -578,28 +396,7 @@ describe("integration — balancing loop", () => {
     const nodeBalA = makeNodeId("BalA");
     const nodeBalB = makeNodeId("BalB");
     const graph: Graph = {
-      nodes: [
-        {
-          id: nodeBalA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeBalB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-      ],
+      nodes: [node(nodeBalA, "A"), node(nodeBalB, "B", 100)],
       edges: [
         {
           id: makeEdgeId("ba-bb"),
@@ -641,46 +438,10 @@ describe("integration — diamond graph", () => {
     const nodeDD = makeNodeId("DiamD");
     const graph: Graph = {
       nodes: [
-        {
-          id: nodeDA,
-          label: "A",
-          x: 0,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeDB,
-          label: "B",
-          x: 100,
-          y: 0,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeDC,
-          label: "C",
-          x: 100,
-          y: 100,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
-        {
-          id: nodeDD,
-          label: "D",
-          x: 200,
-          y: 50,
-          radius: 40,
-          min: 0,
-          max: 10,
-          initial: 5,
-        },
+        node(nodeDA, "A"),
+        node(nodeDB, "B", 100),
+        node(nodeDC, "C", 100, 100),
+        node(nodeDD, "D", 200, 50),
       ],
       edges: [
         {

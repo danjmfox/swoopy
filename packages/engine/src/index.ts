@@ -24,7 +24,9 @@ export {
   DELAY_TICKS_SHORT,
   DELAY_TICKS_MEDIUM,
   DELAY_TICKS_LONG,
+  NODE_SIZE_RADII,
 } from "./constants.ts";
+export type { SizeTier } from "./constants.ts";
 
 export { makeInitialSim, step, inject } from "./sim.ts";
 export { serialize, deserialize } from "./serialisation.ts";

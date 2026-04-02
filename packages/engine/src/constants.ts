@@ -1,3 +1,13 @@
+export type SizeTier = "xs" | "s" | "m" | "l" | "xl";
+
+export const NODE_SIZE_RADII: Record<SizeTier, number> = {
+  xs: 22,
+  s: 26,
+  m: 30,
+  l: 34,
+  xl: 38,
+};
+
 // Signal travel speed — fraction of edge traversed per second.
 // Provisional: visually legible at typical canvas edge lengths. (PRD §7.6)
 export const SIGNAL_SPEED = 0.65;

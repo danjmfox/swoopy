@@ -26,6 +26,7 @@ import {
   step,
   serialize,
   deserialize,
+  NODE_SIZE_RADII,
 } from "@swoopy/engine";
 
 const DELAY_CYCLE: DelayLevel[] = ["none", "short", "medium", "long"];
@@ -71,7 +72,9 @@ interface StoreState {
   deleteEdge: (id: EdgeId) => void;
   updateNode: (
     id: NodeId,
-    patch: Partial<Pick<Node, "label" | "min" | "max" | "initial">>,
+    patch: Partial<
+      Pick<Node, "label" | "min" | "max" | "initial" | "sizeTier">
+    >,
   ) => void;
   moveNode: (id: NodeId, x: number, y: number) => void;
   nudgeNode: (id: NodeId, dx: number, dy: number) => void;
@@ -210,7 +213,8 @@ export const useStore = create<StoreState>((set, get) => ({
       label: "New Node",
       x,
       y,
-      radius: 50,
+      radius: NODE_SIZE_RADII.m,
+      sizeTier: "m" as const,
       min: 0,
       max: 10,
       initial: 5,
@@ -320,7 +324,9 @@ export const useStore = create<StoreState>((set, get) => ({
           max,
           Math.max(min, patch.initial ?? n.initial),
         );
-        return { ...n, ...patch, min, max, initial };
+        const radius =
+          patch.sizeTier != null ? NODE_SIZE_RADII[patch.sizeTier] : n.radius;
+        return { ...n, ...patch, min, max, initial, radius };
       }),
     };
     set({ past: [...past, graph], future: [], graph: next });
