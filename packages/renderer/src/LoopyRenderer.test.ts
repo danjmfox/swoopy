@@ -1087,4 +1087,198 @@ describe("LoopyRenderer", () => {
     vi.advanceTimersByTime(10 * (1000 / 60));
     expect(tickSim.mock.calls.length).toBe(callsAtStop);
   });
+
+  it("GE-36 draws annotation text below node circle when annotation is set", () => {
+    const fillTexts: { text: string; x: number; y: number }[] = [];
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      setLineDash: vi.fn(),
+      scale: vi.fn(),
+      fillText: vi
+        .fn()
+        .mockImplementation((text: string, x: number, y: number) => {
+          fillTexts.push({ text, x, y });
+        }),
+      fillStyle: "" as string,
+      strokeStyle: "" as string,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    const annotatedNode: Node = {
+      ...nodeA,
+      annotation: "GDP per capita",
+    };
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: { nodes: [annotatedNode], edges: [] },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    const annotationCall = fillTexts.find((t) => t.text === "GDP per capita");
+    expect(annotationCall).toBeDefined();
+    expect(annotationCall!.y).toBe(annotatedNode.y + annotatedNode.radius + 14);
+  });
+
+  it("GE-36 truncates annotation to 24 chars with ellipsis in renderer", () => {
+    const fillTexts: { text: string; x: number; y: number }[] = [];
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      setLineDash: vi.fn(),
+      scale: vi.fn(),
+      fillText: vi
+        .fn()
+        .mockImplementation((text: string, x: number, y: number) => {
+          fillTexts.push({ text, x, y });
+        }),
+      fillStyle: "" as string,
+      strokeStyle: "" as string,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    const annotatedNode: Node = {
+      ...nodeA,
+      annotation: "This is a very long annotation string",
+    };
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: { nodes: [annotatedNode], edges: [] },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    const annotationCall = fillTexts.find((t) => t.text === "This is a very long anno…");
+    expect(annotationCall).toBeDefined();
+  });
+
+  it("GE-36 does not draw annotation text when annotation is undefined", () => {
+    const fillTexts: string[] = [];
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      setLineDash: vi.fn(),
+      scale: vi.fn(),
+      fillText: vi.fn().mockImplementation((text: string) => {
+        fillTexts.push(text);
+      }),
+      fillStyle: "" as string,
+      strokeStyle: "" as string,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // nodeA has no annotation field
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: { nodes: [nodeA], edges: [] },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    // Only label "A" and no annotation-like text
+    expect(fillTexts.every((t) => t === nodeA.label || t === "▲" || t === "▼")).toBe(true);
+  });
 });

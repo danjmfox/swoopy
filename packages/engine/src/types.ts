@@ -15,6 +15,7 @@ export interface Node {
   readonly radius: number;
   readonly sizeTier: SizeTier;
   readonly colourTier: ColourTier;
+  readonly annotation?: string;
   readonly min: number;
   readonly max: number;
   readonly initial: number;
