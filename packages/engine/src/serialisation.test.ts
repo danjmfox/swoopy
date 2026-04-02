@@ -4,9 +4,9 @@ import { seedGraph } from "./population.test.ts";
 
 // SE-01, SE-04
 describe("serialize", () => {
-  it("returns a value with a version field", () => {
+  it("emits version 2", () => {
     const blob = serialize(seedGraph);
-    expect(blob).toMatchObject({ version: 1 });
+    expect(blob).toMatchObject({ version: 2 });
   });
 });
 
@@ -24,12 +24,41 @@ describe("deserialize", () => {
     );
   });
 
-  it("S4 — v1 has no migration path: version 0 is unknown and throws", () => {
-    // Serialisation format is versioned from day one (SE-04). There is no migration path in v1.
-    // Any data serialised under a different version number is rejected. This test guards
-    // that contract: if a migration path is added, this test should be updated to assert it.
+  it("throws a descriptive error for version 0", () => {
     expect(() => deserialize({ version: 0, graph: seedGraph })).toThrow(
       /Unsupported/,
     );
+  });
+
+  it("throws for version 3 (future unknown version)", () => {
+    expect(() => deserialize({ version: 3, graph: seedGraph })).toThrow(
+      /version 3/,
+    );
+  });
+});
+
+// GE-34: v1→v2 migration
+describe("deserialize v1 migration", () => {
+  it("adds sizeTier: 'm' to every node in a v1 blob", () => {
+    const v1Blob = {
+      version: 1,
+      graph: {
+        nodes: [
+          {
+            id: "n1",
+            label: "A",
+            x: 0,
+            y: 0,
+            radius: 50,
+            min: 0,
+            max: 10,
+            initial: 5,
+          },
+        ],
+        edges: [],
+      },
+    };
+    const graph = deserialize(v1Blob);
+    expect(graph.nodes[0]).toMatchObject({ sizeTier: "m" });
   });
 });

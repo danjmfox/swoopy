@@ -1,6 +1,6 @@
-import type { Graph } from "./types.ts";
+import type { Graph, Node } from "./types.ts";
 
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 export interface SerializedGraph {
   version: number;
@@ -11,12 +11,25 @@ export function serialize(graph: Graph): SerializedGraph {
   return { version: CURRENT_VERSION, graph };
 }
 
+function migrateV1toV2(graph: { nodes: unknown[]; edges: unknown[] }): Graph {
+  const nodes = graph.nodes.map((n) => {
+    const node = n as Record<string, unknown>;
+    return { ...node, sizeTier: node["sizeTier"] ?? "m" } as Node;
+  });
+  return { nodes, edges: graph.edges as Graph["edges"] };
+}
+
 export function deserialize(blob: unknown): Graph {
   const { version, graph } = blob as SerializedGraph;
-  if (version !== CURRENT_VERSION) {
-    throw new Error(
-      `Unsupported serialisation version ${version}. Expected ${CURRENT_VERSION}.`,
+  if (version === 1) {
+    return migrateV1toV2(
+      graph as unknown as { nodes: unknown[]; edges: unknown[] },
     );
   }
-  return graph;
+  if (version === CURRENT_VERSION) {
+    return graph;
+  }
+  throw new Error(
+    `Unsupported serialisation version ${version}. Expected ${CURRENT_VERSION}.`,
+  );
 }

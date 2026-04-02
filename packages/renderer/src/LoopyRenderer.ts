@@ -20,6 +20,7 @@ import {
   T_POLARITY,
   T_WEIGHT,
 } from "./geometry.ts";
+import { nodeLabelFont } from "./nodeLabelFont.ts";
 
 const MAX_DT = 0.05;
 const DELAY_MARKS: Record<string, number> = {
@@ -352,7 +353,11 @@ export class LoopyRenderer {
         node.max,
         prevValue,
       );
-      const trend = this.trendTracker.update(node.id, rawTrend, performance.now());
+      const trend = this.trendTracker.update(
+        node.id,
+        rawTrend,
+        performance.now(),
+      );
       if (isDragging) ctx.globalAlpha = 0.3;
 
       // Base fill
@@ -378,9 +383,8 @@ export class LoopyRenderer {
       }
 
       // SI-19: delay queue arc — mirrors stock arc on the left side
-      const { fraction: queueFraction, overflow: queueOverflow } = delayQueueIndicator(
-        sim.pending, node.id, graph.edges, node.max,
-      );
+      const { fraction: queueFraction, overflow: queueOverflow } =
+        delayQueueIndicator(sim.pending, node.id, graph.edges, node.max);
       if (queueFraction > 0) {
         ctx.beginPath();
         ctx.arc(
@@ -415,7 +419,7 @@ export class LoopyRenderer {
       // SI-12: trend arrow
       const arrow = trend === "up" ? "▲" : trend === "down" ? "▼" : "";
       ctx.fillStyle = "#f1f5f9";
-      ctx.font = "13px system-ui, sans-serif";
+      ctx.font = nodeLabelFont(node.radius);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(node.label, node.x, node.y - 6);
