@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nodeValueFill } from "./nodeValueFill.ts";
+import { nodeValueFill, textOnFill } from "./nodeValueFill.ts";
 
 describe("nodeValueFill", () => {
   it("returns the low colour at ratio 0", () => {
@@ -29,5 +29,29 @@ describe("nodeValueFill", () => {
     // grey low = #3d4555, grey high = #9ca3af
     expect(nodeValueFill(0, "grey")).toBe("#3d4555");
     expect(nodeValueFill(1, "grey")).toBe("#9ca3af");
+  });
+});
+
+describe("textOnFill", () => {
+  it("returns light text on dark fills", () => {
+    // blue low #254d90 is dark — white text
+    expect(textOnFill("#254d90")).toBe("#f1f5f9");
+  });
+
+  it("returns dark text on light fills", () => {
+    // yellow high #ca8a04 has L≈0.33 — dark text needed
+    expect(textOnFill("#ca8a04")).toBe("#0f172a");
+  });
+
+  it("returns dark text on grey high (#9ca3af)", () => {
+    expect(textOnFill("#9ca3af")).toBe("#0f172a");
+  });
+
+  it("returns light text on pure black", () => {
+    expect(textOnFill("#000000")).toBe("#f1f5f9");
+  });
+
+  it("returns dark text on pure white", () => {
+    expect(textOnFill("#ffffff")).toBe("#0f172a");
   });
 });
