@@ -8,8 +8,8 @@ describe("nodeValueFill", () => {
   });
 
   it("returns the high colour at ratio 1", () => {
-    // blue high = #2563eb
-    expect(nodeValueFill(1, "blue")).toBe("#2563eb");
+    // blue high = swatch #3b82f6
+    expect(nodeValueFill(1, "blue")).toBe("#3b82f6");
   });
 
   it("returns a hex string at mid ratio", () => {
@@ -39,8 +39,8 @@ describe("textOnFill", () => {
   });
 
   it("returns dark text on light fills", () => {
-    // yellow high #ca8a04 has L≈0.33 — dark text needed
-    expect(textOnFill("#ca8a04")).toBe("#0f172a");
+    // yellow swatch #facc15 has L≈0.68 — dark text needed
+    expect(textOnFill("#facc15")).toBe("#0f172a");
   });
 
   it("returns dark text on grey high (#9ca3af)", () => {
