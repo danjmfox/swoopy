@@ -74,7 +74,10 @@ interface StoreState {
   updateNode: (
     id: NodeId,
     patch: Partial<
-      Pick<Node, "label" | "min" | "max" | "initial" | "sizeTier" | "colourTier">
+      Pick<
+        Node,
+        "label" | "min" | "max" | "initial" | "sizeTier" | "colourTier"
+      >
     >,
   ) => void;
   moveNode: (id: NodeId, x: number, y: number) => void;
