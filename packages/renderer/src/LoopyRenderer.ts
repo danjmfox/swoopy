@@ -43,7 +43,6 @@ export interface RendererStore {
   hoveredEdgeRegion?: { edgeId: string; region: "delay" | "weight" } | null;
 }
 
-
 export function arrowheadDimensions(weight: number): {
   len: number;
   half: number;

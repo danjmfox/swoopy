@@ -9,9 +9,7 @@ function hexToRgb(hex: string): [number, number, number] {
 function rgbToHex(r: number, g: number, b: number): string {
   return (
     "#" +
-    [r, g, b]
-      .map((v) => Math.round(v).toString(16).padStart(2, "0"))
-      .join("")
+    [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")
   );
 }
 
