@@ -216,3 +216,31 @@ describe("GE-37: add-annotation toolbar button", () => {
     expect(setMode).toHaveBeenCalledWith("add-annotation");
   });
 });
+
+// GE-38: History toggle button
+describe("GE-38: history toolbar button", () => {
+  it("renders a History button with title 'History'", () => {
+    const { getByTitle } = render(<Toolbar />);
+    expect(getByTitle("History")).toBeTruthy();
+  });
+
+  it("History button appears before Add Annotation button in the DOM", () => {
+    const { getByTitle } = render(<Toolbar />);
+    const history = getByTitle("History");
+    const annotation = getByTitle("Add Annotation");
+    expect(
+      history.compareDocumentPosition(annotation) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("clicking History button calls toggleHistory", () => {
+    const toggleHistory = vi.fn();
+    useStore.setState({ toggleHistory } as Parameters<
+      typeof useStore.setState
+    >[0]);
+    const { getByTitle } = render(<Toolbar />);
+    fireEvent.click(getByTitle("History"));
+    expect(toggleHistory).toHaveBeenCalledOnce();
+  });
+});

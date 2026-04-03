@@ -79,7 +79,13 @@ interface StoreState {
     patch: Partial<
       Pick<
         Node,
-        "label" | "min" | "max" | "initial" | "sizeTier" | "colourTier" | "annotation"
+        | "label"
+        | "min"
+        | "max"
+        | "initial"
+        | "sizeTier"
+        | "colourTier"
+        | "annotation"
       >
     >,
   ) => void;
@@ -137,6 +143,10 @@ interface StoreState {
   resetSim: () => void;
   setSimSpeed: (speed: number) => void;
 
+  // History overlay
+  showHistory: boolean;
+  toggleHistory: () => void;
+
   // Persistence
   loadPersistedGraph: () => void;
   shareGraph: () => Promise<void>;
@@ -182,7 +192,11 @@ export const useStore = create<StoreState>((set, get) => ({
   dragPosition: null as { nodeId: NodeId; x: number; y: number } | null,
   setDragPosition: (nodeId: NodeId, x: number, y: number) =>
     set({ dragPosition: { nodeId, x, y } }),
-  annotationDragPosition: null as { id: AnnotationId; x: number; y: number } | null,
+  annotationDragPosition: null as {
+    id: AnnotationId;
+    x: number;
+    y: number;
+  } | null,
   setAnnotationDragPosition: (id: AnnotationId, x: number, y: number) =>
     set({ annotationDragPosition: { id, x, y } }),
   hoveredEdgeRegion: null as {
@@ -228,7 +242,10 @@ export const useStore = create<StoreState>((set, get) => ({
   deleteAnnotation: (id: AnnotationId) => {
     const { graph, past } = get();
     const modelId = forkIfTransient(get, set);
-    const next = { ...graph, annotations: graph.annotations.filter((a) => a.id !== id) };
+    const next = {
+      ...graph,
+      annotations: graph.annotations.filter((a) => a.id !== id),
+    };
     set({ past: [...past, graph], future: [], graph: next });
     persist(next, modelId);
   },
@@ -237,9 +254,16 @@ export const useStore = create<StoreState>((set, get) => ({
     const modelId = forkIfTransient(get, set);
     const next = {
       ...graph,
-      annotations: graph.annotations.map((a) => (a.id === id ? { ...a, x, y } : a)),
+      annotations: graph.annotations.map((a) =>
+        a.id === id ? { ...a, x, y } : a,
+      ),
     };
-    set({ past: [...past, graph], future: [], graph: next, annotationDragPosition: null });
+    set({
+      past: [...past, graph],
+      future: [],
+      graph: next,
+      annotationDragPosition: null,
+    });
     persist(next, modelId);
   },
   updateAnnotation: (id: AnnotationId, text: string) => {
@@ -247,7 +271,9 @@ export const useStore = create<StoreState>((set, get) => ({
     const modelId = forkIfTransient(get, set);
     const next = {
       ...graph,
-      annotations: graph.annotations.map((a) => (a.id === id ? { ...a, text } : a)),
+      annotations: graph.annotations.map((a) =>
+        a.id === id ? { ...a, text } : a,
+      ),
     };
     set({ past: [...past, graph], future: [], graph: next });
     persist(next, modelId);
@@ -458,6 +484,8 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ graph: next, past: [...past, graph], future: future.slice(1) });
     persist(next, id);
   },
+  showHistory: false,
+  toggleHistory: () => set({ showHistory: !get().showHistory }),
   pauseSim: () => set({ simRunning: false }),
   resumeSim: () => set({ simRunning: true }),
   resetSim: () => {

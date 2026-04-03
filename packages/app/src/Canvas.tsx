@@ -98,6 +98,11 @@ export function Canvas() {
         setMode("add-annotation");
         return;
       }
+      if (e.key === "h") {
+        e.preventDefault();
+        useStore.getState().toggleHistory();
+        return;
+      }
     }
     function onDocKeyUp(e: KeyboardEvent) {
       if (e.key === "Alt") constraintModifierHeld = false;
@@ -143,7 +148,10 @@ export function Canvas() {
 
       if (mode === "add-annotation") {
         const { addAnnotation, openAnnotationEditor } = useStore.getState();
-        const id = addAnnotation(x - ANNOTATION_WIDTH / 2, y - ANNOTATION_MIN_HEIGHT / 2);
+        const id = addAnnotation(
+          x - ANNOTATION_WIDTH / 2,
+          y - ANNOTATION_MIN_HEIGHT / 2,
+        );
         openAnnotationEditor(id);
       } else if (mode === "add-node") {
         if (!hit) addNode(x, y);
@@ -173,7 +181,9 @@ export function Canvas() {
       } else {
         // select / add-edge — track drag source; select mode also sets keyboard focus
         if (hit?.kind === "annotation" && mode === "select") {
-          const ann = useStore.getState().graph.annotations.find((a) => a.id === hit.id);
+          const ann = useStore
+            .getState()
+            .graph.annotations.find((a) => a.id === hit.id);
           if (ann) {
             dragAnnotationId = hit.id;
             dragAnnotationOffset = { dx: x - ann.x, dy: y - ann.y };
@@ -195,7 +205,13 @@ export function Canvas() {
       const y = e.clientY - rect.top;
       if (dragAnnotationId !== null) {
         hasDragged = true;
-        useStore.getState().setAnnotationDragPosition(dragAnnotationId, x - dragAnnotationOffset.dx, y - dragAnnotationOffset.dy);
+        useStore
+          .getState()
+          .setAnnotationDragPosition(
+            dragAnnotationId,
+            x - dragAnnotationOffset.dx,
+            y - dragAnnotationOffset.dy,
+          );
         return;
       }
       if (dragNodeId !== null) {
@@ -219,7 +235,11 @@ export function Canvas() {
       if (dragAnnotationId !== null) {
         const { annotationDragPosition, moveAnnotation } = useStore.getState();
         if (annotationDragPosition && hasDragged) {
-          moveAnnotation(dragAnnotationId, annotationDragPosition.x, annotationDragPosition.y);
+          moveAnnotation(
+            dragAnnotationId,
+            annotationDragPosition.x,
+            annotationDragPosition.y,
+          );
         } else {
           useStore.setState({ annotationDragPosition: null });
         }
@@ -280,7 +300,8 @@ export function Canvas() {
       } = useStore.getState();
       const hit = hitTest(graph, x, y);
       if (hit?.kind === "node" && mode !== "simulate") openNodeEditor(hit.id);
-      else if (hit?.kind === "annotation") useStore.getState().openAnnotationEditor(hit.id);
+      else if (hit?.kind === "annotation")
+        useStore.getState().openAnnotationEditor(hit.id);
       else if (hit?.kind === "edge-polarity") togglePolarity(hit.edgeId);
       else if (hit?.kind === "edge-delay") cycleDelay(hit.edgeId);
       else if (hit?.kind === "edge-weight") openEdgeWeightEditor(hit.edgeId);

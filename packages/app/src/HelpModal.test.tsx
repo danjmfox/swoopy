@@ -55,4 +55,10 @@ describe("HelpModal", () => {
     const { getByText } = render(<HelpModal open={true} onClose={() => {}} />);
     expect(getByText("A")).toBeTruthy();
   });
+
+  // GE-38
+  it("documents H as History overlay shortcut", () => {
+    const { getByText } = render(<HelpModal open={true} onClose={() => {}} />);
+    expect(getByText("H")).toBeTruthy();
+  });
 });

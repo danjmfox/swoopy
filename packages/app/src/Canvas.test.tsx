@@ -1156,14 +1156,20 @@ describe("GE-37 add-annotation mode — pointerdown places annotation", () => {
   it("pointerdown calls addAnnotation with pointer coordinates", async () => {
     const { container } = render(<Canvas />);
     await act(async () => {});
-    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 200, clientY: 150 });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 200,
+      clientY: 150,
+    });
     expect(addAnnotation).toHaveBeenCalledTimes(1);
   });
 
   it("pointerdown calls openAnnotationEditor with the returned id", async () => {
     const { container } = render(<Canvas />);
     await act(async () => {});
-    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 200, clientY: 150 });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 200,
+      clientY: 150,
+    });
     expect(openAnnotationEditor).toHaveBeenCalledWith("a1");
   });
 });
@@ -1185,7 +1191,10 @@ describe("GE-37 dblclick on annotation — opens annotation editor", () => {
     mockHitTest.mockReturnValue({ kind: "annotation", id: "a1" });
     const { container } = render(<Canvas />);
     await act(async () => {});
-    fireEvent.dblClick(container.querySelector("canvas")!, { clientX: 100, clientY: 100 });
+    fireEvent.dblClick(container.querySelector("canvas")!, {
+      clientX: 100,
+      clientY: 100,
+    });
     expect(openAnnotationEditor).toHaveBeenCalledWith("a1");
   });
 });
@@ -1207,7 +1216,10 @@ describe("GE-37 delete mode — pointerdown on annotation removes it", () => {
     mockHitTest.mockReturnValue({ kind: "annotation", id: "a1" });
     const { container } = render(<Canvas />);
     await act(async () => {});
-    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 100, clientY: 100 });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 100,
+      clientY: 100,
+    });
     expect(deleteAnnotation).toHaveBeenCalledWith("a1");
   });
 });
@@ -1237,5 +1249,23 @@ describe("GE-37 select mode — drag annotation calls moveAnnotation", () => {
     fireEvent.pointerMove(canvas, { clientX: 120, clientY: 130 });
     fireEvent.pointerUp(canvas, { clientX: 120, clientY: 130 });
     expect(moveAnnotation).toHaveBeenCalled();
+  });
+});
+
+// GE-38: H key toggles history overlay
+describe("GE-38 H key — history toggle", () => {
+  beforeEach(() => {
+    useStore.setState({ showHistory: false });
+  });
+
+  it("pressing h calls toggleHistory", async () => {
+    const toggleHistory = vi.fn();
+    useStore.setState({ toggleHistory } as Parameters<
+      typeof useStore.setState
+    >[0]);
+    render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: "h" });
+    expect(toggleHistory).toHaveBeenCalledOnce();
   });
 });

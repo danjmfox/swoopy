@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Canvas } from "./Canvas.tsx";
 import { Toolbar } from "./Toolbar.tsx";
 import { NodePopover } from "./NodePopover.tsx";
@@ -7,6 +7,9 @@ import { EdgeWeightPopover } from "./EdgeWeightPopover.tsx";
 import { ConstraintChoiceDialog } from "./ConstraintChoiceDialog.tsx";
 import { WelcomeOverlay } from "./WelcomeOverlay.tsx";
 import { useStore } from "./store.ts";
+import { HistoryLogger } from "./HistoryLogger.ts";
+import { createHistorySubscriber } from "./historySubscriber.ts";
+import { HistoryOverlay } from "./HistoryOverlay.tsx";
 
 function shouldShowWelcome(): boolean {
   const params = new URLSearchParams(window.location.search);
@@ -18,10 +21,19 @@ function shouldShowWelcome(): boolean {
   );
 }
 
+export const historyLogger = new HistoryLogger(300);
+
 export function App() {
   const loadFromUrl = useStore((s) => s.loadFromUrl);
   const loadPersistedGraph = useStore((s) => s.loadPersistedGraph);
   const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
+  const loggerRef = useRef(historyLogger);
+
+  useEffect(() => {
+    const subscriber = createHistorySubscriber(loggerRef.current);
+    const unsubscribe = useStore.subscribe(subscriber);
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -59,6 +71,7 @@ export function App() {
       <EdgeWeightPopover />
       <ConstraintChoiceDialog />
       {showWelcome && <WelcomeOverlay onDismiss={dismissWelcome} />}
+      <HistoryOverlay />
     </div>
   );
 }

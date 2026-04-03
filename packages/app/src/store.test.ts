@@ -42,3 +42,22 @@ describe("updateNode", () => {
     expect(node.colourTier).toBe("red");
   });
 });
+
+// GE-38: history overlay toggle
+describe("showHistory / toggleHistory", () => {
+  it("showHistory defaults to false", () => {
+    expect(useStore.getState().showHistory).toBe(false);
+  });
+
+  it("toggleHistory flips showHistory from false to true", () => {
+    useStore.setState({ showHistory: false });
+    useStore.getState().toggleHistory();
+    expect(useStore.getState().showHistory).toBe(true);
+  });
+
+  it("toggleHistory flips showHistory from true to false", () => {
+    useStore.setState({ showHistory: true });
+    useStore.getState().toggleHistory();
+    expect(useStore.getState().showHistory).toBe(false);
+  });
+});
