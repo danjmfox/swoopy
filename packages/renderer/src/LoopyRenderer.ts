@@ -490,7 +490,7 @@ export class LoopyRenderer {
         ctx.textBaseline = "top";
         for (let i = 0; i < lines.length; i++) {
           ctx.fillText(
-            lines[i],
+            lines[i] ?? "",
             ax + ANNOTATION_PADDING,
             ay + ANNOTATION_PADDING + lineHeight + i * lineHeight,
           );

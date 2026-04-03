@@ -7,6 +7,7 @@ export default defineConfig({
     name: "app",
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
+    typecheck: { enabled: true },
     setupFiles: ["src/test-setup.ts"],
   },
   resolve: {

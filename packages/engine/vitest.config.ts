@@ -5,6 +5,7 @@ export default defineConfig({
     name: "engine",
     environment: "node",
     include: ["src/**/*.test.ts"],
+    typecheck: { enabled: true },
     coverage: {
       provider: "v8",
       include: ["src/**"],

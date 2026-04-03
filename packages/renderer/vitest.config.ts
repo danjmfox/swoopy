@@ -5,6 +5,7 @@ export default defineConfig({
     name: "renderer",
     environment: "jsdom",
     include: ["src/**/*.test.ts"],
+    typecheck: { enabled: true },
   },
   resolve: {
     alias: {
