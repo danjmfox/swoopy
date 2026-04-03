@@ -82,7 +82,11 @@ const MODES = [
     shortcut: "R",
     description: "Click node to inject signal",
   },
-  { name: "Add Annotation", shortcut: "A", description: "Click canvas to place text box" },
+  {
+    name: "Add Annotation",
+    shortcut: "A",
+    description: "Click canvas to place text box",
+  },
   { name: "Delete", shortcut: "D", description: "Click to remove" },
 ];
 
@@ -92,6 +96,7 @@ const SHORTCUTS = [
   { label: "Delete", description: "Remove focused node" },
   { label: "Ctrl+Z", description: "Undo" },
   { label: "Ctrl+Shift+Z", description: "Redo" },
+  { label: "H", description: "History overlay" },
   { label: "?", description: "Toggle this panel" },
 ];
 

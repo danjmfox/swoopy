@@ -15,7 +15,12 @@ const MODES: {
   { mode: "add-node", label: "⬤", title: "Add Node", shortcut: "N" },
   { mode: "add-edge", label: "→", title: "Add Edge", shortcut: "E" },
   { mode: "simulate", label: "▷", title: "Simulate", shortcut: "R" },
-  { mode: "add-annotation", label: "💬", title: "Add Annotation", shortcut: "A" },
+  {
+    mode: "add-annotation",
+    label: "💬",
+    title: "Add Annotation",
+    shortcut: "A",
+  },
   { mode: "delete", label: "✕", title: "Delete", shortcut: "D" },
 ];
 
@@ -24,6 +29,7 @@ export function Toolbar() {
   const simSpeed = useStore((s) => s.simSpeed);
   const mode = useStore((s) => s.mode);
   const previousMode = useStore((s) => s.previousMode);
+  const showHistory = useStore((s) => s.showHistory);
   const { pauseSim, resumeSim, resetSim, setSimSpeed, setMode } =
     useStore.getState();
   const [helpOpen, setHelpOpen] = useState(false);
@@ -93,7 +99,41 @@ export function Toolbar() {
           boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
         }}
       >
-        {MODES.map(({ mode: m, label, title, shortcut }) => (
+        {MODES.filter(
+          (m) => m.mode !== "add-annotation" && m.mode !== "delete",
+        ).map(({ mode: m, label, title, shortcut }) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            title={title}
+            style={{
+              ...btn,
+              background:
+                mode === m && previousMode === null ? "#334155" : "transparent",
+              fontWeight: mode === m ? 700 : 400,
+              outline:
+                mode === m && previousMode !== null
+                  ? "2px solid #f59e0b"
+                  : undefined,
+            }}
+          >
+            {label} {shortcut}
+          </button>
+        ))}
+        <button
+          title="History"
+          onClick={() => useStore.getState().toggleHistory()}
+          style={{
+            ...btn,
+            background: showHistory ? "#334155" : "transparent",
+            fontWeight: showHistory ? 700 : 400,
+          }}
+        >
+          📊 H
+        </button>
+        {MODES.filter(
+          (m) => m.mode === "add-annotation" || m.mode === "delete",
+        ).map(({ mode: m, label, title, shortcut }) => (
           <button
             key={m}
             onClick={() => setMode(m)}
