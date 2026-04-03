@@ -10,7 +10,7 @@
 
 The original SI-06 requirement specified that node values decay exponentially toward their `initial` value when not receiving signals:
 
-```
+```text
 node.initial + (value − node.initial) × (1 − DECAY)^dt
 ```
 
@@ -40,12 +40,12 @@ Remove the intrinsic decay step from `step()`. Node values change only when sign
 
 ### Behavioural changes
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| Inject node, no loops | Returns to `initial` in ~3s | Stays elevated indefinitely |
-| Reinforcing loop only | Amplifies then decays back | Amplifies to `max`, stays |
-| Balancing loop | Corrects faster due to decay + loop | Loop must do all the corrective work |
-| No injection, no signals | Node stays at `initial` (decay already at floor) | No change — same outcome |
+| Scenario                 | Before                                           | After                                |
+| ------------------------ | ------------------------------------------------ | ------------------------------------ |
+| Inject node, no loops    | Returns to `initial` in ~3s                      | Stays elevated indefinitely          |
+| Reinforcing loop only    | Amplifies then decays back                       | Amplifies to `max`, stays            |
+| Balancing loop           | Corrects faster due to decay + loop              | Loop must do all the corrective work |
+| No injection, no signals | Node stays at `initial` (decay already at floor) | No change — same outcome             |
 
 ### Loop structure becomes load-bearing
 

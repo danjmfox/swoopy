@@ -38,7 +38,9 @@ describe("hitTest", () => {
   });
 
   it("returns null for an empty graph", () => {
-    expect(hitTest({ nodes: [], edges: [], annotations: [] }, 100, 100)).toBeNull();
+    expect(
+      hitTest({ nodes: [], edges: [], annotations: [] }, 100, 100),
+    ).toBeNull();
   });
 });
 
@@ -55,7 +57,10 @@ describe("hitTest — annotations", () => {
 
   it("returns annotation hit when point is inside the rect", () => {
     // x=200, y=150, width=180 → centre at (290, ~165); test point well inside
-    expect(hitTest(annotatedGraph, 210, 160)).toEqual({ kind: "annotation", id: annId });
+    expect(hitTest(annotatedGraph, 210, 160)).toEqual({
+      kind: "annotation",
+      id: annId,
+    });
   });
 
   it("returns null when point is outside the annotation rect", () => {

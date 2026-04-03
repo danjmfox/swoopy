@@ -1217,7 +1217,9 @@ describe("LoopyRenderer", () => {
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
 
-    const annotationCall = fillTexts.find((t) => t.text === "This is a very long anno…");
+    const annotationCall = fillTexts.find(
+      (t) => t.text === "This is a very long anno…",
+    );
     expect(annotationCall).toBeDefined();
   });
 
@@ -1279,7 +1281,9 @@ describe("LoopyRenderer", () => {
     renderer.stop();
 
     // Only label "A" and no annotation-like text
-    expect(fillTexts.every((t) => t === nodeA.label || t === "▲" || t === "▼")).toBe(true);
+    expect(
+      fillTexts.every((t) => t === nodeA.label || t === "▲" || t === "▼"),
+    ).toBe(true);
   });
 });
 

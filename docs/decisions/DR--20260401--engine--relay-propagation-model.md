@@ -36,7 +36,7 @@ candidates {3, 5, 8, 13}:
 
 **Characterisation results (2026-04-01):**
 
-```
+```text
 SIGNAL_SPEED=0.65  EDGE_TRANSIT_TICKS=92
 
 Reinforcing loop A→B→A (+/+) — inject A +1:

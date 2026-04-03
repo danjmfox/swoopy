@@ -1,18 +1,19 @@
 ---
 id: DR--20260327--renderer--dpr-css-pixel-geometry
-dateCreated: '2026-03-27'
+dateCreated: "2026-03-27"
 version: 1.0.0
 status: accepted
 changeType: creation
 domain: renderer
 slug: dpr-css-pixel-geometry
 changelog:
-  - date: '2026-03-27'
+  - date: "2026-03-27"
     note: Initial creation — captured at canvas mount (step 5)
-  - date: '2026-03-28'
+  - date: "2026-03-28"
     note: Accepted — CSS-pixel geometry validated by edgeHit.test.ts and hitTest.test.ts
-lastEdited: '2026-03-28'
+lastEdited: "2026-03-28"
 ---
+
 # All geometry and hit testing operate in CSS pixels; DPR applied at draw time only
 
 ## 🧭 Context
@@ -28,10 +29,10 @@ events (which are always in CSS pixels) must be scaled before hit testing.
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-|--------|-------------|---------|-----------|
-| A | All geometry in physical pixels; divide pointer events by DPR for hit testing | Rejected | Every hit test call site must remember to divide; easy to miss, hard to test |
-| B | Geometry and hit testing in CSS pixels; multiply by DPR only in `ctx.setTransform` at draw time | Chosen | Single point of DPR application; hit testing and engine geometry stay in one coordinate space |
+| Option | Description                                                                                     | Outcome  | Rationale                                                                                     |
+| ------ | ----------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| A      | All geometry in physical pixels; divide pointer events by DPR for hit testing                   | Rejected | Every hit test call site must remember to divide; easy to miss, hard to test                  |
+| B      | Geometry and hit testing in CSS pixels; multiply by DPR only in `ctx.setTransform` at draw time | Chosen   | Single point of DPR application; hit testing and engine geometry stay in one coordinate space |
 
 ## 🧠 Decision
 
@@ -75,6 +76,6 @@ is consistent with PRD §9.
 
 ## 🧾 Changelog
 
-| Date | Note |
-|------|------|
+| Date       | Note                                                                               |
+| ---------- | ---------------------------------------------------------------------------------- |
 | 2026-03-27 | Initial draft — captured at canvas mount implementation (feat/step-5-canvas-mount) |

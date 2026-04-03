@@ -5,7 +5,11 @@ import { AnnotationPopover } from "./AnnotationPopover.tsx";
 import type { AnnotationId } from "@swoopy/engine";
 
 function setup() {
-  useStore.setState({ graph: { nodes: [], edges: [], annotations: [] }, past: [], future: [] });
+  useStore.setState({
+    graph: { nodes: [], edges: [], annotations: [] },
+    past: [],
+    future: [],
+  });
   const id = useStore.getState().addAnnotation(100, 200);
   useStore.setState({ editingAnnotationId: id as AnnotationId });
   return id;

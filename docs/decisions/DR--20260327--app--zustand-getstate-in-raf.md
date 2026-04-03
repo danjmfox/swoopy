@@ -1,18 +1,19 @@
 ---
 id: DR--20260327--app--zustand-getstate-in-raf
-dateCreated: '2026-03-27'
+dateCreated: "2026-03-27"
 version: 1.0.0
 status: accepted
 changeType: creation
 domain: app
 slug: zustand-getstate-in-raf
 changelog:
-  - date: '2026-03-27'
+  - date: "2026-03-27"
     note: Initial creation — captured at RAF + store implementation (step 6)
-  - date: '2026-03-28'
+  - date: "2026-03-28"
     note: Accepted — decision validated by Zustand slice boundary test (store.test.tsx)
-lastEdited: '2026-03-28'
+lastEdited: "2026-03-28"
 ---
+
 # RAF loop reads simSlice via Zustand getState(), not useStore()
 
 ## 🧭 Context
@@ -28,12 +29,12 @@ occur and the React/RAF boundary collapses.
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-|--------|-------------|---------|-----------|
-| A | Store sim state in React state (`useState`/`useReducer`) | Rejected | Every tick causes a re-render; violates PRD §5.1 directly |
-| B | Use a Zustand subscription (`subscribe()`) in the RAF loop | Rejected | Inverted: RAF should push to store, not react to it; adds unnecessary complexity |
-| C | Two Zustand slices; RAF calls `store.getState().tickSim(dt)` | Chosen | `getState()` is a snapshot read with no subscription; `tickSim` updates the sim slice; React components subscribe to graphSlice only and never re-render from sim changes |
-| D | Observable/signal library (RxJS, nanostores) for sim state | Rejected | Cognitive load tax — adds a second reactive primitive for one boundary; Zustand already solves this with `getState()` |
+| Option | Description                                                  | Outcome  | Rationale                                                                                                                                                                 |
+| ------ | ------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A      | Store sim state in React state (`useState`/`useReducer`)     | Rejected | Every tick causes a re-render; violates PRD §5.1 directly                                                                                                                 |
+| B      | Use a Zustand subscription (`subscribe()`) in the RAF loop   | Rejected | Inverted: RAF should push to store, not react to it; adds unnecessary complexity                                                                                          |
+| C      | Two Zustand slices; RAF calls `store.getState().tickSim(dt)` | Chosen   | `getState()` is a snapshot read with no subscription; `tickSim` updates the sim slice; React components subscribe to graphSlice only and never re-render from sim changes |
+| D      | Observable/signal library (RxJS, nanostores) for sim state   | Rejected | Cognitive load tax — adds a second reactive primitive for one boundary; Zustand already solves this with `getState()`                                                     |
 
 ## 🧠 Decision
 
@@ -84,6 +85,6 @@ The pattern is documented in Zustand's own guidance for non-reactive reads.
 
 ## 🧾 Changelog
 
-| Date | Note |
-|------|------|
+| Date       | Note                                                                       |
+| ---------- | -------------------------------------------------------------------------- |
 | 2026-03-27 | Initial draft — captured at step 6 implementation (feat/step-6-raf-slices) |

@@ -1090,13 +1090,18 @@ describe("GE-37: annotation store slice", () => {
   it("moveAnnotation updates x and y of the annotation", () => {
     const id = useStore.getState().addAnnotation(10, 20);
     useStore.getState().moveAnnotation(id, 99, 88);
-    expect(useStore.getState().graph.annotations[0]).toMatchObject({ x: 99, y: 88 });
+    expect(useStore.getState().graph.annotations[0]).toMatchObject({
+      x: 99,
+      y: 88,
+    });
   });
 
   it("updateAnnotation updates the text of the annotation", () => {
     const id = useStore.getState().addAnnotation(10, 20);
     useStore.getState().updateAnnotation(id, "hello world");
-    expect(useStore.getState().graph.annotations[0]).toMatchObject({ text: "hello world" });
+    expect(useStore.getState().graph.annotations[0]).toMatchObject({
+      text: "hello world",
+    });
   });
 
   it("editingAnnotationId defaults to null", () => {
