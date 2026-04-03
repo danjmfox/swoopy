@@ -5,9 +5,13 @@ import { NodePopover } from "./NodePopover.tsx";
 import type { NodeId } from "@swoopy/engine";
 
 function setup() {
-  useStore.setState({ graph: { nodes: [], edges: [] }, past: [], future: [] });
+  useStore.setState({
+    graph: { nodes: [], edges: [], annotations: [] },
+    past: [],
+    future: [],
+  });
   useStore.getState().addNode(100, 200);
-  const nodeId = useStore.getState().graph.nodes[0].id as NodeId;
+  const nodeId = useStore.getState().graph.nodes[0]!.id as NodeId;
   useStore.setState({ editingNodeId: nodeId });
   return nodeId;
 }

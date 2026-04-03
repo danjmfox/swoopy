@@ -16,7 +16,7 @@ describe("SE-06/SE-09: model action bar (top-right)", () => {
       graph: seedGraph,
       shareGraph,
       newModel,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   afterEach(() => {
@@ -72,7 +72,7 @@ describe("Toolbar mode switcher", () => {
       graph: seedGraph,
       mode: "select",
       setMode,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   const modes: AppMode[] = [
@@ -99,6 +99,7 @@ describe("Toolbar mode switcher", () => {
       "add-edge": "Add Edge",
       simulate: "Simulate",
       delete: "Delete",
+      "add-annotation": "Add Annotation",
     };
     const { getByTitle } = render(<Toolbar />);
     await act(async () => {
@@ -117,7 +118,7 @@ describe("Toolbar mode switcher", () => {
   });
 
   it("sim controls (play/pause, reset, speed) are hidden outside simulate mode", () => {
-    useStore.setState({ mode: "select" } as Parameters<
+    useStore.setState({ mode: "select" } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { queryByTitle } = render(<Toolbar />);
@@ -127,7 +128,7 @@ describe("Toolbar mode switcher", () => {
   });
 
   it("sim controls are visible in simulate mode", () => {
-    useStore.setState({ mode: "simulate", simRunning: true } as Parameters<
+    useStore.setState({ mode: "simulate", simRunning: true } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { getByTitle } = render(<Toolbar />);
@@ -156,7 +157,7 @@ describe("Toolbar mode switcher", () => {
   });
 
   it("active mode button has distinct styling", () => {
-    useStore.setState({ mode: "simulate" } as Parameters<
+    useStore.setState({ mode: "simulate" } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { getByTitle } = render(<Toolbar />);
@@ -172,7 +173,7 @@ describe("Toolbar mode switcher", () => {
     useStore.setState({
       mode: "add-edge",
       previousMode: "select",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     const { getByTitle } = render(<Toolbar />);
     const addEdgeBtn = getByTitle("Add Edge") as HTMLButtonElement;
     // spring state: no fill, amber border
@@ -184,7 +185,7 @@ describe("Toolbar mode switcher", () => {
     useStore.setState({
       mode: "add-edge",
       previousMode: null,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     const { getByTitle } = render(<Toolbar />);
     const addEdgeBtn = getByTitle("Add Edge") as HTMLButtonElement;
     expect(addEdgeBtn.style.background).not.toBe("transparent");
@@ -202,7 +203,7 @@ describe("GE-37: add-annotation toolbar button", () => {
       graph: seedGraph,
       mode: "select",
       setMode,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("renders an Add Annotation button", () => {
@@ -236,7 +237,7 @@ describe("GE-38: history toolbar button", () => {
 
   it("clicking History button calls toggleHistory", () => {
     const toggleHistory = vi.fn();
-    useStore.setState({ toggleHistory } as Parameters<
+    useStore.setState({ toggleHistory } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { getByTitle } = render(<Toolbar />);

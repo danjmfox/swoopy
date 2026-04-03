@@ -13,7 +13,7 @@ function HistoryGraph({
   nodes,
   histories,
 }: {
-  nodes: Node[];
+  nodes: readonly Node[];
   histories: { tick: number; value: number }[][];
 }) {
   const innerW = SVG_W - PAD.left - PAD.right;
@@ -57,7 +57,7 @@ function HistoryGraph({
       ))}
       {/* one path per node */}
       {nodes.map((node, ni) => {
-        const history = histories[ni];
+        const history = histories[ni]!;
         if (history.length === 0) return null;
         const valueRange = node.max - node.min || 1;
         const toY = (value: number) =>
@@ -232,7 +232,7 @@ export function HistoryOverlay() {
               {nodes.map((node, ni) => (
                 <tr key={node.id}>
                   <td style={{ padding: "4px 12px" }}>{node.label}</td>
-                  {histories[ni].map((s, i) => (
+                  {histories[ni]!.map((s, i) => (
                     <td
                       key={i}
                       style={{ padding: "4px 8px", textAlign: "right" }}

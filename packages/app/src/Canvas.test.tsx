@@ -20,7 +20,7 @@ describe("GE-20 Canvas keyboard nav — Tab, arrows, Delete", () => {
   let focusNextNode: ReturnType<typeof vi.fn>;
   let nudgeNode: ReturnType<typeof vi.fn>;
   let deleteNode: ReturnType<typeof vi.fn>;
-  const focusedNode = seedGraph.nodes[0];
+  const focusedNode = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     focusNextNode = vi.fn();
@@ -32,7 +32,7 @@ describe("GE-20 Canvas keyboard nav — Tab, arrows, Delete", () => {
       focusNextNode,
       nudgeNode,
       deleteNode,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("Tab calls focusNextNode", async () => {
@@ -92,7 +92,7 @@ describe("GE-20 Canvas keyboard nav — Tab, arrows, Delete", () => {
   });
 
   it("arrow keys do nothing when no node is focused", async () => {
-    useStore.setState({ focusedNodeId: null } as Parameters<
+    useStore.setState({ focusedNodeId: null } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { container } = render(<Canvas />);
@@ -105,7 +105,7 @@ describe("GE-20 Canvas keyboard nav — Tab, arrows, Delete", () => {
 
 describe("GE-20 click sets focused node in select mode", () => {
   let setFocusedNode: ReturnType<typeof vi.fn>;
-  const node = seedGraph.nodes[0];
+  const node = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     setFocusedNode = vi.fn();
@@ -114,7 +114,7 @@ describe("GE-20 click sets focused node in select mode", () => {
       graph: seedGraph,
       mode: "select",
       setFocusedNode,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("pointerdown on a node sets focusedNodeId to that node", async () => {
@@ -138,7 +138,7 @@ describe("GE-20 click sets focused node in select mode", () => {
 
 describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
   let moveNode: ReturnType<typeof vi.fn>;
-  const popNode = seedGraph.nodes[0];
+  const popNode = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     moveNode = vi.fn();
@@ -148,7 +148,7 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
       mode: "select",
       previousMode: null,
       moveNode,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("drag from node produces exactly one moveNode call with final position", async () => {
@@ -163,7 +163,7 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
     fireEvent.pointerUp(canvas, { clientX: 130, clientY: 130 });
 
     expect(moveNode).toHaveBeenCalledTimes(1);
-    expect(moveNode.mock.calls[0][0]).toBe(popNode.id);
+    expect(moveNode.mock.calls[0]![0]).toBe(popNode.id);
   });
 
   it("click on node (no drag) does NOT call moveNode", async () => {
@@ -178,7 +178,7 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
 
   it("pointermove while dragging in select mode calls setDragPosition", async () => {
     const setDragPosition = vi.fn();
-    useStore.setState({ mode: "select", setDragPosition } as Parameters<
+    useStore.setState({ mode: "select", setDragPosition } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: popNode.id });
@@ -192,7 +192,7 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
     // jsdom PointerEvent doesn't populate clientX/clientY on pointermove;
     // assert the function was called with the correct nodeId
     expect(setDragPosition).toHaveBeenCalled();
-    expect(setDragPosition.mock.calls[0][0]).toBe(popNode.id);
+    expect(setDragPosition.mock.calls[0]![0]).toBe(popNode.id);
   });
 
   it("pointermove without prior pointerdown does not call moveNode", async () => {
@@ -207,10 +207,10 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
   });
 
   it("GE-23 modifier+drag from nodeA to nodeB calls setPendingConstraintEdge", async () => {
-    const nodeA = seedGraph.nodes[0];
-    const nodeB = seedGraph.nodes[1];
+    const nodeA = seedGraph.nodes[0]!;
+    const nodeB = seedGraph.nodes[1]!;
     const setPendingConstraintEdge = vi.fn();
-    useStore.setState({ setPendingConstraintEdge } as Parameters<
+    useStore.setState({ setPendingConstraintEdge } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     // pointerdown hits nodeA; pointerup hits nodeB
@@ -244,7 +244,7 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
 });
 
 describe("SI-02/03 simulate mode — pointerdown on node injects signal", () => {
-  const targetNode = seedGraph.nodes[0];
+  const targetNode = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     mockHitTest.mockReset();
@@ -252,7 +252,7 @@ describe("SI-02/03 simulate mode — pointerdown on node injects signal", () => 
       graph: seedGraph,
       sim: makeInitialSim(seedGraph),
       mode: "simulate",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("SI-02 pointerdown on node injects a positive signal", async () => {
@@ -284,7 +284,7 @@ describe("SI-02/03 simulate mode — pointerdown on node injects signal", () => 
   });
 
   it("select mode does not inject on node click", async () => {
-    useStore.setState({ mode: "select" } as Parameters<
+    useStore.setState({ mode: "select" } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: targetNode.id });
@@ -302,7 +302,7 @@ describe("SI-02/03 simulate mode — pointerdown on node injects signal", () => 
 
 describe("GE-09 delete mode — pointerdown on node removes it", () => {
   let deleteNode: ReturnType<typeof vi.fn>;
-  const targetNode = seedGraph.nodes[0];
+  const targetNode = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     deleteNode = vi.fn();
@@ -311,7 +311,7 @@ describe("GE-09 delete mode — pointerdown on node removes it", () => {
       graph: seedGraph,
       deleteNode,
       mode: "delete",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("pointerdown on a node calls deleteNode", async () => {
@@ -339,7 +339,7 @@ describe("GE-09 delete mode — pointerdown on node removes it", () => {
 
 describe("GE-26 delete mode — pointerdown on edge hit region removes it", () => {
   let deleteEdge: ReturnType<typeof vi.fn>;
-  const targetEdge = seedGraph.edges[0];
+  const targetEdge = seedGraph.edges[0]!;
 
   beforeEach(() => {
     deleteEdge = vi.fn();
@@ -348,7 +348,7 @@ describe("GE-26 delete mode — pointerdown on edge hit region removes it", () =
       graph: seedGraph,
       deleteEdge,
       mode: "delete",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("pointerdown on edge-polarity calls deleteEdge", async () => {
@@ -391,8 +391,8 @@ describe("GE-26 delete mode — pointerdown on edge hit region removes it", () =
 describe("GE-04 add-edge mode — drag node to node creates edge", () => {
   let addEdge: ReturnType<typeof vi.fn>;
   let moveNode: ReturnType<typeof vi.fn>;
-  const nodeA = seedGraph.nodes[0];
-  const nodeB = seedGraph.nodes[1];
+  const nodeA = seedGraph.nodes[0]!;
+  const nodeB = seedGraph.nodes[1]!;
 
   beforeEach(() => {
     addEdge = vi.fn();
@@ -403,7 +403,7 @@ describe("GE-04 add-edge mode — drag node to node creates edge", () => {
       addEdge,
       moveNode,
       mode: "add-edge",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("drag from nodeA to nodeB calls addEdge", async () => {
@@ -450,7 +450,7 @@ describe("GE-04 add-edge mode — drag node to node creates edge", () => {
 
   it("GE-23 Alt+drag in add-edge mode calls setPendingConstraintEdge, not addEdge", async () => {
     const setPendingConstraintEdge = vi.fn();
-    useStore.setState({ setPendingConstraintEdge } as Parameters<
+    useStore.setState({ setPendingConstraintEdge } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     mockHitTest
@@ -480,7 +480,7 @@ describe("GE-01 add-node mode — click canvas creates node", () => {
       graph: seedGraph,
       addNode,
       mode: "add-node",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("pointerdown on empty space calls addNode with pointer coordinates", async () => {
@@ -495,7 +495,7 @@ describe("GE-01 add-node mode — click canvas creates node", () => {
   });
 
   it("pointerdown on an existing node does not call addNode", async () => {
-    mockHitTest.mockReturnValue({ kind: "node", id: seedGraph.nodes[0].id });
+    mockHitTest.mockReturnValue({ kind: "node", id: seedGraph.nodes[0]!.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
     const canvas = container.querySelector("canvas")!;
@@ -507,7 +507,7 @@ describe("GE-01 add-node mode — click canvas creates node", () => {
 });
 
 describe("SI-02 hold-to-inject — continuous injection while pointer held", () => {
-  const targetNode = seedGraph.nodes[0];
+  const targetNode = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     mockHitTest.mockReset();
@@ -515,7 +515,7 @@ describe("SI-02 hold-to-inject — continuous injection while pointer held", () 
       graph: seedGraph,
       sim: makeInitialSim(seedGraph),
       mode: "simulate",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   afterEach(() => {
@@ -573,7 +573,7 @@ describe("GE-21 Ctrl+Z / Ctrl+Shift+Z — undo and redo", () => {
   beforeEach(() => {
     undo = vi.fn();
     redo = vi.fn();
-    useStore.setState({ graph: seedGraph, undo, redo } as Parameters<
+    useStore.setState({ graph: seedGraph, undo, redo } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
   });
@@ -623,7 +623,7 @@ describe("GE-21 Ctrl+Z / Ctrl+Shift+Z — undo and redo", () => {
 
 describe("GE-27 Enter on focused node opens editor", () => {
   let openNodeEditor: ReturnType<typeof vi.fn>;
-  const node = seedGraph.nodes[0];
+  const node = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     openNodeEditor = vi.fn();
@@ -631,7 +631,7 @@ describe("GE-27 Enter on focused node opens editor", () => {
       graph: seedGraph,
       focusedNodeId: node.id,
       openNodeEditor,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("Enter opens editor for the focused node", async () => {
@@ -642,7 +642,7 @@ describe("GE-27 Enter on focused node opens editor", () => {
   });
 
   it("Enter does nothing when no node is focused", async () => {
-    useStore.setState({ focusedNodeId: null } as Parameters<
+    useStore.setState({ focusedNodeId: null } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { container } = render(<Canvas />);
@@ -658,7 +658,7 @@ describe("GE-28 mode keyboard shortcuts — S/N/E/R/D", () => {
   beforeEach(() => {
     setMode = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, setMode } as Parameters<
+    useStore.setState({ graph: seedGraph, setMode } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
   });
@@ -735,19 +735,19 @@ describe("GE-28 mode keyboard shortcuts — S/N/E/R/D", () => {
 
 describe("GE-18 dblclick — opens node editor in non-simulate modes", () => {
   let openNodeEditor: ReturnType<typeof vi.fn>;
-  const node = seedGraph.nodes[0];
+  const node = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     openNodeEditor = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, openNodeEditor } as Parameters<
+    useStore.setState({ graph: seedGraph, openNodeEditor } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
   });
 
   it("dblclick on node in select mode calls openNodeEditor", async () => {
     mockHitTest.mockReturnValue({ kind: "node", id: node.id });
-    useStore.setState({ mode: "select" } as Parameters<
+    useStore.setState({ mode: "select" } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { container } = render(<Canvas />);
@@ -761,7 +761,7 @@ describe("GE-18 dblclick — opens node editor in non-simulate modes", () => {
 
   it("dblclick on node in add-node mode calls openNodeEditor", async () => {
     mockHitTest.mockReturnValue({ kind: "node", id: node.id });
-    useStore.setState({ mode: "add-node" } as Parameters<
+    useStore.setState({ mode: "add-node" } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { container } = render(<Canvas />);
@@ -776,12 +776,12 @@ describe("GE-18 dblclick — opens node editor in non-simulate modes", () => {
 
 describe("GE-08 dblclick — toggle polarity on edge-polarity hit region", () => {
   let togglePolarity: ReturnType<typeof vi.fn>;
-  const edge = seedGraph.edges[0];
+  const edge = seedGraph.edges[0]!;
 
   beforeEach(() => {
     togglePolarity = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, togglePolarity } as Parameters<
+    useStore.setState({ graph: seedGraph, togglePolarity } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
   });
@@ -800,12 +800,12 @@ describe("GE-08 dblclick — toggle polarity on edge-polarity hit region", () =>
 
 describe("GE-14 dblclick — cycle delay on edge-delay hit region", () => {
   let cycleDelay: ReturnType<typeof vi.fn>;
-  const edge = seedGraph.edges[0];
+  const edge = seedGraph.edges[0]!;
 
   beforeEach(() => {
     cycleDelay = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, cycleDelay } as Parameters<
+    useStore.setState({ graph: seedGraph, cycleDelay } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
   });
@@ -824,12 +824,12 @@ describe("GE-14 dblclick — cycle delay on edge-delay hit region", () => {
 
 describe("GE-19 dblclick — open weight editor on edge-weight hit region", () => {
   let openEdgeWeightEditor: ReturnType<typeof vi.fn>;
-  const edge = seedGraph.edges[0];
+  const edge = seedGraph.edges[0]!;
 
   beforeEach(() => {
     openEdgeWeightEditor = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, openEdgeWeightEditor } as Parameters<
+    useStore.setState({ graph: seedGraph, openEdgeWeightEditor } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
   });
@@ -848,19 +848,19 @@ describe("GE-19 dblclick — open weight editor on edge-weight hit region", () =
 
 describe("GE-18 dblclick — no-op in simulate mode", () => {
   let openNodeEditor: ReturnType<typeof vi.fn>;
-  const node = seedGraph.nodes[0];
+  const node = seedGraph.nodes[0]!;
 
   beforeEach(() => {
     openNodeEditor = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, openNodeEditor } as Parameters<
+    useStore.setState({ graph: seedGraph, openNodeEditor } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
   });
 
   it("dblclick on node in simulate mode does NOT open editor", async () => {
     mockHitTest.mockReturnValue({ kind: "node", id: node.id });
-    useStore.setState({ mode: "simulate" } as Parameters<
+    useStore.setState({ mode: "simulate" } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     const { container } = render(<Canvas />);
@@ -874,7 +874,7 @@ describe("GE-18 dblclick — no-op in simulate mode", () => {
 });
 
 describe("GE-30 hover feedback", () => {
-  const edge = seedGraph.edges[0];
+  const edge = seedGraph.edges[0]!;
 
   beforeEach(() => {
     mockHitTest.mockReset();
@@ -882,11 +882,11 @@ describe("GE-30 hover feedback", () => {
       graph: seedGraph,
       mode: "select",
       hoveredEdgeRegion: null,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   afterEach(() => {
-    useStore.setState({ hoveredEdgeRegion: null } as Parameters<
+    useStore.setState({ hoveredEdgeRegion: null } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
   });
@@ -922,8 +922,8 @@ describe("GE-30 hover feedback", () => {
   it("pointermove over non-edge-region clears hoveredEdgeRegion", async () => {
     useStore.setState({
       hoveredEdgeRegion: { edgeId: edge.id, region: "delay" },
-    } as Parameters<typeof useStore.setState>[0]);
-    mockHitTest.mockReturnValue({ kind: "node", id: seedGraph.nodes[0].id });
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+    mockHitTest.mockReturnValue({ kind: "node", id: seedGraph.nodes[0]!.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
     fireEvent.pointerMove(container.querySelector("canvas")!, {
@@ -935,7 +935,7 @@ describe("GE-30 hover feedback", () => {
 });
 
 describe("GE-32 spring-loaded modes — Canvas interaction", () => {
-  const [nodeA, nodeB] = seedGraph.nodes;
+  const [nodeA, nodeB] = seedGraph.nodes as [typeof seedGraph.nodes[0], typeof seedGraph.nodes[1]];
 
   beforeEach(() => {
     mockHitTest.mockReset();
@@ -943,7 +943,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
       graph: seedGraph,
       mode: "select",
       previousMode: null,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   // Task 4 — Shift+pointerdown on node enters spring add-edge
@@ -963,7 +963,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
   // Task 6 — pointer-up on different node while spring add-edge → addEdge + exit spring
   it("pointer-up on a different node in spring add-edge creates an edge and exits spring", async () => {
     const addEdge = vi.fn();
-    useStore.setState({ addEdge } as Parameters<typeof useStore.setState>[0]);
+    useStore.setState({ addEdge } as unknown as Parameters<typeof useStore.setState>[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
@@ -981,7 +981,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
   // Task 8 — Shift-up while in spring add-edge → exitSpringMode
   it("Shift-up while in spring mode exits spring without creating edge", async () => {
     const addEdge = vi.fn();
-    useStore.setState({ addEdge } as Parameters<typeof useStore.setState>[0]);
+    useStore.setState({ addEdge } as unknown as Parameters<typeof useStore.setState>[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
@@ -997,7 +997,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
   // Task 10/12 — Shift+pointerdown on blank → create node immediately (no spring intermediary)
   it("Shift+pointerdown on blank canvas creates a node immediately", async () => {
     const addNode = vi.fn();
-    useStore.setState({ addNode } as Parameters<typeof useStore.setState>[0]);
+    useStore.setState({ addNode } as unknown as Parameters<typeof useStore.setState>[0]);
     mockHitTest.mockReturnValue(null);
     const { container } = render(<Canvas />);
     await act(async () => {});
@@ -1027,7 +1027,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
 
   // Task 15 — Escape while NOT in spring → mode = "select"
   it("Escape while not in spring mode returns to select", async () => {
-    useStore.setState({ mode: "add-node", previousMode: null } as Parameters<
+    useStore.setState({ mode: "add-node", previousMode: null } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     render(<Canvas />);
@@ -1038,7 +1038,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
 
   // Task 17 — Space tap toggles simRunning
   it("Space toggles simRunning from true to false", async () => {
-    useStore.setState({ simRunning: true } as Parameters<
+    useStore.setState({ simRunning: true } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     render(<Canvas />);
@@ -1048,7 +1048,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
   });
 
   it("Space toggles simRunning from false to true", async () => {
-    useStore.setState({ simRunning: false } as Parameters<
+    useStore.setState({ simRunning: false } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     render(<Canvas />);
@@ -1059,7 +1059,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
 
   // Task 19 — simulate mode exempt from spring-loading
   it("Shift+pointerdown on node while in simulate mode does NOT enter spring mode", async () => {
-    useStore.setState({ mode: "simulate", previousMode: null } as Parameters<
+    useStore.setState({ mode: "simulate", previousMode: null } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
@@ -1079,7 +1079,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
     useStore.setState({
       mode: "add-edge",
       previousMode: "select",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
@@ -1095,7 +1095,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
   // Task 21 — Shift+Option in spring add-edge → constraint edge
   it("pointer-up with Alt held in spring add-edge calls setPendingConstraintEdge", async () => {
     const setPendingConstraintEdge = vi.fn();
-    useStore.setState({ setPendingConstraintEdge } as Parameters<
+    useStore.setState({ setPendingConstraintEdge } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
@@ -1116,7 +1116,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
     useStore.setState({
       mode: "select",
       simRunning: false,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     render(<Canvas />);
     await act(async () => {});
     fireEvent.keyDown(document, { key: " " });
@@ -1127,7 +1127,7 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
     useStore.setState({
       mode: "simulate",
       simRunning: true,
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     render(<Canvas />);
     await act(async () => {});
     fireEvent.keyDown(document, { key: " " });
@@ -1150,7 +1150,7 @@ describe("GE-37 add-annotation mode — pointerdown places annotation", () => {
       addAnnotation,
       openAnnotationEditor,
       mode: "add-annotation",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("pointerdown calls addAnnotation with pointer coordinates", async () => {
@@ -1184,7 +1184,7 @@ describe("GE-37 dblclick on annotation — opens annotation editor", () => {
       graph: seedGraph,
       openAnnotationEditor,
       mode: "select",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("dblclick on annotation calls openAnnotationEditor", async () => {
@@ -1209,7 +1209,7 @@ describe("GE-37 delete mode — pointerdown on annotation removes it", () => {
       graph: seedGraph,
       deleteAnnotation,
       mode: "delete",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("pointerdown on annotation calls deleteAnnotation", async () => {
@@ -1237,7 +1237,7 @@ describe("GE-37 select mode — drag annotation calls moveAnnotation", () => {
       },
       moveAnnotation,
       mode: "select",
-    } as Parameters<typeof useStore.setState>[0]);
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("pointerdown + pointermove + pointerup calls moveAnnotation with final position", async () => {
@@ -1260,7 +1260,7 @@ describe("GE-38 H key — history toggle", () => {
 
   it("pressing h calls toggleHistory", async () => {
     const toggleHistory = vi.fn();
-    useStore.setState({ toggleHistory } as Parameters<
+    useStore.setState({ toggleHistory } as unknown as Parameters<
       typeof useStore.setState
     >[0]);
     render(<Canvas />);

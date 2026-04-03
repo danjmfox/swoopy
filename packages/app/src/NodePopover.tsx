@@ -50,7 +50,7 @@ export function NodePopover() {
     if (!editingNodeId) return;
     updateNode(editingNodeId, {
       label,
-      annotation: annotation || undefined,
+      ...(annotation ? { annotation } : {}),
       min,
       max,
       initial,

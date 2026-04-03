@@ -11,7 +11,7 @@ describe("persistence round-trip (integration)", () => {
   beforeEach(() => {
     localStorage.clear();
     useStore.setState({
-      graph: { nodes: [], edges: [] },
+      graph: { nodes: [], edges: [], annotations: [] },
       past: [],
       future: [],
     });
@@ -25,17 +25,17 @@ describe("persistence round-trip (integration)", () => {
     useStore.getState().addNode(100, 200);
     useStore.getState().addNode(300, 400);
     const { graph: original } = useStore.getState();
-    useStore.getState().addEdge(original.nodes[0].id, original.nodes[1].id);
+    useStore.getState().addEdge(original.nodes[0]!.id, original.nodes[1]!.id);
     const { graph: withEdge } = useStore.getState();
 
     await useStore.getState().shareGraph();
 
     const sharedUrl = (
       navigator.clipboard.writeText as ReturnType<typeof vi.fn>
-    ).mock.calls[0][0];
+    ).mock.calls[0]![0] as string;
     const search = new URL(sharedUrl).search;
 
-    useStore.setState({ graph: { nodes: [], edges: [] } });
+    useStore.setState({ graph: { nodes: [], edges: [], annotations: [] } });
     useStore.getState().loadFromUrl(search);
 
     const { graph: restored } = useStore.getState();
@@ -47,7 +47,7 @@ describe("persistence round-trip (integration)", () => {
     expect(restored.nodes.map((n) => [n.x, n.y])).toEqual(
       withEdge.nodes.map((n) => [n.x, n.y]),
     );
-    expect(restored.edges[0].from).toBe(withEdge.edges[0].from);
-    expect(restored.edges[0].to).toBe(withEdge.edges[0].to);
+    expect(restored.edges[0]!.from).toBe(withEdge.edges[0]!.from);
+    expect(restored.edges[0]!.to).toBe(withEdge.edges[0]!.to);
   });
 });

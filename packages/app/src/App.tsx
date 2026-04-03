@@ -31,7 +31,9 @@ export function App() {
 
   useEffect(() => {
     const subscriber = createHistorySubscriber(loggerRef.current);
-    const unsubscribe = useStore.subscribe(subscriber);
+    const unsubscribe = useStore.subscribe(
+      subscriber as unknown as Parameters<typeof useStore.subscribe>[0],
+    );
     return unsubscribe;
   }, []);
 
