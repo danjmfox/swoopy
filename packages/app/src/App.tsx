@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Canvas } from "./Canvas.tsx";
 import { Toolbar } from "./Toolbar.tsx";
 import { NodePopover } from "./NodePopover.tsx";
+import { AnnotationPopover } from "./AnnotationPopover.tsx";
 import { EdgeWeightPopover } from "./EdgeWeightPopover.tsx";
 import { ConstraintChoiceDialog } from "./ConstraintChoiceDialog.tsx";
 import { WelcomeOverlay } from "./WelcomeOverlay.tsx";
@@ -54,6 +55,7 @@ export function App() {
       <Canvas />
       <Toolbar />
       <NodePopover />
+      <AnnotationPopover />
       <EdgeWeightPopover />
       <ConstraintChoiceDialog />
       {showWelcome && <WelcomeOverlay onDismiss={dismissWelcome} />}

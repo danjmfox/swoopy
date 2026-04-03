@@ -15,6 +15,7 @@ const MODES: {
   { mode: "add-node", label: "⬤", title: "Add Node", shortcut: "N" },
   { mode: "add-edge", label: "→", title: "Add Edge", shortcut: "E" },
   { mode: "simulate", label: "▷", title: "Simulate", shortcut: "R" },
+  { mode: "add-annotation", label: "💬", title: "Add Annotation", shortcut: "A" },
   { mode: "delete", label: "✕", title: "Delete", shortcut: "D" },
 ];
 

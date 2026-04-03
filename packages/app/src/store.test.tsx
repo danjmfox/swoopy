@@ -1056,3 +1056,63 @@ describe("GE-32 spring-loaded mode state", () => {
     expect(useStore.getState().previousMode).toBeNull();
   });
 });
+
+// GE-37: annotation store slice
+describe("GE-37: annotation store slice", () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] });
+  });
+
+  it("add-annotation is a valid AppMode", () => {
+    useStore.getState().setMode("add-annotation");
+    expect(useStore.getState().mode).toBe("add-annotation");
+  });
+
+  it("addAnnotation adds an annotation to graph.annotations", () => {
+    useStore.getState().addAnnotation(100, 200);
+    const { annotations } = useStore.getState().graph;
+    expect(annotations).toHaveLength(1);
+    expect(annotations[0]).toMatchObject({ x: 100, y: 200, text: "" });
+  });
+
+  it("addAnnotation returns the new annotation id", () => {
+    const id = useStore.getState().addAnnotation(10, 20);
+    expect(typeof id).toBe("string");
+    expect(id.length).toBeGreaterThan(0);
+  });
+
+  it("deleteAnnotation removes the annotation by id", () => {
+    const id = useStore.getState().addAnnotation(50, 60);
+    useStore.getState().deleteAnnotation(id);
+    expect(useStore.getState().graph.annotations).toHaveLength(0);
+  });
+
+  it("moveAnnotation updates x and y of the annotation", () => {
+    const id = useStore.getState().addAnnotation(10, 20);
+    useStore.getState().moveAnnotation(id, 99, 88);
+    expect(useStore.getState().graph.annotations[0]).toMatchObject({ x: 99, y: 88 });
+  });
+
+  it("updateAnnotation updates the text of the annotation", () => {
+    const id = useStore.getState().addAnnotation(10, 20);
+    useStore.getState().updateAnnotation(id, "hello world");
+    expect(useStore.getState().graph.annotations[0]).toMatchObject({ text: "hello world" });
+  });
+
+  it("editingAnnotationId defaults to null", () => {
+    expect(useStore.getState().editingAnnotationId).toBeNull();
+  });
+
+  it("openAnnotationEditor sets editingAnnotationId", () => {
+    const id = useStore.getState().addAnnotation(10, 20);
+    useStore.getState().openAnnotationEditor(id);
+    expect(useStore.getState().editingAnnotationId).toBe(id);
+  });
+
+  it("closeAnnotationEditor clears editingAnnotationId", () => {
+    const id = useStore.getState().addAnnotation(10, 20);
+    useStore.getState().openAnnotationEditor(id);
+    useStore.getState().closeAnnotationEditor();
+    expect(useStore.getState().editingAnnotationId).toBeNull();
+  });
+});

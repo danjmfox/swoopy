@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { LoopyRenderer, hitTest } from "@swoopy/renderer";
 import { inject, INJECT_STRENGTH } from "@swoopy/engine";
+import { ANNOTATION_WIDTH, ANNOTATION_MIN_HEIGHT } from "@swoopy/renderer";
 import { useStore } from "./store.ts";
 
 export function Canvas() {
@@ -15,6 +16,8 @@ export function Canvas() {
 
     // Drag state machine
     let dragNodeId: import("@swoopy/engine").NodeId | null = null;
+    let dragAnnotationId: import("@swoopy/engine").AnnotationId | null = null;
+    let dragAnnotationOffset: { dx: number; dy: number } = { dx: 0, dy: 0 };
     let hasDragged = false; // true once pointermove fires after a pointerdown
     let constraintModifierHeld = false;
     let shiftHeld = false;
@@ -90,6 +93,11 @@ export function Canvas() {
         setMode("delete");
         return;
       }
+      if (e.key === "a") {
+        e.preventDefault();
+        setMode("add-annotation");
+        return;
+      }
     }
     function onDocKeyUp(e: KeyboardEvent) {
       if (e.key === "Alt") constraintModifierHeld = false;
@@ -133,7 +141,11 @@ export function Canvas() {
         }
       }
 
-      if (mode === "add-node") {
+      if (mode === "add-annotation") {
+        const { addAnnotation, openAnnotationEditor } = useStore.getState();
+        const id = addAnnotation(x - ANNOTATION_WIDTH / 2, y - ANNOTATION_MIN_HEIGHT / 2);
+        openAnnotationEditor(id);
+      } else if (mode === "add-node") {
         if (!hit) addNode(x, y);
       } else if (mode === "simulate") {
         if (hit?.kind === "node") {
@@ -149,7 +161,9 @@ export function Canvas() {
         }
       } else if (mode === "delete") {
         if (hit?.kind === "node") deleteNode(hit.id);
-        else if (
+        else if (hit?.kind === "annotation") {
+          useStore.getState().deleteAnnotation(hit.id);
+        } else if (
           hit?.kind === "edge-polarity" ||
           hit?.kind === "edge-delay" ||
           hit?.kind === "edge-weight"
@@ -158,7 +172,14 @@ export function Canvas() {
         }
       } else {
         // select / add-edge — track drag source; select mode also sets keyboard focus
-        if (hit?.kind === "node") {
+        if (hit?.kind === "annotation" && mode === "select") {
+          const ann = useStore.getState().graph.annotations.find((a) => a.id === hit.id);
+          if (ann) {
+            dragAnnotationId = hit.id;
+            dragAnnotationOffset = { dx: x - ann.x, dy: y - ann.y };
+            hasDragged = false;
+          }
+        } else if (hit?.kind === "node") {
           dragNodeId = hit.id;
           hasDragged = false;
           if (mode === "select") useStore.getState().setFocusedNode(hit.id);
@@ -172,6 +193,11 @@ export function Canvas() {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
+      if (dragAnnotationId !== null) {
+        hasDragged = true;
+        useStore.getState().setAnnotationDragPosition(dragAnnotationId, x - dragAnnotationOffset.dx, y - dragAnnotationOffset.dy);
+        return;
+      }
       if (dragNodeId !== null) {
         hasDragged = true;
         const { mode, setDragPosition } = useStore.getState();
@@ -190,6 +216,16 @@ export function Canvas() {
 
     function onPointerUp(e: PointerEvent) {
       clearHold();
+      if (dragAnnotationId !== null) {
+        const { annotationDragPosition, moveAnnotation } = useStore.getState();
+        if (annotationDragPosition && hasDragged) {
+          moveAnnotation(dragAnnotationId, annotationDragPosition.x, annotationDragPosition.y);
+        } else {
+          useStore.setState({ annotationDragPosition: null });
+        }
+        dragAnnotationId = null;
+        return;
+      }
       if (dragNodeId === null) return;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -244,6 +280,7 @@ export function Canvas() {
       } = useStore.getState();
       const hit = hitTest(graph, x, y);
       if (hit?.kind === "node" && mode !== "simulate") openNodeEditor(hit.id);
+      else if (hit?.kind === "annotation") useStore.getState().openAnnotationEditor(hit.id);
       else if (hit?.kind === "edge-polarity") togglePolarity(hit.edgeId);
       else if (hit?.kind === "edge-delay") cycleDelay(hit.edgeId);
       else if (hit?.kind === "edge-weight") openEdgeWeightEditor(hit.edgeId);
