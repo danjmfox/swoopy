@@ -74,6 +74,7 @@ export const seedGraph: Graph = {
     edge("pop-deaths", popId, deathsId, 1),
     edge("deaths-pop", deathsId, popId, -1), // balancing
   ],
+  annotations: [],
 };
 
 // GE-11, GE-12

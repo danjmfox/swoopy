@@ -2,6 +2,14 @@ import type { ColourTier, SizeTier } from "./constants.js";
 
 export type NodeId = string & { readonly __brand: "NodeId" };
 export type EdgeId = string & { readonly __brand: "EdgeId" };
+export type AnnotationId = string & { readonly __brand: "AnnotationId" };
+
+export interface Annotation {
+  readonly id: AnnotationId;
+  readonly x: number;
+  readonly y: number;
+  readonly text: string;
+}
 
 export type DelayLevel = "none" | "short" | "medium" | "long";
 export type EdgeKind = "causal" | "constraint";
@@ -68,4 +76,5 @@ export interface SimState {
 export interface Graph {
   readonly nodes: ReadonlyArray<Node>;
   readonly edges: ReadonlyArray<Edge>;
+  readonly annotations: ReadonlyArray<Annotation>;
 }

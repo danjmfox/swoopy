@@ -7,6 +7,7 @@ import type {
   Node,
   DelayLevel,
   ConstraintKind,
+  AnnotationId,
 } from "@swoopy/engine";
 
 export type AppMode =
@@ -14,7 +15,8 @@ export type AppMode =
   | "add-node"
   | "add-edge"
   | "simulate"
-  | "delete";
+  | "delete"
+  | "add-annotation";
 
 // previousMode is non-null while a spring-loaded sub-mode is active.
 // Distinct from `transient` (which means "URL-loaded graph, not yet locally saved").
@@ -23,6 +25,7 @@ import {
   makeInitialSim,
   makeNodeId,
   makeEdgeId,
+  makeAnnotationId,
   step,
   serialize,
   deserialize,
@@ -96,6 +99,8 @@ interface StoreState {
   // Ephemeral drag state (not persisted, not in undo history)
   dragPosition: { nodeId: NodeId; x: number; y: number } | null;
   setDragPosition: (nodeId: NodeId, x: number, y: number) => void;
+  annotationDragPosition: { id: AnnotationId; x: number; y: number } | null;
+  setAnnotationDragPosition: (id: AnnotationId, x: number, y: number) => void;
 
   // Ephemeral hover state (not persisted)
   hoveredEdgeRegion: { edgeId: EdgeId; region: "delay" | "weight" } | null;
@@ -108,6 +113,15 @@ interface StoreState {
   setPendingConstraintEdge: (from: NodeId, to: NodeId) => void;
   confirmConstraintEdge: (kind: ConstraintKind) => void;
   cancelConstraintEdge: () => void;
+
+  // Annotation actions
+  addAnnotation: (x: number, y: number) => AnnotationId;
+  deleteAnnotation: (id: AnnotationId) => void;
+  moveAnnotation: (id: AnnotationId, x: number, y: number) => void;
+  updateAnnotation: (id: AnnotationId, text: string) => void;
+  editingAnnotationId: AnnotationId | null;
+  openAnnotationEditor: (id: AnnotationId) => void;
+  closeAnnotationEditor: () => void;
 
   // Editor UI state
   editingNodeId: NodeId | null;
@@ -168,6 +182,9 @@ export const useStore = create<StoreState>((set, get) => ({
   dragPosition: null as { nodeId: NodeId; x: number; y: number } | null,
   setDragPosition: (nodeId: NodeId, x: number, y: number) =>
     set({ dragPosition: { nodeId, x, y } }),
+  annotationDragPosition: null as { id: AnnotationId; x: number; y: number } | null,
+  setAnnotationDragPosition: (id: AnnotationId, x: number, y: number) =>
+    set({ annotationDragPosition: { id, x, y } }),
   hoveredEdgeRegion: null as {
     edgeId: EdgeId;
     region: "delay" | "weight";
@@ -198,6 +215,46 @@ export const useStore = create<StoreState>((set, get) => ({
     const idx = nodes.findIndex((n) => n.id === focusedNodeId);
     set({ focusedNodeId: nodes[(idx + 1) % nodes.length].id });
   },
+  addAnnotation: (x: number, y: number) => {
+    const { graph, past } = get();
+    const id = makeAnnotationId(crypto.randomUUID());
+    const modelId = forkIfTransient(get, set);
+    const annotation = { id, x, y, text: "" };
+    const next = { ...graph, annotations: [...graph.annotations, annotation] };
+    set({ past: [...past, graph], future: [], graph: next });
+    persist(next, modelId);
+    return id;
+  },
+  deleteAnnotation: (id: AnnotationId) => {
+    const { graph, past } = get();
+    const modelId = forkIfTransient(get, set);
+    const next = { ...graph, annotations: graph.annotations.filter((a) => a.id !== id) };
+    set({ past: [...past, graph], future: [], graph: next });
+    persist(next, modelId);
+  },
+  moveAnnotation: (id: AnnotationId, x: number, y: number) => {
+    const { graph, past } = get();
+    const modelId = forkIfTransient(get, set);
+    const next = {
+      ...graph,
+      annotations: graph.annotations.map((a) => (a.id === id ? { ...a, x, y } : a)),
+    };
+    set({ past: [...past, graph], future: [], graph: next, annotationDragPosition: null });
+    persist(next, modelId);
+  },
+  updateAnnotation: (id: AnnotationId, text: string) => {
+    const { graph, past } = get();
+    const modelId = forkIfTransient(get, set);
+    const next = {
+      ...graph,
+      annotations: graph.annotations.map((a) => (a.id === id ? { ...a, text } : a)),
+    };
+    set({ past: [...past, graph], future: [], graph: next });
+    persist(next, modelId);
+  },
+  editingAnnotationId: null as AnnotationId | null,
+  openAnnotationEditor: (id: AnnotationId) => set({ editingAnnotationId: id }),
+  closeAnnotationEditor: () => set({ editingAnnotationId: null }),
   editingNodeId: null,
   openNodeEditor: (id) => set({ editingNodeId: id }),
   closeNodeEditor: () => set({ editingNodeId: null }),
@@ -432,7 +489,7 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   newModel: () => {
     const newId = crypto.randomUUID();
-    const emptyGraph: Graph = { nodes: [], edges: [] };
+    const emptyGraph: Graph = { nodes: [], edges: [], annotations: [] };
     persist(emptyGraph, newId);
     localStorage.setItem("swoopy_current_model", newId);
     const url = new URL(window.location.href);

@@ -191,3 +191,28 @@ describe("Toolbar mode switcher", () => {
     expect(addEdgeBtn.style.outline).toBeFalsy();
   });
 });
+
+// GE-37: add-annotation toolbar button
+describe("GE-37: add-annotation toolbar button", () => {
+  let setMode: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    setMode = vi.fn();
+    useStore.setState({
+      graph: seedGraph,
+      mode: "select",
+      setMode,
+    } as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("renders an Add Annotation button", () => {
+    const { getByTitle } = render(<Toolbar />);
+    expect(getByTitle("Add Annotation")).toBeTruthy();
+  });
+
+  it("clicking Add Annotation calls setMode with add-annotation", () => {
+    const { getByTitle } = render(<Toolbar />);
+    fireEvent.click(getByTitle("Add Annotation"));
+    expect(setMode).toHaveBeenCalledWith("add-annotation");
+  });
+});

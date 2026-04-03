@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { serialize, deserialize } from "./index.ts";
 import { seedGraph } from "./population.test.ts";
+import type { Annotation, AnnotationId } from "./types.ts";
 
 // SE-01, SE-04
 describe("serialize", () => {
-  it("emits version 3", () => {
+  it("emits version 4", () => {
     const blob = serialize(seedGraph);
-    expect(blob).toMatchObject({ version: 3 });
+    expect(blob).toMatchObject({ version: 4 });
   });
 });
 
@@ -30,9 +31,9 @@ describe("deserialize", () => {
     );
   });
 
-  it("throws for version 4 (future unknown version)", () => {
-    expect(() => deserialize({ version: 4, graph: seedGraph })).toThrow(
-      /version 4/,
+  it("throws for version 5 (future unknown version)", () => {
+    expect(() => deserialize({ version: 5, graph: seedGraph })).toThrow(
+      /version 5/,
     );
   });
 });
@@ -87,5 +88,35 @@ describe("deserialize v2 migration", () => {
     };
     const graph = deserialize(v2Blob);
     expect(graph.nodes[0]).toMatchObject({ colourTier: "blue" });
+  });
+});
+
+// GE-37: Annotation type and Graph.annotations
+describe("Annotation type", () => {
+  it("Annotation has id, x, y, text fields", () => {
+    const ann: Annotation = {
+      id: "a1" as AnnotationId,
+      x: 10,
+      y: 20,
+      text: "hello",
+    };
+    expect(ann.id).toBe("a1");
+    expect(ann.x).toBe(10);
+    expect(ann.y).toBe(20);
+    expect(ann.text).toBe("hello");
+  });
+
+  it("deserialise v3 blob → annotations defaults to []", () => {
+    const graph = deserialize(serialize(seedGraph));
+    expect(graph.annotations).toEqual([]);
+  });
+
+  it("round-trip v4 preserves annotations", () => {
+    const graphWithAnnotation = {
+      ...seedGraph,
+      annotations: [{ id: "a1" as AnnotationId, x: 10, y: 20, text: "hi" }],
+    };
+    const restored = deserialize(serialize(graphWithAnnotation));
+    expect(restored.annotations).toEqual(graphWithAnnotation.annotations);
   });
 });

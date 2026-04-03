@@ -1,10 +1,12 @@
 export type {
   NodeId,
   EdgeId,
+  AnnotationId,
   DelayLevel,
   EdgeKind,
   ConstraintKind,
   Node,
+  Annotation,
   CausalEdge,
   ConstraintEdge,
   Edge,
@@ -14,7 +16,7 @@ export type {
   Graph,
 } from "./types.ts";
 
-export { makeNodeId, makeEdgeId } from "./ids.ts";
+export { makeNodeId, makeEdgeId, makeAnnotationId } from "./ids.ts";
 
 export {
   SIGNAL_SPEED,

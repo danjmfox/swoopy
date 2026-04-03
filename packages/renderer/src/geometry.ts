@@ -3,6 +3,10 @@
 
 export const BOW = 28 // px perpendicular offset for parallel edge pairs
 
+export const ANNOTATION_WIDTH = 180
+export const ANNOTATION_MIN_HEIGHT = 40
+export const ANNOTATION_PADDING = 10
+
 /** Quadratic bezier point at parameter t (0–1) */
 export function bezierPoint(
   x1: number, y1: number,

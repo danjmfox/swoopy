@@ -1,11 +1,12 @@
-import type { Graph, NodeId, EdgeId, CausalEdge } from '@swoopy/engine'
-import { bezierPoint, controlPoint, BOW, EDGE_HIT_RADIUS, T_DELAY, T_POLARITY, T_WEIGHT } from './geometry.ts'
+import type { Graph, NodeId, EdgeId, CausalEdge, AnnotationId } from '@swoopy/engine'
+import { bezierPoint, controlPoint, BOW, EDGE_HIT_RADIUS, T_DELAY, T_POLARITY, T_WEIGHT, ANNOTATION_WIDTH, ANNOTATION_MIN_HEIGHT } from './geometry.ts'
 
 export type HitTarget =
   | { kind: 'node'; id: NodeId }
   | { kind: 'edge-polarity'; edgeId: EdgeId }
   | { kind: 'edge-delay'; edgeId: EdgeId }
   | { kind: 'edge-weight'; edgeId: EdgeId }
+  | { kind: 'annotation'; id: AnnotationId }
 
 // All coordinates in CSS pixels — DPR applied at draw time only (docs/decisions/DR--20260327--renderer--dpr-css-pixel-geometry.md)
 export function hitTest(graph: Graph, x: number, y: number): HitTarget | null {
@@ -44,6 +45,18 @@ export function hitTest(graph: Graph, x: number, y: number): HitTarget | null {
     for (const [t, target] of regions) {
       const pt = bezierPoint(x1, y1, cx, cy, x2, y2, t)
       if (Math.hypot(x - pt.x, y - pt.y) <= EDGE_HIT_RADIUS) return target
+    }
+  }
+
+  // Annotations — rect hit (x, y, ANNOTATION_WIDTH, ANNOTATION_MIN_HEIGHT minimum)
+  for (const ann of graph.annotations ?? []) {
+    if (
+      x >= ann.x &&
+      x <= ann.x + ANNOTATION_WIDTH &&
+      y >= ann.y &&
+      y <= ann.y + ANNOTATION_MIN_HEIGHT
+    ) {
+      return { kind: 'annotation', id: ann.id }
     }
   }
 

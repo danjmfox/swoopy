@@ -698,6 +698,13 @@ describe("GE-28 mode keyboard shortcuts — S/N/E/R/D", () => {
     expect(setMode).toHaveBeenCalledWith("delete");
   });
 
+  it("A switches to add-annotation mode", async () => {
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(container.querySelector("canvas")!, { key: "a" });
+    expect(setMode).toHaveBeenCalledWith("add-annotation");
+  });
+
   it("S switches mode even when canvas does not have focus", async () => {
     render(<Canvas />);
     await act(async () => {});
@@ -1126,5 +1133,109 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
     fireEvent.keyDown(document, { key: " " });
     expect(useStore.getState().mode).toBe("simulate");
     expect(useStore.getState().simRunning).toBe(false);
+  });
+});
+
+// GE-37: annotation canvas interactions
+describe("GE-37 add-annotation mode — pointerdown places annotation", () => {
+  let addAnnotation: ReturnType<typeof vi.fn>;
+  let openAnnotationEditor: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    addAnnotation = vi.fn().mockReturnValue("a1");
+    openAnnotationEditor = vi.fn();
+    mockHitTest.mockReset().mockReturnValue(null);
+    useStore.setState({
+      graph: seedGraph,
+      addAnnotation,
+      openAnnotationEditor,
+      mode: "add-annotation",
+    } as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("pointerdown calls addAnnotation with pointer coordinates", async () => {
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 200, clientY: 150 });
+    expect(addAnnotation).toHaveBeenCalledTimes(1);
+  });
+
+  it("pointerdown calls openAnnotationEditor with the returned id", async () => {
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 200, clientY: 150 });
+    expect(openAnnotationEditor).toHaveBeenCalledWith("a1");
+  });
+});
+
+describe("GE-37 dblclick on annotation — opens annotation editor", () => {
+  let openAnnotationEditor: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    openAnnotationEditor = vi.fn();
+    mockHitTest.mockReset();
+    useStore.setState({
+      graph: seedGraph,
+      openAnnotationEditor,
+      mode: "select",
+    } as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("dblclick on annotation calls openAnnotationEditor", async () => {
+    mockHitTest.mockReturnValue({ kind: "annotation", id: "a1" });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.dblClick(container.querySelector("canvas")!, { clientX: 100, clientY: 100 });
+    expect(openAnnotationEditor).toHaveBeenCalledWith("a1");
+  });
+});
+
+describe("GE-37 delete mode — pointerdown on annotation removes it", () => {
+  let deleteAnnotation: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    deleteAnnotation = vi.fn();
+    mockHitTest.mockReset();
+    useStore.setState({
+      graph: seedGraph,
+      deleteAnnotation,
+      mode: "delete",
+    } as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("pointerdown on annotation calls deleteAnnotation", async () => {
+    mockHitTest.mockReturnValue({ kind: "annotation", id: "a1" });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 100, clientY: 100 });
+    expect(deleteAnnotation).toHaveBeenCalledWith("a1");
+  });
+});
+
+describe("GE-37 select mode — drag annotation calls moveAnnotation", () => {
+  let moveAnnotation: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    moveAnnotation = vi.fn();
+    mockHitTest.mockReset();
+    useStore.setState({
+      graph: {
+        ...seedGraph,
+        annotations: [{ id: "a1", x: 100, y: 100, text: "" }],
+      },
+      moveAnnotation,
+      mode: "select",
+    } as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("pointerdown + pointermove + pointerup calls moveAnnotation with final position", async () => {
+    mockHitTest.mockReturnValue({ kind: "annotation", id: "a1" });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.pointerDown(canvas, { clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(canvas, { clientX: 120, clientY: 130 });
+    fireEvent.pointerUp(canvas, { clientX: 120, clientY: 130 });
+    expect(moveAnnotation).toHaveBeenCalled();
   });
 });

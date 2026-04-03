@@ -4,6 +4,7 @@ import type {
   CausalEdge,
   ConstraintEdge,
   NodeId,
+  AnnotationId,
 } from "@swoopy/engine";
 import { MAX_SIGNALS } from "@swoopy/engine";
 import {
@@ -20,6 +21,9 @@ import {
   T_DELAY,
   T_POLARITY,
   T_WEIGHT,
+  ANNOTATION_WIDTH,
+  ANNOTATION_MIN_HEIGHT,
+  ANNOTATION_PADDING,
 } from "./geometry.ts";
 import { nodeLabelFont } from "./nodeLabelFont.ts";
 
@@ -40,6 +44,7 @@ export interface RendererStore {
   focusedNodeId: NodeId | null;
   mode: string;
   dragPosition?: { nodeId: NodeId; x: number; y: number } | null;
+  annotationDragPosition?: { id: AnnotationId; x: number; y: number } | null;
   hoveredEdgeRegion?: { edgeId: string; region: "delay" | "weight" } | null;
 }
 
@@ -180,7 +185,7 @@ export class LoopyRenderer {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    const { graph, sim, mode, dragPosition } = state;
+    const { graph, sim, mode, dragPosition, annotationDragPosition } = state;
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
     const causalEdges = graph.edges.filter(
       (e): e is CausalEdge => e.kind === "causal",
@@ -438,6 +443,46 @@ export class LoopyRenderer {
       }
 
       if (isDragging) ctx.globalAlpha = 1;
+    }
+
+    // Annotation boxes
+    for (const ann of graph.annotations ?? []) {
+      const ax = annotationDragPosition?.id === ann.id ? annotationDragPosition.x : ann.x;
+      const ay = annotationDragPosition?.id === ann.id ? annotationDragPosition.y : ann.y;
+      const lines = ann.text ? ann.text.split("\n") : [];
+      const lineHeight = 16;
+      const textHeight = lines.length * lineHeight;
+      const height = Math.max(ANNOTATION_MIN_HEIGHT, ANNOTATION_PADDING * 2 + lineHeight + textHeight);
+
+      ctx.beginPath();
+      if (typeof ctx.roundRect === "function") {
+        ctx.roundRect(ax, ay, ANNOTATION_WIDTH, height, 4);
+      } else {
+        ctx.rect(ax, ay, ANNOTATION_WIDTH, height);
+      }
+      ctx.fillStyle = "#1e293b";
+      ctx.fill();
+      ctx.strokeStyle = "#3b82f6";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Grip dots
+      ctx.fillStyle = "#475569";
+      ctx.font = "12px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("···", ax + ANNOTATION_WIDTH / 2, ay + 10);
+
+      // Text content
+      if (ann.text) {
+        ctx.fillStyle = "#f1f5f9";
+        ctx.font = "13px system-ui, sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        for (let i = 0; i < lines.length; i++) {
+          ctx.fillText(lines[i], ax + ANNOTATION_PADDING, ay + ANNOTATION_PADDING + lineHeight + i * lineHeight);
+        }
+      }
     }
 
     // Ghost node — follows cursor during drag in select mode

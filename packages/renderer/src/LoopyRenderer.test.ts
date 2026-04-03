@@ -1282,3 +1282,78 @@ describe("LoopyRenderer", () => {
     expect(fillTexts.every((t) => t === nodeA.label || t === "▲" || t === "▼")).toBe(true);
   });
 });
+
+// GE-37: annotation box rendering
+describe("GE-37 annotation rendering", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("draws a rounded rect with electric blue (#3b82f6) stroke for an annotation", () => {
+    const strokes: { style: string }[] = [];
+    const fills: { style: string }[] = [];
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn().mockImplementation(function (this: typeof ctx) {
+        fills.push({ style: ctx.fillStyle as string });
+      }),
+      stroke: vi.fn().mockImplementation(function (this: typeof ctx) {
+        strokes.push({ style: ctx.strokeStyle as string });
+      }),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      fillText: vi.fn(),
+      roundRect: vi.fn(),
+      setLineDash: vi.fn(),
+      measureText: vi.fn().mockReturnValue({ width: 0 }),
+      fillStyle: "" as string,
+      strokeStyle: "" as string,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+      scale: vi.fn(),
+    };
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: {
+          nodes: [],
+          edges: [],
+          annotations: [{ id: "a1", x: 100, y: 100, text: "hello" }],
+        },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    const blueStroke = strokes.find((s) => s.style === "#3b82f6");
+    expect(blueStroke).toBeDefined();
+  });
+});

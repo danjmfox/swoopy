@@ -49,4 +49,10 @@ describe("HelpModal", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  // GE-37
+  it("documents A as Add annotation shortcut", () => {
+    const { getByText } = render(<HelpModal open={true} onClose={() => {}} />);
+    expect(getByText("A")).toBeTruthy();
+  });
 });

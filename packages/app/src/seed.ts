@@ -79,4 +79,5 @@ export const seedGraph: Graph = {
       transferFn: "linear",
     },
   ],
+  annotations: [],
 };

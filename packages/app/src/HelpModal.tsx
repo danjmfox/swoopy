@@ -82,6 +82,7 @@ const MODES = [
     shortcut: "R",
     description: "Click node to inject signal",
   },
+  { name: "Add Annotation", shortcut: "A", description: "Click canvas to place text box" },
   { name: "Delete", shortcut: "D", description: "Click to remove" },
 ];
 
