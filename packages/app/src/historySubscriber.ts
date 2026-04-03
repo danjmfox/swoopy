@@ -18,7 +18,19 @@ export function createHistorySubscriber(
 ): (state: SubscriberState) => void {
   let prevGraph: Graph | null = null;
   let prevSimRunning = false;
+  let prevSim: SubscriberState["sim"] | null = null;
   return (state) => {
+    // Skip re-fires caused by unrelated store updates (e.g. incrementHistorySeq).
+    // Only process when sim, graph, or simRunning actually changed.
+    if (
+      state.sim === prevSim &&
+      state.graph === prevGraph &&
+      state.simRunning === prevSimRunning
+    ) {
+      return;
+    }
+    prevSim = state.sim;
+
     const { tick, nodeValues } = state.sim;
     const { simRunning } = state;
     let shouldNotify = false;
@@ -41,7 +53,7 @@ export function createHistorySubscriber(
       shouldNotify = true;
     }
 
-    if (shouldNotify) onSample?.();
     prevSimRunning = simRunning;
+    if (shouldNotify) onSample?.();
   };
 }
