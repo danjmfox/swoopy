@@ -1,9 +1,89 @@
+import { useState } from "react";
 import { useStore } from "./store.ts";
 import { historyLogger } from "./App.tsx";
+import { NODE_COLOURS, type Node } from "@swoopy/engine";
+
+type ViewMode = "table" | "graph";
+
+const SVG_W = 600;
+const SVG_H = 260;
+const PAD = { top: 10, right: 16, bottom: 30, left: 40 };
+
+function HistoryGraph({
+  nodes,
+  histories,
+}: {
+  nodes: Node[];
+  histories: { tick: number; value: number }[][];
+}) {
+  const innerW = SVG_W - PAD.left - PAD.right;
+  const innerH = SVG_H - PAD.top - PAD.bottom;
+
+  const allTicks = histories.flatMap((h) => h.map((s) => s.tick));
+  const minTick = Math.min(...allTicks);
+  const maxTick = Math.max(...allTicks);
+  const tickRange = maxTick - minTick || 1;
+
+  const toX = (tick: number) =>
+    PAD.left + ((tick - minTick) / tickRange) * innerW;
+
+  return (
+    <svg
+      width={SVG_W}
+      height={SVG_H}
+      style={{ display: "block", overflow: "visible" }}
+    >
+      {/* x-axis */}
+      <line
+        x1={PAD.left}
+        y1={SVG_H - PAD.bottom}
+        x2={SVG_W - PAD.right}
+        y2={SVG_H - PAD.bottom}
+        stroke="#475569"
+        strokeWidth={1}
+      />
+      {/* x-axis tick labels */}
+      {histories[0]?.map((s) => (
+        <text
+          key={s.tick}
+          x={toX(s.tick)}
+          y={SVG_H - PAD.bottom + 14}
+          textAnchor="middle"
+          fill="#64748b"
+          fontSize={10}
+        >
+          {s.tick / 60}s
+        </text>
+      ))}
+      {/* one path per node */}
+      {nodes.map((node, ni) => {
+        const history = histories[ni];
+        if (history.length === 0) return null;
+        const valueRange = node.max - node.min || 1;
+        const toY = (value: number) =>
+          PAD.top + innerH - ((value - node.min) / valueRange) * innerH;
+        const d = history
+          .map((s, i) => `${i === 0 ? "M" : "L"}${toX(s.tick)},${toY(s.value)}`)
+          .join(" ");
+        const colour = NODE_COLOURS[node.colourTier].swatch;
+        return (
+          <path
+            key={node.id}
+            d={d}
+            fill="none"
+            stroke={colour}
+            strokeWidth={2}
+          />
+        );
+      })}
+    </svg>
+  );
+}
 
 export function HistoryOverlay() {
   const showHistory = useStore((s) => s.showHistory);
   const graph = useStore((s) => s.graph);
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   if (!showHistory) return null;
 
@@ -45,6 +125,34 @@ export function HistoryOverlay() {
           }}
         >
           <span style={{ color: "#f1f5f9", fontWeight: 600 }}>History</span>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button
+              onClick={() => setViewMode("table")}
+              style={{
+                background: viewMode === "table" ? "#475569" : "#334155",
+                color: "#f1f5f9",
+                border: "none",
+                borderRadius: 4,
+                padding: "4px 10px",
+                cursor: "pointer",
+              }}
+            >
+              Table
+            </button>
+            <button
+              onClick={() => setViewMode("graph")}
+              style={{
+                background: viewMode === "graph" ? "#475569" : "#334155",
+                color: "#f1f5f9",
+                border: "none",
+                borderRadius: 4,
+                padding: "4px 10px",
+                cursor: "pointer",
+              }}
+            >
+              Graph
+            </button>
+          </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button
               onClick={() => {
@@ -87,7 +195,7 @@ export function HistoryOverlay() {
           <p style={{ color: "#94a3b8" }}>
             No data yet — run the simulation to record history.
           </p>
-        ) : (
+        ) : viewMode === "table" ? (
           <table
             style={{
               borderCollapse: "collapse",
@@ -136,6 +244,8 @@ export function HistoryOverlay() {
               ))}
             </tbody>
           </table>
+        ) : (
+          <HistoryGraph nodes={nodes} histories={histories} />
         )}
       </div>
     </div>

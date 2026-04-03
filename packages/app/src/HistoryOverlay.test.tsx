@@ -102,6 +102,62 @@ describe("HistoryOverlay", () => {
     vi.restoreAllMocks();
   });
 
+  it("renders Table and Graph toggle buttons in the header when showHistory is true", () => {
+    useStore.setState({
+      showHistory: true,
+      graph: {
+        nodes: [],
+        edges: [],
+        annotations: [],
+      } as unknown as typeof useStore.getState.prototype.graph,
+    });
+    render(<HistoryOverlay />);
+    expect(screen.getByRole("button", { name: "Table" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Graph" })).toBeTruthy();
+  });
+
+  it("clicking Graph button renders an SVG with one path per node", () => {
+    useStore.setState({
+      showHistory: true,
+      graph: {
+        nodes: [
+          {
+            id: "node-1",
+            label: "Stress",
+            x: 0,
+            y: 0,
+            radius: 30,
+            sizeTier: "m",
+            colourTier: "blue",
+            min: 0,
+            max: 10,
+            initial: 5,
+          },
+          {
+            id: "node-2",
+            label: "Capacity",
+            x: 0,
+            y: 0,
+            radius: 30,
+            sizeTier: "m",
+            colourTier: "green",
+            min: 0,
+            max: 10,
+            initial: 5,
+          },
+        ],
+        edges: [],
+        annotations: [],
+      } as unknown as typeof useStore.getState.prototype.graph,
+    });
+    render(<HistoryOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Graph" }));
+    const svg = document.querySelector("svg");
+    expect(svg).not.toBeNull();
+    const paths = svg!.querySelectorAll("path");
+    expect(paths).toHaveLength(2);
+  });
+
   it("renders node label as a row header and sim-second column header derived from tick", () => {
     useStore.setState({
       showHistory: true,
