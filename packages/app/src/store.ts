@@ -146,6 +146,8 @@ interface StoreState {
   // History overlay
   showHistory: boolean;
   toggleHistory: () => void;
+  historySeq: number;
+  incrementHistorySeq: () => void;
 
   // Persistence
   loadPersistedGraph: () => void;
@@ -487,6 +489,8 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   showHistory: false,
   toggleHistory: () => set({ showHistory: !get().showHistory }),
+  historySeq: 0,
+  incrementHistorySeq: () => set({ historySeq: get().historySeq + 1 }),
   pauseSim: () => set({ simRunning: false }),
   resumeSim: () => set({ simRunning: true }),
   resetSim: () => {

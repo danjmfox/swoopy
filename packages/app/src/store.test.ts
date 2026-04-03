@@ -58,6 +58,26 @@ describe("deleteNode", () => {
   });
 });
 
+// GE-40: historySeq counter
+describe("historySeq / incrementHistorySeq", () => {
+  it("historySeq defaults to 0", () => {
+    expect(useStore.getState().historySeq).toBe(0);
+  });
+
+  it("incrementHistorySeq increments historySeq by 1", () => {
+    useStore.setState({ historySeq: 0 });
+    useStore.getState().incrementHistorySeq();
+    expect(useStore.getState().historySeq).toBe(1);
+  });
+
+  it("incrementHistorySeq is cumulative", () => {
+    useStore.setState({ historySeq: 0 });
+    useStore.getState().incrementHistorySeq();
+    useStore.getState().incrementHistorySeq();
+    expect(useStore.getState().historySeq).toBe(2);
+  });
+});
+
 // GE-38: history overlay toggle
 describe("showHistory / toggleHistory", () => {
   it("showHistory defaults to false", () => {
