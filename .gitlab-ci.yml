@@ -35,18 +35,15 @@ install:
   script:
     - pnpm install --frozen-lockfile
 
-lint:
-  extends: .pnpm_template
-  stage: validate
-  script:
-    - pnpm -r lint
+# Trunk-based lint runs on GitHub Actions via trunk-io/trunk-action.
+# No equivalent available on GitLab runners; omitted intentionally.
 
 typecheck:
   extends: .pnpm_template
   stage: validate
   script:
     # This enforces the "any is a build error" requirement from the PRD
-    - pnpm -r typecheck
+    - pnpm typecheck
 
 test:engine:
   extends: .pnpm_template
