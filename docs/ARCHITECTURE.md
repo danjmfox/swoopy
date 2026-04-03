@@ -19,18 +19,18 @@ The simulation core. Every function is pure: same inputs, same outputs, no side 
 
 Key exports:
 
-| Export                                          | Purpose                                                                                             | Details                |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------- |
-| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types                                                                                        |                        |
-| `NodeId`, `EdgeId`                              | Branded primitive types — prevent accidental string substitution                                    |                        |
+| Export                                          | Purpose                                                                                                                     | Details                |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types                                                                                                                |                        |
+| `NodeId`, `EdgeId`                              | Branded primitive types — prevent accidental string substitution                                                            |                        |
 | `SimState`                                      | Snapshot of simulation state: node values, displayPrevNodeValues (renderer trend arrows), travelling signals, pending queue |                        |
-| `makeInitialSim(graph)`                         | Create a clean `SimState` from a graph                                                              |                        |
-| `step(graph, sim, dt)`                          | Advance simulation by `dt` seconds; returns new `SimState`                                          |                        |
-| `inject(sim, graph, nodeId, strength)`          | Return new `SimState` with node value changed and relay signals emitted on outgoing edges           |                        |
-| `serialize(graph)`                              | `Graph` → versioned JSON-compatible value                                                           |                        |
-| `deserialize(raw)`                              | Versioned value → `Graph`; throws on unknown version                                                |                        |
-| `hitTest(graph, x, y)`                          | Return `HitTarget` or `null`                                                                        | For canvas coordinates |
-| `bezierPoint`, `controlPoint`                   | Geometry helpers for curve rendering and hit testing                                                |                        |
+| `makeInitialSim(graph)`                         | Create a clean `SimState` from a graph                                                                                      |                        |
+| `step(graph, sim, dt)`                          | Advance simulation by `dt` seconds; returns new `SimState`                                                                  |                        |
+| `inject(sim, graph, nodeId, strength)`          | Return new `SimState` with node value changed and relay signals emitted on outgoing edges                                   |                        |
+| `serialize(graph)`                              | `Graph` → versioned JSON-compatible value                                                                                   |                        |
+| `deserialize(raw)`                              | Versioned value → `Graph`; throws on unknown version                                                                        |                        |
+| `hitTest(graph, x, y)`                          | Return `HitTarget` or `null`                                                                                                | For canvas coordinates |
+| `bezierPoint`, `controlPoint`                   | Geometry helpers for curve rendering and hit testing                                                                        |                        |
 
 ### Simulation step
 

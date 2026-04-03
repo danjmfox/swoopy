@@ -447,12 +447,21 @@ export class LoopyRenderer {
 
     // Annotation boxes
     for (const ann of graph.annotations ?? []) {
-      const ax = annotationDragPosition?.id === ann.id ? annotationDragPosition.x : ann.x;
-      const ay = annotationDragPosition?.id === ann.id ? annotationDragPosition.y : ann.y;
+      const ax =
+        annotationDragPosition?.id === ann.id
+          ? annotationDragPosition.x
+          : ann.x;
+      const ay =
+        annotationDragPosition?.id === ann.id
+          ? annotationDragPosition.y
+          : ann.y;
       const lines = ann.text ? ann.text.split("\n") : [];
       const lineHeight = 16;
       const textHeight = lines.length * lineHeight;
-      const height = Math.max(ANNOTATION_MIN_HEIGHT, ANNOTATION_PADDING * 2 + lineHeight + textHeight);
+      const height = Math.max(
+        ANNOTATION_MIN_HEIGHT,
+        ANNOTATION_PADDING * 2 + lineHeight + textHeight,
+      );
 
       ctx.beginPath();
       if (typeof ctx.roundRect === "function") {
@@ -480,7 +489,11 @@ export class LoopyRenderer {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         for (let i = 0; i < lines.length; i++) {
-          ctx.fillText(lines[i], ax + ANNOTATION_PADDING, ay + ANNOTATION_PADDING + lineHeight + i * lineHeight);
+          ctx.fillText(
+            lines[i] ?? "",
+            ax + ANNOTATION_PADDING,
+            ay + ANNOTATION_PADDING + lineHeight + i * lineHeight,
+          );
         }
       }
     }

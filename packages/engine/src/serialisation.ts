@@ -47,19 +47,31 @@ export function deserialize(blob: unknown): Graph {
         migrateV1toV2(
           graph as unknown as { nodes: unknown[]; edges: unknown[] },
         ) as unknown as { nodes: unknown[]; edges: unknown[] },
-      ) as unknown as { nodes: unknown[]; edges: unknown[]; annotations?: unknown[] },
+      ) as unknown as {
+        nodes: unknown[];
+        edges: unknown[];
+        annotations?: unknown[];
+      },
     );
   }
   if (version === 2) {
     return migrateV3toV4(
       migrateV2toV3(
         graph as unknown as { nodes: unknown[]; edges: unknown[] },
-      ) as unknown as { nodes: unknown[]; edges: unknown[]; annotations?: unknown[] },
+      ) as unknown as {
+        nodes: unknown[];
+        edges: unknown[];
+        annotations?: unknown[];
+      },
     );
   }
   if (version === 3) {
     return migrateV3toV4(
-      graph as unknown as { nodes: unknown[]; edges: unknown[]; annotations?: unknown[] },
+      graph as unknown as {
+        nodes: unknown[];
+        edges: unknown[];
+        annotations?: unknown[];
+      },
     );
   }
   if (version === CURRENT_VERSION) {

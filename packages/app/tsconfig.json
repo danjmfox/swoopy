@@ -11,9 +11,6 @@
       "@swoopy/renderer": ["../renderer/src/index.ts"]
     }
   },
-  "references": [
-    { "path": "../engine" },
-    { "path": "../renderer" }
-  ],
-  "include": ["src", "vite.config.ts"]
+  "references": [{ "path": "../engine" }, { "path": "../renderer" }],
+  "include": ["src"]
 }

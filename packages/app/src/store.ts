@@ -227,7 +227,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const nodes = graph.nodes;
     if (nodes.length === 0) return;
     const idx = nodes.findIndex((n) => n.id === focusedNodeId);
-    set({ focusedNodeId: nodes[(idx + 1) % nodes.length].id });
+    set({ focusedNodeId: nodes[(idx + 1) % nodes.length]!.id });
   },
   addAnnotation: (x: number, y: number) => {
     const { graph, past } = get();
@@ -380,7 +380,7 @@ export const useStore = create<StoreState>((set, get) => ({
       edges: graph.edges.map((e) => {
         if (e.id !== edgeId || e.kind !== "causal") return e;
         const idx = DELAY_CYCLE.indexOf(e.delay);
-        return { ...e, delay: DELAY_CYCLE[(idx + 1) % DELAY_CYCLE.length] };
+        return { ...e, delay: DELAY_CYCLE[(idx + 1) % DELAY_CYCLE.length]! };
       }),
     };
     set({ past: [...past, graph], future: [], graph: next });
@@ -451,6 +451,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const { graph, past } = get();
     const modelId = forkIfTransient(get, set);
     const next = {
+      ...graph,
       nodes: graph.nodes.filter((n) => n.id !== id),
       edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
     };
@@ -467,7 +468,7 @@ export const useStore = create<StoreState>((set, get) => ({
   undo: () => {
     const { graph, past, future } = get();
     if (past.length === 0) return;
-    const previous = past[past.length - 1];
+    const previous = past[past.length - 1]!;
     const id = forkIfTransient(get, set);
     set({
       graph: previous,
@@ -479,7 +480,7 @@ export const useStore = create<StoreState>((set, get) => ({
   redo: () => {
     const { graph, past, future } = get();
     if (future.length === 0) return;
-    const next = future[0];
+    const next = future[0]!;
     const id = forkIfTransient(get, set);
     set({ graph: next, past: [...past, graph], future: future.slice(1) });
     persist(next, id);

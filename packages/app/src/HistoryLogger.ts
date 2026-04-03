@@ -43,8 +43,8 @@ export class HistoryLogger {
     const maxLen = Math.max(0, ...histories.map((h) => h.length));
     const rows: string[] = [];
     for (let i = 0; i < maxLen; i++) {
-      const tick = histories.find((h) => h[i] !== undefined)?.[i].tick ?? "";
-      const values = nodes.map((_, ni) => histories[ni][i]?.value ?? "");
+      const tick = histories.find((h) => h[i] !== undefined)?.[i]!.tick ?? "";
+      const values = nodes.map((_, ni) => histories[ni]![i]?.value ?? "");
       rows.push([tick, ...values].join(","));
     }
     return [header, ...rows].join("\n") + "\n";
@@ -57,12 +57,12 @@ export class HistoryLogger {
     const result: { tick: number; value: number }[] = [];
     if (count < this.capacity) {
       for (let i = 0; i < count; i++) {
-        result.push({ tick: ticks[i], value: values[i] });
+        result.push({ tick: ticks[i]!, value: values[i]! });
       }
     } else {
       for (let i = 0; i < this.capacity; i++) {
         const idx = (head + i) % this.capacity;
-        result.push({ tick: ticks[idx], value: values[idx] });
+        result.push({ tick: ticks[idx]!, value: values[idx]! });
       }
     }
     return result;

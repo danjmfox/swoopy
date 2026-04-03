@@ -1,21 +1,22 @@
 ---
 id: DR--20260330--engine--staggered-density-signals
-dateCreated: '2026-03-30'
+dateCreated: "2026-03-30"
 version: 1.1.0
 status: accepted
 changeType: revision
 domain: engine
 slug: staggered-density-signals
 changelog:
-  - date: '2026-03-30'
+  - date: "2026-03-30"
     note: Initial creation — emerged from oscillation investigation during first high-weight use
-  - date: '2026-03-30'
+  - date: "2026-03-30"
     note: Advanced to proposed — characterisation evidence committed alongside
-  - date: '2026-03-30'
+  - date: "2026-03-30"
     note: Accepted — model confirmed, implementation proceeding
-  - date: '2026-03-31'
+  - date: "2026-03-31"
     note: "v1.1 revision — stagger-after-delay extended to delayed edges (emerged from manual testing)"
 ---
+
 # DR--20260330--engine--staggered-density-signals
 
 ## 🧭 Context
@@ -35,12 +36,13 @@ structure and was pedagogically harmful. Any fix must not reintroduce an invisib
 **Investigation approach:** A characterisation script
 (`packages/engine/src/characterise-staggered.ts`) was written to test three candidate models
 inline (no production code changed) against two scenarios:
+
 - Scenario A: 6- and 12-node fully-connected reinforcing graph → steady-state signal count
 - Scenario B: 2-node balancing loop at w=1, w=3, w=5 → oscillation check
 
 **Characterisation results (2026-03-30):**
 
-```
+```text
 SIGNAL_SPEED=0.65, EDGE_TRANSIT_TICKS≈92, EMIT_THRESHOLD=0.06
 
 Scenario A — signal count (travelling + pending, p99 plateau ticks 120–600):
@@ -65,13 +67,13 @@ Scenario B — 2-node balancing loop (A samples every 30 ticks, final at t=300):
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-|--------|-------------|---------|-----------|
-| A | Keep current model (1 signal × delta × weight) | Rejected | Loop gain = w²; oscillates violently at w>1 |
-| B | Fixed damping (SIGNAL_DAMPING=0.95 at emission) | Rejected | Round-trip gain still w²×d²=22.6 at w=5; insufficient by 22× |
-| C | Staggered(delta): N signals × strength=delta each | Rejected | Delays onset but doesn't prevent oscillation; still crashes at w≥3 |
-| D | Normalized(delta/N): N signals × strength=delta/N each | **Accepted** | Stable at all weights; weight controls visual density only |
-| E | Damped(FRICTION=0.8): velocity-dependent suppression on top of D | Considered | Also stable; slightly suppresses large injections; harder to explain/test |
+| Option | Description                                                      | Outcome      | Rationale                                                                 |
+| ------ | ---------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------- |
+| A      | Keep current model (1 signal × delta × weight)                   | Rejected     | Loop gain = w²; oscillates violently at w>1                               |
+| B      | Fixed damping (SIGNAL_DAMPING=0.95 at emission)                  | Rejected     | Round-trip gain still w²×d²=22.6 at w=5; insufficient by 22×              |
+| C      | Staggered(delta): N signals × strength=delta each                | Rejected     | Delays onset but doesn't prevent oscillation; still crashes at w≥3        |
+| D      | Normalized(delta/N): N signals × strength=delta/N each           | **Accepted** | Stable at all weights; weight controls visual density only                |
+| E      | Damped(FRICTION=0.8): velocity-dependent suppression on top of D | Considered   | Also stable; slightly suppresses large injections; harder to explain/test |
 
 ## 🧠 Decision
 
@@ -98,6 +100,7 @@ confirm label before implementing UI change.
 
 **What weight does NOT do in this model:**
 Weight does not change the steady-state outcome of a simple loop. It affects:
+
 - Visual richness: more particles on screen for high-weight edges
 - Temporal spread: multiple arrivals over the edge transit period
 - In complex multi-loop graphs: more signal traffic on high-weight edges, creating
@@ -165,6 +168,7 @@ edges too for consistent visual semantics. A weight=5 edge must show 5 particles
 of whether it carries a delay.
 
 **Decision:** Stagger-after-delay. For delayed edges with weight > 1:
+
 - Emit `count = round(weight)` signals, each of strength `delta / count`
 - Signal `i` gets `ticksRemaining = DELAY_TICKS[edge.delay] + i × staggerTicks`
 - The burst departs after the delay has expired, then spreads across the edge transit

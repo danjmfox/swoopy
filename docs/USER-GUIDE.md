@@ -11,6 +11,7 @@ A model has two elements:
 **Nodes** — variables. Each has a label, a value range (`min` to `max`), and a current value shown by colour and the arc around its edge.
 
 **Edges** — influences between nodes. There are two kinds:
+
 - **Causal edge** — a solid curved arrow; carries a signal from one node to another
 - **Constraint edge** — a dashed line; dynamically caps or floors another node's value
 
@@ -20,13 +21,13 @@ A model has two elements:
 
 The toolbar at the bottom of the screen controls what your mouse does. The active mode is shown in the toolbar.
 
-| Mode | What clicking / dragging does |
-|------|-------------------------------|
-| **Select** | Click a node or edge to select it. Drag a node to reposition it. Double-click to configure. |
-| **Add Node** | Click empty canvas to create a node. Double-click an existing node to rename or configure it. |
+| Mode         | What clicking / dragging does                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **Select**   | Click a node or edge to select it. Drag a node to reposition it. Double-click to configure.                         |
+| **Add Node** | Click empty canvas to create a node. Double-click an existing node to rename or configure it.                       |
 | **Add Edge** | Drag from one node to another to draw a causal edge. Hold **Alt** while dragging to draw a constraint edge instead. |
-| **Simulate** | Click a node to inject a positive signal. Shift-click to inject a negative one. |
-| **Delete** | Click a node or edge to remove it. Deleting a node removes all its connected edges. |
+| **Simulate** | Click a node to inject a positive signal. Shift-click to inject a negative one.                                     |
+| **Delete**   | Click a node or edge to remove it. Deleting a node removes all its connected edges.                                 |
 
 ---
 
@@ -40,11 +41,11 @@ Switch to **Add Node** mode, then click the canvas. A node appears with a defaul
 
 Double-click any node (in any mode) to open its popover:
 
-| Field | Meaning |
-|-------|---------|
-| Label | What this variable is called |
-| Min | The lowest value this variable can reach |
-| Max | The highest value it can reach |
+| Field   | Meaning                                                      |
+| ------- | ------------------------------------------------------------ |
+| Label   | What this variable is called                                 |
+| Min     | The lowest value this variable can reach                     |
+| Max     | The highest value it can reach                               |
 | Initial | Where it starts; also the value restored by the Reset button |
 
 ### Draw a causal edge
@@ -53,11 +54,11 @@ Switch to **Add Edge** mode, then drag from one node to another. The arrow direc
 
 A new edge is reinforcing (`+`) by default. To configure it:
 
-| Region on the edge | Double-click action |
-|--------------------|---------------------|
-| Polarity badge (`+` / `−`) at the midpoint | Toggle reinforcing / balancing |
-| Delay marks (if any) — left of centre | Cycle delay: none → `‖` (days) → `‖‖` (weeks) → `‖‖‖` (months) → none |
-| Weight region — right of centre | Open weight popover (0–5); default 1.0; higher weight = stronger signal |
+| Region on the edge                         | Double-click action                                                     |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| Polarity badge (`+` / `−`) at the midpoint | Toggle reinforcing / balancing                                          |
+| Delay marks (if any) — left of centre      | Cycle delay: none → `‖` (days) → `‖‖` (weeks) → `‖‖‖` (months) → none   |
+| Weight region — right of centre            | Open weight popover (0–5); default 1.0; higher weight = stronger signal |
 
 ### Draw a constraint edge
 
@@ -78,6 +79,7 @@ Switch to **Simulate** mode.
 - **Shift-click** a node to inject a negative signal (things are going badly)
 
 Watch signals travel along edges as small coloured dots:
+
 - Blue dot — positive signal
 - Red dot — negative signal
 
@@ -87,10 +89,10 @@ A signal crossing a balancing (`−`) edge **reverses its polarity**. This is ho
 
 ### Simulation controls
 
-| Control | Action |
-|---------|--------|
-| ⏸ / ▶ | Pause and resume the simulation |
-| ↺ | Reset all node values to their initial settings; clear all signals |
+| Control                              | Action                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------- |
+| ⏸ / ▶                              | Pause and resume the simulation                                           |
+| ↺                                    | Reset all node values to their initial settings; clear all signals        |
 | Speed: `0.25×` `0.5×` `1×` `2×` `4×` | Compress or expand time — useful for observing slow delay effects quickly |
 
 ---
@@ -105,10 +107,10 @@ Nodes shift from blue (low value) through to warm red (high value), relative to 
 
 A thin arc around the inside of each node ring shows the node's current value as a proportion of its range:
 
-| Colour | Meaning |
-|--------|---------|
-| Green | Value is in the lower quarter of its range |
-| Yellow | Value is in the middle of its range |
+| Colour | Meaning                                                 |
+| ------ | ------------------------------------------------------- |
+| Green  | Value is in the lower quarter of its range              |
+| Yellow | Value is in the middle of its range                     |
 | Orange | Value is in the upper quarter — approaching its maximum |
 
 ### Trend arrow
@@ -138,26 +140,26 @@ A `⌈` label on a dashed line means ceiling constraint. A `⌊` means floor con
 
 These work anywhere — no canvas focus required.
 
-| Key | Mode |
-|-----|------|
-| `S` | Select |
-| `N` | Add Node |
-| `E` | Add Edge |
+| Key | Mode           |
+| --- | -------------- |
+| `S` | Select         |
+| `N` | Add Node       |
+| `E` | Add Edge       |
 | `R` | Simulate (Run) |
-| `D` | Delete |
+| `D` | Delete         |
 
 ### Canvas shortcuts
 
 These work when the canvas has focus (click the canvas first if shortcuts are not responding).
 
-| Key | Action |
-|-----|--------|
-| `Tab` | Cycle keyboard focus through nodes |
-| `Arrow keys` | Nudge the focused node |
-| `Enter` | Open the focused node's config popover |
-| `Delete` | Remove the focused node |
-| `Ctrl Z` | Undo |
-| `Ctrl Shift Z` | Redo |
+| Key            | Action                                 |
+| -------------- | -------------------------------------- |
+| `Tab`          | Cycle keyboard focus through nodes     |
+| `Arrow keys`   | Nudge the focused node                 |
+| `Enter`        | Open the focused node's config popover |
+| `Delete`       | Remove the focused node                |
+| `Ctrl Z`       | Undo                                   |
+| `Ctrl Shift Z` | Redo                                   |
 
 ---
 
@@ -190,8 +192,9 @@ Each model you work on is saved separately in your browser under its own URL (`?
 Swoopy is a thinking tool, not a predictive model. Node values are qualitative proxies — a value of 7 means "high relative to the range", not a real measurement. The dynamics are real (reinforcing loops do amplify, delays do cause oscillation) but the numbers are not.
 
 Things it does not currently model:
+
 - Rate constraints ("only N hires per month regardless of budget") — the ceiling/floor constraints cap values, not rates
-- Interaction effects — a variable that changes the *strength* of a relationship between two others
+- Interaction effects — a variable that changes the _strength_ of a relationship between two others
 - Goals and threshold reactions
 - Annotation (assumptions, quick-fix markers, goals on the diagram)
 

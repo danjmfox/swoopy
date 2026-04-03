@@ -44,6 +44,7 @@ const twoNodeGraph: Graph = {
       transferFn: "linear",
     },
   ],
+      annotations: []
 };
 
 // ---------------------------------------------------------------------------
@@ -146,6 +147,7 @@ describe("step() — signal arrival", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     const initialC = 5;
     let sim = inject(makeInitialSim(chainGraph), chainGraph, nodeA, 1);
@@ -183,6 +185,7 @@ describe("step() — signal arrival", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     // Manually place a signal on A→B with hopsRemaining=0
     const sim0 = makeInitialSim(chainGraph);
@@ -230,6 +233,7 @@ describe("weight — amplitude fragments", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1);
     expect(sim1.signals.length).toBe(3);
@@ -250,6 +254,7 @@ describe("weight — amplitude fragments", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1);
     for (const s of sim1.signals) {
@@ -272,6 +277,7 @@ describe("weight — amplitude fragments", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1);
     const progressValues = sim1.signals.map((s) => s.progress);
@@ -314,6 +320,7 @@ describe("signal aging — hopsRemaining", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     const sim0 = makeInitialSim(chainGraph);
     const simWithSignal = {
@@ -383,6 +390,7 @@ describe("integration — reinforcing loop", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     let sim = inject(makeInitialSim(graph), graph, nodeLoopA, 1);
     // MAX_HOPS=8 × EDGE_TRANSIT_TICKS=92 ≈ 736 ticks to propagate full chain + buffer
@@ -420,6 +428,7 @@ describe("integration — balancing loop", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     let sim = inject(makeInitialSim(graph), graph, nodeBalA, 1);
     for (let i = 0; i < 900; i++) sim = step(graph, sim, 1 / 60);
@@ -486,6 +495,7 @@ describe("integration — diamond graph", () => {
           transferFn: "linear",
         },
       ],
+      annotations: []
     };
     let sim = inject(makeInitialSim(graph), graph, nodeDA, 1);
     for (let i = 0; i < 400; i++) sim = step(graph, sim, 1 / 60);

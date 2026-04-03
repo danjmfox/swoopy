@@ -47,6 +47,7 @@ describe("GE-24 ceiling constraint", () => {
     const graph: Graph = {
       nodes: [node("A", 5), node("B", 8)],
       edges: [ceiling("A-B", "A", "B")],
+      annotations: []
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -62,6 +63,7 @@ describe("GE-24 floor constraint", () => {
     const graph: Graph = {
       nodes: [node("A", 7), node("B", 0)],
       edges: [floor("A-B", "A", "B")],
+      annotations: []
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -77,6 +79,7 @@ describe("SI-13 floor wins when effective_min > effective_max", () => {
     const graph: Graph = {
       nodes: [node("C", 4), node("D", 7), node("B", 0)],
       edges: [ceiling("C-B", "C", "B"), floor("D-B", "D", "B")],
+      annotations: []
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -91,6 +94,7 @@ describe("GE-25 multiple incoming constraints combine", () => {
     const graph: Graph = {
       nodes: [node("C1", 6), node("C2", 3), node("B", 8)],
       edges: [ceiling("C1-B", "C1", "B"), ceiling("C2-B", "C2", "B")],
+      annotations: []
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -102,6 +106,7 @@ describe("GE-25 multiple incoming constraints combine", () => {
     const graph: Graph = {
       nodes: [node("F1", 2), node("F2", 6), node("B", 0)],
       edges: [floor("F1-B", "F1", "B"), floor("F2-B", "F2", "B")],
+      annotations: []
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -119,6 +124,7 @@ describe("GE-24 dynamic source variation", () => {
     const graph: Graph = {
       nodes: [node("A", 2), node("B", 8)],
       edges: [ceiling("A-B", "A", "B")],
+      annotations: []
     };
     const sim0 = makeInitialSim(graph);
     const sim1 = step(graph, sim0, 1 / 60);
@@ -141,6 +147,7 @@ describe("SE-01 serialise round-trip with constraint edges", () => {
     const graph: Graph = {
       nodes: [node("A", 5), node("B", 0)],
       edges: [ceiling("A-B", "A", "B")],
+      annotations: []
     };
     const restored = deserialize(serialize(graph));
     expect(restored.edges).toEqual(graph.edges);

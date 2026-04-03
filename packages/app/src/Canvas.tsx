@@ -8,8 +8,8 @@ export function Canvas() {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    if (!ref.current) return;
     const canvas = ref.current;
-    if (!canvas) return;
 
     const renderer = new LoopyRenderer(canvas, useStore.getState);
     renderer.start();

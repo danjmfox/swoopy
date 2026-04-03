@@ -1,23 +1,24 @@
 ---
 id: DR--20260330--app--new-model-action
-dateCreated: '2026-03-30'
+dateCreated: "2026-03-30"
 version: 1.0.0
 status: accepted
 changeType: creation
 domain: app
 slug: new-model-action
 changelog:
-  - date: '2026-03-30'
+  - date: "2026-03-30"
     note: Initial creation
-  - date: '2026-03-30'
+  - date: "2026-03-30"
     note: Marked as draft
-  - date: '2026-03-30'
+  - date: "2026-03-30"
     note: Marked as proposed
-  - date: '2026-03-30'
+  - date: "2026-03-30"
     note: Marked as accepted
-lastEdited: '2026-03-30'
-dateAccepted: '2026-03-30'
+lastEdited: "2026-03-30"
+dateAccepted: "2026-03-30"
 ---
+
 # DR--20260330--app--new-model-action
 
 ## Context
@@ -33,15 +34,16 @@ This decision records how `newModel()` extends the SE-08 contract.
 
 ## Options Considered
 
-| Option | Description | Outcome | Rationale |
-|--------|-------------|---------|-----------|
-| A | `newModel()` uses `history.pushState()` — adds a back-stack entry | Rejected | Without a `popstate` listener, Back changes the URL but the canvas stays on the new blank model — misleading UX. Deferred to a future navigation story. |
-| B | `newModel()` uses `history.replaceState()` — replaces current URL, no back-stack entry | Accepted | Consistent with `forkIfTransient()`. Old model is preserved in localStorage under its UUID — no data loss, just no Back shortcut. |
-| C | Confirm dialog before creating new model | Rejected | Every mutation already persists via `persist()`. A confirm would falsely imply unsaved work exists. Violates Stewardship: avoid ceremony that misleads. |
+| Option | Description                                                                            | Outcome  | Rationale                                                                                                                                               |
+| ------ | -------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A      | `newModel()` uses `history.pushState()` — adds a back-stack entry                      | Rejected | Without a `popstate` listener, Back changes the URL but the canvas stays on the new blank model — misleading UX. Deferred to a future navigation story. |
+| B      | `newModel()` uses `history.replaceState()` — replaces current URL, no back-stack entry | Accepted | Consistent with `forkIfTransient()`. Old model is preserved in localStorage under its UUID — no data loss, just no Back shortcut.                       |
+| C      | Confirm dialog before creating new model                                               | Rejected | Every mutation already persists via `persist()`. A confirm would falsely imply unsaved work exists. Violates Stewardship: avoid ceremony that misleads. |
 
 ## Decision
 
 `newModel()` will:
+
 1. Generate a fresh UUID
 2. Set graph to an empty graph (no nodes, no edges)
 3. Set `transient: false`

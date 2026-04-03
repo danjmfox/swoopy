@@ -1,15 +1,16 @@
 ---
 id: DR--20260328--engine--weight-range-expansion
-dateCreated: '2026-03-28'
+dateCreated: "2026-03-28"
 version: 1.0.0
 status: accepted
 changeType: creation
 domain: engine
 slug: weight-range-expansion
 changelog:
-  - date: '2026-03-28'
+  - date: "2026-03-28"
     note: Initial creation — accepted immediately, emerged from first use session
 ---
+
 # DR--20260328--engine--weight-range-expansion
 
 ## 🧭 Context
@@ -19,17 +20,17 @@ weakening of a relationship (0 = no effect, 1 = full effect).
 
 During the first real use session, a practical problem emerged: the natural language of systems
 thinking is relative — "this edge is twice as strong as the others." With a 0–1 range, expressing
-that means editing *all other edges* down to 0.5, which is laborious and semantically backwards.
+that means editing _all other edges_ down to 0.5, which is laborious and semantically backwards.
 The user should be able to strengthen one edge, not weaken everything else.
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-|--------|-------------|---------|-----------|
-| A | Keep range 0–1 | Rejected | Forces users to weaken everything else to express relative amplification; counterintuitive |
-| B | Expand to 0–2 | Rejected | Doubles the range but still limits "3×" expressions that are common in practice |
-| C | Expand to 0–5 | Accepted | Supports "2× or 3× the others" naturally; 5 is a sensible ceiling for a teaching tool where extreme values are counterproductive |
-| D | Uncapped / arbitrary positive | Rejected | No upper bound makes the slider/input UX poor and invites runaway signal strength |
+| Option | Description                   | Outcome  | Rationale                                                                                                                        |
+| ------ | ----------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| A      | Keep range 0–1                | Rejected | Forces users to weaken everything else to express relative amplification; counterintuitive                                       |
+| B      | Expand to 0–2                 | Rejected | Doubles the range but still limits "3×" expressions that are common in practice                                                  |
+| C      | Expand to 0–5                 | Accepted | Supports "2× or 3× the others" naturally; 5 is a sensible ceiling for a teaching tool where extreme values are counterproductive |
+| D      | Uncapped / arbitrary positive | Rejected | No upper bound makes the slider/input UX poor and invites runaway signal strength                                                |
 
 ## 🧠 Decision
 

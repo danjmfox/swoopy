@@ -1,18 +1,19 @@
 ---
 id: DR--20260327--engine--simstate-prev-node-values
-dateCreated: '2026-03-27'
+dateCreated: "2026-03-27"
 version: 1.0.0
 status: accepted
 changeType: creation
 domain: engine
 slug: simstate-prev-node-values
 changelog:
-  - date: '2026-03-27'
+  - date: "2026-03-27"
     note: Initial creation — captured at implementation time
-  - date: '2026-03-28'
+  - date: "2026-03-28"
     note: Accepted — prevNodeValues pattern validated across all engine tests
-lastEdited: '2026-03-28'
+lastEdited: "2026-03-28"
 ---
+
 # SimState carries prevNodeValues for cross-step delta detection
 
 ## 🧭 Context
@@ -29,11 +30,11 @@ are ever emitted from a user click.
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-|--------|-------------|---------|-----------|
-| A | Compare against `node.initial` | Rejected | Fires continuously once a node settles above initial — emits signals every frame indefinitely |
-| B | `inject()` creates explicit pending signals (requires graph access) | Rejected | Couples a value-level operation to graph structure; changes `inject()` signature |
-| C | Add `prevNodeValues` to `SimState`, set by `step()` each tick | Chosen | `inject()` stays trivial; `step()` remains pure; delta comparison is in one place |
+| Option | Description                                                         | Outcome  | Rationale                                                                                     |
+| ------ | ------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| A      | Compare against `node.initial`                                      | Rejected | Fires continuously once a node settles above initial — emits signals every frame indefinitely |
+| B      | `inject()` creates explicit pending signals (requires graph access) | Rejected | Couples a value-level operation to graph structure; changes `inject()` signature              |
+| C      | Add `prevNodeValues` to `SimState`, set by `step()` each tick       | Chosen   | `inject()` stays trivial; `step()` remains pure; delta comparison is in one place             |
 
 ## 🧠 Decision
 
@@ -58,8 +59,8 @@ Status: `new` → advance to `draft` once reviewed.
 
 ## 🧩 Reasoning
 
-The PRD note on `inject()` — *"clamping is applied by the next step() call, not here —
-this preserves the delta signal that step() needs to detect"* — implies step() must have
+The PRD note on `inject()` — _"clamping is applied by the next step() call, not here —
+this preserves the delta signal that step() needs to detect"_ — implies step() must have
 a pre-inject baseline. `prevNodeValues` is that baseline. The extra Map is a small,
 bounded cost: same key set as `nodeValues`, updated once per tick.
 
@@ -81,6 +82,6 @@ minimum change needed.
 
 ## 🧾 Changelog
 
-| Date | Note |
-|------|------|
+| Date       | Note                                                                      |
+| ---------- | ------------------------------------------------------------------------- |
 | 2026-03-27 | Initial draft — captured at implementation time (feat/step-3-engine-step) |

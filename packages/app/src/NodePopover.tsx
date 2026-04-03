@@ -48,7 +48,13 @@ export function NodePopover() {
 
   function commit() {
     if (!editingNodeId) return;
-    updateNode(editingNodeId, { label, annotation: annotation || undefined, min, max, initial });
+    updateNode(editingNodeId, {
+      label,
+      ...(annotation ? { annotation } : {}),
+      min,
+      max,
+      initial,
+    });
     closeNodeEditor();
   }
 

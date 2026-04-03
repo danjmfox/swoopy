@@ -16,7 +16,7 @@ function makeStore(tickSim = vi.fn()): () => RendererStore {
     tickSim,
     simRunning: true,
     simSpeed: 1,
-    graph: { nodes: [], edges: [] },
+    graph: { nodes: [], edges: [], annotations: [] },
     sim: {
       signals: [],
       pending: [],
@@ -24,6 +24,8 @@ function makeStore(tickSim = vi.fn()): () => RendererStore {
       displayPrevNodeValues: new Map(),
       tick: 0,
     },
+    focusedNodeId: null,
+    mode: "select",
   });
 }
 
@@ -153,7 +155,7 @@ function makeArcFillCanvas(): {
 }
 
 const nodeA: Node = {
-  id: "a",
+  id: "a" as import("@swoopy/engine").NodeId,
   label: "A",
   x: 100,
   y: 100,
@@ -165,7 +167,7 @@ const nodeA: Node = {
   initial: 5,
 };
 const nodeB: Node = {
-  id: "b",
+  id: "b" as import("@swoopy/engine").NodeId,
   label: "B",
   x: 300,
   y: 100,
@@ -177,10 +179,10 @@ const nodeB: Node = {
   initial: 5,
 };
 const edgeAB: CausalEdge = {
-  id: "e1",
+  id: "e1" as import("@swoopy/engine").EdgeId,
   kind: "causal",
-  from: "a",
-  to: "b",
+  from: "a" as import("@swoopy/engine").NodeId,
+  to: "b" as import("@swoopy/engine").NodeId,
   polarity: 1,
   weight: 1,
   delay: "none",
@@ -209,7 +211,7 @@ describe("LoopyRenderer", () => {
   it("GE-20 focused node draws a white focus ring", () => {
     const { canvas, strokes } = makeSpyCanvas();
     const node: Node = {
-      id: "n1",
+      id: "n1" as import("@swoopy/engine").NodeId,
       label: "A",
       x: 100,
       y: 100,
@@ -225,7 +227,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [node], edges: [] },
+        graph: { nodes: [node], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -247,7 +249,7 @@ describe("LoopyRenderer", () => {
   it("GE-20 unfocused node does not draw a white focus ring", () => {
     const { canvas, strokes } = makeSpyCanvas();
     const node: Node = {
-      id: "n1",
+      id: "n1" as import("@swoopy/engine").NodeId,
       label: "A",
       x: 100,
       y: 100,
@@ -263,7 +265,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [node], edges: [] },
+        graph: { nodes: [node], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -493,7 +495,7 @@ describe("LoopyRenderer", () => {
       vi.advanceTimersByTime(1000 / 60);
       renderer.stop();
       // Causal edges are drawn before nodes; the first stroke() is the edge curve
-      return strokes()[0].width;
+      return strokes()[0]!.width;
     }
     const w0 = edgeCurveWidthForWeight(0);
     const w1 = edgeCurveWidthForWeight(1);
@@ -566,7 +568,7 @@ describe("LoopyRenderer", () => {
     // nodeB is at x=300,y=100,r=30; edge goes left→right so x2=270,y2=100
     const x2 = 270,
       y2 = 100;
-    const strokeCurve = quadCurves[0];
+    const strokeCurve = quadCurves[0]!;
     expect(strokeCurve.ex).not.toBeCloseTo(x2, 0);
     expect(strokeCurve).toBeDefined();
   });
@@ -597,7 +599,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -626,7 +628,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: true,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -651,7 +653,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: true,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -711,7 +713,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -775,7 +777,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -841,7 +843,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -1217,7 +1219,9 @@ describe("LoopyRenderer", () => {
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
 
-    const annotationCall = fillTexts.find((t) => t.text === "This is a very long anno…");
+    const annotationCall = fillTexts.find(
+      (t) => t.text === "This is a very long anno…",
+    );
     expect(annotationCall).toBeDefined();
   });
 
@@ -1261,7 +1265,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [] },
         sim: {
           signals: [],
           pending: [],
@@ -1279,7 +1283,9 @@ describe("LoopyRenderer", () => {
     renderer.stop();
 
     // Only label "A" and no annotation-like text
-    expect(fillTexts.every((t) => t === nodeA.label || t === "▲" || t === "▼")).toBe(true);
+    expect(
+      fillTexts.every((t) => t === nodeA.label || t === "▲" || t === "▼"),
+    ).toBe(true);
   });
 });
 
