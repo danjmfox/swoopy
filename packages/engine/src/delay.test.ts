@@ -59,6 +59,7 @@ describe("SI-14 delayed edge holds signals in pending queue", () => {
     const graph: Graph = {
       nodes: [node("A"), node("B")],
       edges: [causal("A-B", "A", "B", "short")],
+      annotations: []
     };
     const sim0 = makeInitialSim(graph);
     const sim1 = inject(sim0, graph, makeNodeId("A"), INJECT_STRENGTH);
@@ -72,6 +73,7 @@ describe("SI-14 delayed edge holds signals in pending queue", () => {
     const graph: Graph = {
       nodes: [node("A"), node("B")],
       edges: [causal("A-B", "A", "B", "short")],
+      annotations: []
     };
     let sim = makeInitialSim(graph);
     sim = inject(sim, graph, makeNodeId("A"), INJECT_STRENGTH);

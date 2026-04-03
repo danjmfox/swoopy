@@ -4,9 +4,9 @@ import { makeNodeId, makeEdgeId } from "./ids.ts";
 import { SIGNAL_SPEED, INJECT_STRENGTH } from "./constants.ts";
 import type { Graph } from "./types.ts";
 
-const nodeA = makeNodeId();
-const nodeB = makeNodeId();
-const edgeAB = makeEdgeId();
+const nodeA = makeNodeId("nodeA");
+const nodeB = makeNodeId("nodeB");
+const edgeAB = makeEdgeId("edgeAB");
 
 const graph: Graph = {
   nodes: [
@@ -44,8 +44,10 @@ const graph: Graph = {
       polarity: 1,
       weight: 1,
       delay: "none",
+      transferFn: "linear",
     },
   ],
+  annotations: [],
 };
 
 describe("step() displayPrevNodeValues — SI-12 trend display", () => {
@@ -77,7 +79,7 @@ describe("step() dt clamp — PRD §9 risk 5", () => {
     const sim1 = step(graph, sim0, 0.016); // normal 60fps frame; signal emitted at progress=0
     expect(sim1.signals.length).toBeGreaterThan(0);
 
-    const startProgress = sim1.signals[0].progress; // should be 0 (newly emitted)
+    const startProgress = sim1.signals[0]!.progress; // should be 0 (newly emitted)
 
     // spike frame — without clamping, progress jumps by SIGNAL_SPEED * 0.5 = 0.325
     const sim2 = step(graph, sim1, 0.5);

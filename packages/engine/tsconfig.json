@@ -6,5 +6,6 @@
     "rootDir": "src",
     "composite": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/characterise.ts", "src/characterise-relay.ts"]
 }

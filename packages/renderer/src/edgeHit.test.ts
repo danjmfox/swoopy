@@ -47,6 +47,7 @@ const graph: Graph = {
       transferFn: "linear",
     },
   ],
+  annotations: [],
 };
 
 // Edge runs from (50,0) to (250,0) — bowed upward with BOW=28

@@ -32,8 +32,8 @@ for (let i = 0; i < N; i++) {
     edges.push({
       kind: "causal",
       id: makeEdgeId(`e${i}-${j}`),
-      from: nodeIds[i],
-      to: nodeIds[j],
+      from: nodeIds[i]!,
+      to: nodeIds[j]!,
       polarity: 1,
       weight: 1.0,
       delay: "none",
@@ -41,7 +41,7 @@ for (let i = 0; i < N; i++) {
     });
   }
 }
-const capGraph: Graph = { nodes, edges };
+const capGraph: Graph = { nodes, edges, annotations: [] };
 
 // SI-11: signal count is capped at MAX_SIGNALS
 describe("SI-11 MAX_SIGNALS constant and cap", () => {
