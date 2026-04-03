@@ -24,6 +24,7 @@ stages:
     - corepack enable
     - corepack prepare pnpm@latest --activate
     - pnpm config set store-dir $PNPM_HOME
+    - pnpm install --frozen-lockfile
   interruptible: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
