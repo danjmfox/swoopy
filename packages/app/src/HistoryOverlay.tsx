@@ -83,6 +83,7 @@ function HistoryGraph({
 export function HistoryOverlay() {
   const showHistory = useStore((s) => s.showHistory);
   const graph = useStore((s) => s.graph);
+  useStore((s) => s.historySeq);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   if (!showHistory) return null;

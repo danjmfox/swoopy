@@ -108,6 +108,62 @@ describe("createHistorySubscriber", () => {
     expect(logger.record).not.toHaveBeenCalled();
   });
 
+  it("calls onSample once after recording a batch of node values", () => {
+    const logger = makeLogger();
+    const onSample = vi.fn();
+    const subscriber = createHistorySubscriber(logger, onSample);
+    // Initialize prevGraph via tick=0 before testing a sample tick
+    subscriber(makeState(0, new Map(), emptyGraph));
+    onSample.mockClear();
+    const nodeValues = new Map([
+      ["node-1" as NodeId, 3.0],
+      ["node-2" as NodeId, 7.5],
+    ]);
+    subscriber(makeState(HISTORY_SAMPLE_INTERVAL_TICKS, nodeValues, emptyGraph));
+    expect(onSample).toHaveBeenCalledOnce();
+  });
+
+  it("calls onSample when logger.clear() is triggered by tick=0", () => {
+    const logger = makeLogger();
+    const onSample = vi.fn();
+    const subscriber = createHistorySubscriber(logger, onSample);
+    subscriber(makeState(0, new Map(), emptyGraph));
+    expect(onSample).toHaveBeenCalledOnce();
+  });
+
+  it("calls onSample when logger.clear() is triggered by graph change", () => {
+    const logger = makeLogger();
+    const onSample = vi.fn();
+    const subscriber = createHistorySubscriber(logger, onSample);
+    const graphA = { nodes: [], edges: [], annotations: [] } as unknown as Graph;
+    const graphB = { nodes: [], edges: [], annotations: [] } as unknown as Graph;
+    subscriber(makeState(HISTORY_SAMPLE_INTERVAL_TICKS, new Map(), graphA));
+    onSample.mockClear();
+    subscriber(makeState(HISTORY_SAMPLE_INTERVAL_TICKS * 2, new Map(), graphB));
+    expect(onSample).toHaveBeenCalledOnce();
+  });
+
+  it("does not call onSample on ticks that are not sample boundaries", () => {
+    const logger = makeLogger();
+    const onSample = vi.fn();
+    const subscriber = createHistorySubscriber(logger, onSample);
+    // Initialize prevGraph via tick=0, then test a non-boundary tick
+    subscriber(makeState(0, new Map(), emptyGraph));
+    onSample.mockClear();
+    subscriber(makeState(1, new Map([["node-1" as NodeId, 5.0]]), emptyGraph));
+    expect(onSample).not.toHaveBeenCalled();
+  });
+
+  it("works without onSample (optional param)", () => {
+    const logger = makeLogger();
+    const subscriber = createHistorySubscriber(logger);
+    expect(() =>
+      subscriber(
+        makeState(HISTORY_SAMPLE_INTERVAL_TICKS, new Map(), emptyGraph),
+      ),
+    ).not.toThrow();
+  });
+
   it("calls clear when graph reference changes", () => {
     const logger = makeLogger();
     const subscriber = createHistorySubscriber(logger);
