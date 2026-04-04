@@ -8,6 +8,7 @@ import type {
 import {
   bezierPoint,
   controlPoint,
+  edgeEndpoints,
   edgeBow,
   EDGE_HIT_RADIUS,
   T_DELAY,
@@ -41,16 +42,7 @@ export function hitTest(graph: Graph, x: number, y: number): HitTarget | null {
     const from = nodeById.get(edge.from);
     const to = nodeById.get(edge.to);
     if (!from || !to) continue;
-
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const len = Math.hypot(dx, dy);
-    const ux = dx / len;
-    const uy = dy / len;
-    const x1 = from.x + ux * from.radius;
-    const y1 = from.y + uy * from.radius;
-    const x2 = to.x - ux * to.radius;
-    const y2 = to.y - uy * to.radius;
+    const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
     const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, causalEdges));
 
     const regions: Array<[number, HitTarget]> = [

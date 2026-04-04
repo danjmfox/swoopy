@@ -119,7 +119,9 @@ describe("createHistorySubscriber", () => {
       ["node-1" as NodeId, 3.0],
       ["node-2" as NodeId, 7.5],
     ]);
-    subscriber(makeState(HISTORY_SAMPLE_INTERVAL_TICKS, nodeValues, emptyGraph));
+    subscriber(
+      makeState(HISTORY_SAMPLE_INTERVAL_TICKS, nodeValues, emptyGraph),
+    );
     expect(onSample).toHaveBeenCalledOnce();
   });
 
@@ -135,8 +137,16 @@ describe("createHistorySubscriber", () => {
     const logger = makeLogger();
     const onSample = vi.fn();
     const subscriber = createHistorySubscriber(logger, onSample);
-    const graphA = { nodes: [], edges: [], annotations: [] } as unknown as Graph;
-    const graphB = { nodes: [], edges: [], annotations: [] } as unknown as Graph;
+    const graphA = {
+      nodes: [],
+      edges: [],
+      annotations: [],
+    } as unknown as Graph;
+    const graphB = {
+      nodes: [],
+      edges: [],
+      annotations: [],
+    } as unknown as Graph;
     subscriber(makeState(HISTORY_SAMPLE_INTERVAL_TICKS, new Map(), graphA));
     onSample.mockClear();
     subscriber(makeState(HISTORY_SAMPLE_INTERVAL_TICKS * 2, new Map(), graphB));

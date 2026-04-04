@@ -41,43 +41,19 @@ function migrateV3toV4(graph: {
 
 export function deserialize(blob: unknown): Graph {
   const { version, graph } = blob as SerializedGraph;
-  if (version === 1) {
-    return migrateV3toV4(
-      migrateV2toV3(
-        migrateV1toV2(
-          graph as unknown as { nodes: unknown[]; edges: unknown[] },
-        ) as unknown as { nodes: unknown[]; edges: unknown[] },
-      ) as unknown as {
-        nodes: unknown[];
-        edges: unknown[];
-        annotations?: unknown[];
-      },
+  if (version < 1 || version > CURRENT_VERSION) {
+    throw new Error(
+      `Unsupported serialisation version ${version}. Expected ${CURRENT_VERSION}.`,
     );
   }
-  if (version === 2) {
-    return migrateV3toV4(
-      migrateV2toV3(
-        graph as unknown as { nodes: unknown[]; edges: unknown[] },
-      ) as unknown as {
-        nodes: unknown[];
-        edges: unknown[];
-        annotations?: unknown[];
-      },
-    );
-  }
-  if (version === 3) {
-    return migrateV3toV4(
-      graph as unknown as {
-        nodes: unknown[];
-        edges: unknown[];
-        annotations?: unknown[];
-      },
-    );
-  }
-  if (version === CURRENT_VERSION) {
-    return graph;
-  }
-  throw new Error(
-    `Unsupported serialisation version ${version}. Expected ${CURRENT_VERSION}.`,
-  );
+  // Cast once at the boundary; each migration function handles its own field access.
+  let g = graph as unknown as {
+    nodes: unknown[];
+    edges: unknown[];
+    annotations?: unknown[];
+  };
+  if (version < 2) g = migrateV1toV2(g) as typeof g;
+  if (version < 3) g = migrateV2toV3(g) as typeof g;
+  if (version < 4) return migrateV3toV4(g);
+  return graph;
 }

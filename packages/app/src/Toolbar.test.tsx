@@ -128,9 +128,10 @@ describe("Toolbar mode switcher", () => {
   });
 
   it("sim controls are visible in simulate mode", () => {
-    useStore.setState({ mode: "simulate", simRunning: true } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      mode: "simulate",
+      simRunning: true,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     const { getByTitle } = render(<Toolbar />);
     expect(getByTitle("Pause")).toBeTruthy();
     expect(getByTitle("Reset")).toBeTruthy();

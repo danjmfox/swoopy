@@ -22,6 +22,25 @@ export function edgeBow(
   return edge.isQuickFix ? -BOW : BOW;
 }
 
+/** Edge endpoint coordinates in CSS pixels — points where edge meets node circumference. */
+export function edgeEndpoints(
+  from: { x: number; y: number; radius: number },
+  to: { x: number; y: number; radius: number },
+): { x1: number; y1: number; x2: number; y2: number } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 1) return { x1: from.x, y1: from.y, x2: to.x, y2: to.y };
+  const ux = dx / len;
+  const uy = dy / len;
+  return {
+    x1: from.x + ux * from.radius,
+    y1: from.y + uy * from.radius,
+    x2: to.x - ux * to.radius,
+    y2: to.y - uy * to.radius,
+  };
+}
+
 export const ANNOTATION_WIDTH = 180;
 export const ANNOTATION_MIN_HEIGHT = 40;
 export const ANNOTATION_PADDING = 10;
