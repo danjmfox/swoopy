@@ -17,6 +17,7 @@ import { nodeValueFill } from "./nodeValueFill.ts";
 import {
   bezierPoint,
   controlPoint,
+  edgeEndpoints,
   BOW,
   edgeBow,
   T_DELAY,
@@ -220,15 +221,7 @@ export class LoopyRenderer {
       const from = nodeById.get(edge.from);
       const to = nodeById.get(edge.to);
       if (!from || !to) continue;
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
-      const len = Math.hypot(dx, dy);
-      const ux = dx / len;
-      const uy = dy / len;
-      const x1 = from.x + ux * from.radius;
-      const y1 = from.y + uy * from.radius;
-      const x2 = to.x - ux * to.radius;
-      const y2 = to.y - uy * to.radius;
+      const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
       ctx.setLineDash([6, 4]);
       ctx.beginPath();
       ctx.moveTo(x1, y1);
@@ -251,29 +244,11 @@ export class LoopyRenderer {
       const from = nodeById.get(edge.from);
       const to = nodeById.get(edge.to);
       if (!from || !to) continue;
-
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
-      const len = Math.hypot(dx, dy);
-      const ux = dx / len;
-      const uy = dy / len;
-
+      const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
       // SI-11: dim edge when signal count is high
-      const edgeSignalCount = sim.signals.filter(
-        (s) => s.edgeId === edge.id,
-      ).length;
+      const edgeSignalCount = sim.signals.filter((s) => s.edgeId === edge.id).length;
       const alpha = saturationAlpha(edgeSignalCount, MAX_SIGNALS);
-
-      drawCurvedArrow(
-        ctx,
-        from.x + ux * from.radius,
-        from.y + uy * from.radius,
-        to.x - ux * to.radius,
-        to.y - uy * to.radius,
-        edge,
-        edgeBow(edge, causalEdges),
-        alpha,
-      );
+      drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, causalEdges), alpha);
     }
 
     // GE-29/GE-30: Select mode — affordance dots at delay and weight hit regions
@@ -283,22 +258,8 @@ export class LoopyRenderer {
         const from = nodeById.get(edge.from);
         const to = nodeById.get(edge.to);
         if (!from || !to) continue;
-        const dx = to.x - from.x;
-        const dy = to.y - from.y;
-        const len = Math.hypot(dx, dy);
-        const ux = dx / len;
-        const uy = dy / len;
-        const x1 = from.x + ux * from.radius;
-        const y1 = from.y + uy * from.radius;
-        const x2 = to.x - ux * to.radius;
-        const y2 = to.y - uy * to.radius;
-        const { cx, cy } = controlPoint(
-          x1,
-          y1,
-          x2,
-          y2,
-          edgeBow(edge, causalEdges),
-        );
+        const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
+        const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, causalEdges));
         for (const [t, region] of [
           [T_DELAY, "delay"],
           [T_WEIGHT, "weight"],
@@ -330,27 +291,9 @@ export class LoopyRenderer {
       const from = nodeById.get(edge.from);
       const to = nodeById.get(edge.to);
       if (!from || !to) continue;
-
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
-      const len = Math.hypot(dx, dy);
-      const ux = dx / len;
-      const uy = dy / len;
-      const x1 = from.x + ux * from.radius;
-      const y1 = from.y + uy * from.radius;
-      const x2 = to.x - ux * to.radius;
-      const y2 = to.y - uy * to.radius;
-      const bow = edgeBow(edge, causalEdges);
-      const { cx, cy } = controlPoint(x1, y1, x2, y2, bow);
-      const { x: px, y: py } = bezierPoint(
-        x1,
-        y1,
-        cx,
-        cy,
-        x2,
-        y2,
-        signal.progress,
-      );
+      const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
+      const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, causalEdges));
+      const { x: px, y: py } = bezierPoint(x1, y1, cx, cy, x2, y2, signal.progress);
 
       ctx.beginPath();
       ctx.arc(px, py, 5, 0, Math.PI * 2);
