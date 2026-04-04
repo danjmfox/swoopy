@@ -201,23 +201,26 @@ export class LoopyRenderer {
 
     const { graph, sim, mode, dragPosition, annotationDragPosition } = state;
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
-    const causalEdges = graph.edges.filter(
-      (e): e is CausalEdge => e.kind === "causal",
-    );
+    const causalEdges = graph.edges.filter((e): e is CausalEdge => e.kind === "causal");
     const constraintEdges = graph.edges.filter(
       (e): e is ConstraintEdge => e.kind === "constraint",
     );
 
-    const hasReverse = new Set(
-      causalEdges
-        .filter((e) =>
-          causalEdges.some((r) => r.from === e.to && r.to === e.from),
-        )
-        .map((e) => e.id),
-    );
+    this.drawConstraintEdges(ctx, constraintEdges, nodeById);
+    this.drawCausalEdges(ctx, causalEdges, nodeById, sim);
+    if (mode === "select") this.drawAffordanceDots(ctx, causalEdges, nodeById, state);
+    this.drawSignalParticles(ctx, causalEdges, nodeById, sim);
+    this.drawNodes(ctx, graph, sim, dragPosition ?? null, state);
+    this.drawAnnotations(ctx, graph, annotationDragPosition ?? null);
+    if (dragPosition) this.drawGhostNode(ctx, graph, sim, dragPosition);
+  }
 
-    // Constraint edges — dashed lines, no arrowhead, ⌈/⌊ label
-    for (const edge of constraintEdges) {
+  private drawConstraintEdges(
+    ctx: CanvasRenderingContext2D,
+    edges: ConstraintEdge[],
+    nodeById: Map<string, { x: number; y: number; radius: number }>,
+  ): void {
+    for (const edge of edges) {
       const from = nodeById.get(edge.from);
       const to = nodeById.get(edge.to);
       if (!from || !to) continue;
@@ -230,17 +233,25 @@ export class LoopyRenderer {
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.setLineDash([]);
-      const mx = (x1 + x2) / 2;
-      const my = (y1 + y2) / 2;
       ctx.fillStyle = "#94a3b8";
       ctx.font = "14px system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(edge.constraintKind === "ceiling" ? "⌈" : "⌊", mx, my - 10);
+      ctx.fillText(
+        edge.constraintKind === "ceiling" ? "⌈" : "⌊",
+        (x1 + x2) / 2,
+        (y1 + y2) / 2 - 10,
+      );
     }
+  }
 
-    // Causal edges
-    for (const edge of causalEdges) {
+  private drawCausalEdges(
+    ctx: CanvasRenderingContext2D,
+    edges: CausalEdge[],
+    nodeById: Map<string, { x: number; y: number; radius: number }>,
+    sim: SimState,
+  ): void {
+    for (const edge of edges) {
       const from = nodeById.get(edge.from);
       const to = nodeById.get(edge.to);
       if (!from || !to) continue;
@@ -248,106 +259,105 @@ export class LoopyRenderer {
       // SI-11: dim edge when signal count is high
       const edgeSignalCount = sim.signals.filter((s) => s.edgeId === edge.id).length;
       const alpha = saturationAlpha(edgeSignalCount, MAX_SIGNALS);
-      drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, causalEdges), alpha);
+      drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha);
     }
+  }
 
-    // GE-29/GE-30: Select mode — affordance dots at delay and weight hit regions
-    if (mode === "select") {
-      const hovered = state.hoveredEdgeRegion ?? null;
-      for (const edge of causalEdges) {
-        const from = nodeById.get(edge.from);
-        const to = nodeById.get(edge.to);
-        if (!from || !to) continue;
-        const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
-        const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, causalEdges));
-        for (const [t, region] of [
-          [T_DELAY, "delay"],
-          [T_WEIGHT, "weight"],
-        ] as [number, "delay" | "weight"][]) {
-          const { x: px, y: py } = bezierPoint(x1, y1, cx, cy, x2, y2, t);
-          const isHovered =
-            hovered?.edgeId === edge.id && hovered?.region === region;
-          ctx.beginPath();
-          ctx.arc(px, py, 8, 0, Math.PI * 2);
-          ctx.fillStyle = isHovered
-            ? "rgba(148,163,184,0.9)"
-            : "rgba(148,163,184,0.25)";
-          ctx.fill();
-          if (isHovered) {
-            ctx.fillStyle = "rgba(148,163,184,0.9)";
-            ctx.font = "11px system-ui, sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "bottom";
-            ctx.fillText(region === "delay" ? "Delay" : "Weight", px, py - 12);
-          }
+  private drawAffordanceDots(
+    ctx: CanvasRenderingContext2D,
+    edges: CausalEdge[],
+    nodeById: Map<string, { x: number; y: number; radius: number }>,
+    state: RendererStore,
+  ): void {
+    const hovered = state.hoveredEdgeRegion ?? null;
+    for (const edge of edges) {
+      const from = nodeById.get(edge.from);
+      const to = nodeById.get(edge.to);
+      if (!from || !to) continue;
+      const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
+      const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, edges));
+      for (const [t, region] of [
+        [T_DELAY, "delay"],
+        [T_WEIGHT, "weight"],
+      ] as [number, "delay" | "weight"][]) {
+        const { x: px, y: py } = bezierPoint(x1, y1, cx, cy, x2, y2, t);
+        const isHovered = hovered?.edgeId === edge.id && hovered?.region === region;
+        ctx.beginPath();
+        ctx.arc(px, py, 8, 0, Math.PI * 2);
+        ctx.fillStyle = isHovered ? "rgba(148,163,184,0.9)" : "rgba(148,163,184,0.25)";
+        ctx.fill();
+        if (isHovered) {
+          ctx.fillStyle = "rgba(148,163,184,0.9)";
+          ctx.font = "11px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.fillText(region === "delay" ? "Delay" : "Weight", px, py - 12);
         }
       }
     }
+  }
 
-    // Signal particles
+  private drawSignalParticles(
+    ctx: CanvasRenderingContext2D,
+    edges: CausalEdge[],
+    nodeById: Map<string, { x: number; y: number; radius: number }>,
+    sim: SimState,
+  ): void {
     for (const signal of sim.signals) {
-      const edge = causalEdges.find((e) => e.id === signal.edgeId);
+      const edge = edges.find((e) => e.id === signal.edgeId);
       if (!edge) continue;
       const from = nodeById.get(edge.from);
       const to = nodeById.get(edge.to);
       if (!from || !to) continue;
       const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
-      const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, causalEdges));
+      const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, edges));
       const { x: px, y: py } = bezierPoint(x1, y1, cx, cy, x2, y2, signal.progress);
-
       ctx.beginPath();
       ctx.arc(px, py, 5, 0, Math.PI * 2);
       ctx.fillStyle = signal.strength > 0 ? "#7dd3fc" : "#fca5a5";
       ctx.fill();
     }
+  }
 
-    // Nodes
+  private drawNodes(
+    ctx: CanvasRenderingContext2D,
+    graph: Graph,
+    sim: SimState,
+    dragPosition: { nodeId: NodeId; x: number; y: number } | null,
+    state: RendererStore,
+  ): void {
     for (const node of graph.nodes) {
       const isDragging = dragPosition?.nodeId === node.id;
       const value = sim.nodeValues.get(node.id) ?? node.initial;
       const prevValue = sim.displayPrevNodeValues.get(node.id) ?? node.initial;
-      const { fill, trend: rawTrend } = stockIndicator(
-        value,
-        node.min,
-        node.max,
-        prevValue,
-      );
-      const trend = this.trendTracker.update(
-        node.id,
-        rawTrend,
-        performance.now(),
-      );
+      const { fill, trend: rawTrend } = stockIndicator(value, node.min, node.max, prevValue);
+      const trend = this.trendTracker.update(node.id, rawTrend, performance.now());
       if (isDragging) ctx.globalAlpha = 0.3;
 
-      // Base fill
       ctx.beginPath();
       ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-      const nodeFill = nodeValueFill(
+      ctx.fillStyle = nodeValueFill(
         node.max > node.min ? (value - node.min) / (node.max - node.min) : 0,
         node.colourTier,
       );
-      ctx.fillStyle = nodeFill;
       ctx.fill();
 
-      // SI-12: stock fill arc — thin ring showing position in [min, max]
+      // SI-12: stock fill arc
       if (fill > 0) {
         ctx.beginPath();
-        ctx.arc(
-          node.x,
-          node.y,
-          node.radius - 4,
-          -Math.PI / 2,
-          -Math.PI / 2 + fill * Math.PI,
-        );
-        ctx.strokeStyle =
-          fill > 0.75 ? "#f97316" : fill > 0.25 ? "#facc15" : "#4ade80";
+        ctx.arc(node.x, node.y, node.radius - 4, -Math.PI / 2, -Math.PI / 2 + fill * Math.PI);
+        ctx.strokeStyle = fill > 0.75 ? "#f97316" : fill > 0.25 ? "#facc15" : "#4ade80";
         ctx.lineWidth = 3;
         ctx.stroke();
       }
 
-      // SI-19: delay queue arc — mirrors stock arc on the left side
-      const { fraction: queueFraction, overflow: queueOverflow } =
-        delayQueueIndicator(sim.pending, node.id, graph.edges, node.max);
+      // SI-19: delay queue arc
+      const { fraction: queueFraction, overflow: queueOverflow } = delayQueueIndicator(
+        sim.pending,
+        node.id,
+        graph.edges,
+        node.max,
+      );
       if (queueFraction > 0) {
         ctx.beginPath();
         ctx.arc(
@@ -370,7 +380,7 @@ export class LoopyRenderer {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // GE-20: focus ring — white highlight when node is keyboard/click focused
+      // GE-20: focus ring
       if (state.focusedNodeId === node.id) {
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius + 3, 0, Math.PI * 2);
@@ -379,7 +389,7 @@ export class LoopyRenderer {
         ctx.stroke();
       }
 
-      // SI-12: trend arrow
+      // SI-12: label + trend arrow
       const arrow = trend === "up" ? "▲" : trend === "down" ? "▼" : "";
       ctx.fillStyle = "#f1f5f9";
       ctx.font = nodeLabelFont(node.radius);
@@ -394,9 +404,7 @@ export class LoopyRenderer {
 
       if (node.annotation) {
         const text =
-          node.annotation.length > 24
-            ? node.annotation.slice(0, 24) + "…"
-            : node.annotation;
+          node.annotation.length > 24 ? node.annotation.slice(0, 24) + "…" : node.annotation;
         ctx.font = "10px system-ui, sans-serif";
         ctx.fillStyle = "#94a3b8";
         ctx.textAlign = "center";
@@ -406,23 +414,21 @@ export class LoopyRenderer {
 
       if (isDragging) ctx.globalAlpha = 1;
     }
+  }
 
-    // Annotation boxes
+  private drawAnnotations(
+    ctx: CanvasRenderingContext2D,
+    graph: Graph,
+    annotationDragPosition: { id: AnnotationId; x: number; y: number } | null,
+  ): void {
     for (const ann of graph.annotations ?? []) {
-      const ax =
-        annotationDragPosition?.id === ann.id
-          ? annotationDragPosition.x
-          : ann.x;
-      const ay =
-        annotationDragPosition?.id === ann.id
-          ? annotationDragPosition.y
-          : ann.y;
+      const ax = annotationDragPosition?.id === ann.id ? annotationDragPosition.x : ann.x;
+      const ay = annotationDragPosition?.id === ann.id ? annotationDragPosition.y : ann.y;
       const lines = ann.text ? ann.text.split("\n") : [];
       const lineHeight = 16;
-      const textHeight = lines.length * lineHeight;
       const height = Math.max(
         ANNOTATION_MIN_HEIGHT,
-        ANNOTATION_PADDING * 2 + lineHeight + textHeight,
+        ANNOTATION_PADDING * 2 + lineHeight + lines.length * lineHeight,
       );
 
       ctx.beginPath();
@@ -437,14 +443,12 @@ export class LoopyRenderer {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Grip dots
       ctx.fillStyle = "#475569";
       ctx.font = "12px system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("···", ax + ANNOTATION_WIDTH / 2, ay + 10);
 
-      // Text content
       if (ann.text) {
         ctx.fillStyle = "#f1f5f9";
         ctx.font = "13px system-ui, sans-serif";
@@ -459,35 +463,37 @@ export class LoopyRenderer {
         }
       }
     }
+  }
 
-    // Ghost node — follows cursor during drag in select mode
-    if (dragPosition) {
-      const node = graph.nodes.find((n) => n.id === dragPosition.nodeId);
-      if (node) {
-        const value = sim.nodeValues.get(node.id) ?? node.initial;
-        ctx.globalAlpha = 0.75;
-        ctx.beginPath();
-        ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2);
-        const dragFill = nodeValueFill(
-          node.max > node.min ? (value - node.min) / (node.max - node.min) : 0,
-          node.colourTier,
-        );
-        ctx.fillStyle = dragFill;
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = "#94a3b8";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "#f1f5f9";
-        ctx.font = "13px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(node.label, dragPosition.x, dragPosition.y);
-        ctx.globalAlpha = 1;
-      }
-    }
+  private drawGhostNode(
+    ctx: CanvasRenderingContext2D,
+    graph: Graph,
+    sim: SimState,
+    dragPosition: { nodeId: NodeId; x: number; y: number },
+  ): void {
+    const node = graph.nodes.find((n) => n.id === dragPosition.nodeId);
+    if (!node) return;
+    const value = sim.nodeValues.get(node.id) ?? node.initial;
+    ctx.globalAlpha = 0.75;
+    ctx.beginPath();
+    ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2);
+    ctx.fillStyle = nodeValueFill(
+      node.max > node.min ? (value - node.min) / (node.max - node.min) : 0,
+      node.colourTier,
+    );
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(dragPosition.x, dragPosition.y, node.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#f1f5f9";
+    ctx.font = "13px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(node.label, dragPosition.x, dragPosition.y);
+    ctx.globalAlpha = 1;
   }
 }
