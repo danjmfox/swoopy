@@ -4,7 +4,8 @@ import { useStore } from "./store.ts";
 export function EdgeWeightPopover() {
   const editingEdgeId = useStore((s) => s.editingEdgeId);
   const graph = useStore((s) => s.graph);
-  const { setEdgeWeight, closeEdgeWeightEditor } = useStore.getState();
+  const { setEdgeWeight, closeEdgeWeightEditor, toggleEdgeQuickFix } =
+    useStore.getState();
 
   const edge = editingEdgeId
     ? graph.edges.find((e) => e.kind === "causal" && e.id === editingEdgeId)
@@ -98,6 +99,26 @@ export function EdgeWeightPopover() {
           OK
         </button>
       </div>
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          color: "#94a3b8",
+          fontSize: 11,
+          cursor: "pointer",
+          borderTop: "1px solid #334155",
+          paddingTop: 8,
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={!!edge.isQuickFix}
+          onChange={() => toggleEdgeQuickFix(edge.id)}
+          style={{ accentColor: "#38bdf8" }}
+        />
+        Quick Fix
+      </label>
     </div>
   );
 }

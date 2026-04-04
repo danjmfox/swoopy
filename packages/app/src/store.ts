@@ -94,6 +94,7 @@ interface StoreState {
   togglePolarity: (edgeId: EdgeId) => void;
   cycleDelay: (edgeId: EdgeId) => void;
   setEdgeWeight: (edgeId: EdgeId, weight: number) => void;
+  toggleEdgeQuickFix: (edgeId: EdgeId) => void;
   undo: () => void;
   redo: () => void;
 
@@ -396,6 +397,20 @@ export const useStore = create<StoreState>((set, get) => ({
       ...graph,
       edges: graph.edges.map((e) =>
         e.id === edgeId && e.kind === "causal" ? { ...e, weight: clamped } : e,
+      ),
+    };
+    set({ past: [...past, graph], future: [], graph: next });
+    persist(next, id);
+  },
+  toggleEdgeQuickFix: (edgeId) => {
+    const { graph, past } = get();
+    const id = forkIfTransient(get, set);
+    const next = {
+      ...graph,
+      edges: graph.edges.map((e) =>
+        e.id === edgeId && e.kind === "causal"
+          ? { ...e, isQuickFix: !e.isQuickFix }
+          : e,
       ),
     };
     set({ past: [...past, graph], future: [], graph: next });

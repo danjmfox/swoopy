@@ -87,7 +87,9 @@ function drawCurvedArrow(
   ctx.quadraticCurveTo(cx, cy, ax, ay);
   ctx.strokeStyle = colour;
   ctx.lineWidth = 1 + edge.weight * 1.5;
+  if (edge.isQuickFix) ctx.setLineDash([6, 4]);
   ctx.stroke();
+  if (edge.isQuickFix) ctx.setLineDash([]);
   ctx.beginPath();
   ctx.moveTo(x2, y2);
   ctx.lineTo(ax + uy * headHalf, ay - ux * headHalf);
@@ -134,6 +136,16 @@ function drawCurvedArrow(
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(edge.weight.toFixed(2), wp.x, wp.y - 8);
+  }
+
+  // QF label at t=0.65
+  if (edge.isQuickFix) {
+    const qp = bezierPoint(x1, y1, cx, cy, x2, y2, 0.65);
+    ctx.fillStyle = colour;
+    ctx.font = "bold 13px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("QF", qp.x, qp.y + 14);
   }
 }
 
