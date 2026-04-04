@@ -38,6 +38,7 @@ export interface CausalEdge {
   readonly weight: number; // 0–5, see docs/decisions/DR--20260328--engine--weight-range-expansion.md
   readonly delay: DelayLevel;
   readonly transferFn: "linear";
+  readonly isQuickFix?: boolean;
 }
 
 export interface ConstraintEdge {

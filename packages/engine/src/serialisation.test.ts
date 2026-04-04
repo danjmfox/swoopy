@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { serialize, deserialize } from "./index.ts";
+import { serialize, deserialize, makeEdgeId, makeNodeId } from "./index.ts";
 import { seedGraph } from "./population.test.ts";
 import type { Annotation, AnnotationId } from "./types.ts";
 
@@ -88,6 +88,45 @@ describe("deserialize v2 migration", () => {
     };
     const graph = deserialize(v2Blob);
     expect(graph.nodes[0]).toMatchObject({ colourTier: "blue" });
+  });
+});
+
+// GE-41: QF flag round-trip
+describe("QF flag serialisation", () => {
+  it("round-trips isQuickFix: true on a causal edge", () => {
+    const qfEdgeId = makeEdgeId("qf-edge");
+    const nA = makeNodeId("a");
+    const nB = makeNodeId("b");
+    const qfGraph = {
+      ...seedGraph,
+      edges: [
+        {
+          kind: "causal" as const,
+          id: qfEdgeId,
+          from: nA,
+          to: nB,
+          polarity: 1 as const,
+          weight: 2,
+          delay: "none" as const,
+          transferFn: "linear" as const,
+          isQuickFix: true,
+        },
+      ],
+    };
+    const restored = deserialize(serialize(qfGraph));
+    const edge = restored.edges[0];
+    expect(edge.kind).toBe("causal");
+    if (edge.kind === "causal") {
+      expect(edge.isQuickFix).toBe(true);
+    }
+  });
+
+  it("round-trips an edge without isQuickFix (defaults to undefined)", () => {
+    const restored = deserialize(serialize(seedGraph));
+    const edge = restored.edges[0];
+    if (edge.kind === "causal") {
+      expect(edge.isQuickFix).toBeUndefined();
+    }
   });
 });
 
