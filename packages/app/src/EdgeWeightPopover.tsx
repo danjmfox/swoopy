@@ -67,25 +67,6 @@ export function EdgeWeightPopover() {
       }}
       onKeyDown={onKeyDown}
     >
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          color: "#94a3b8",
-          fontSize: 11,
-          cursor: "pointer",
-          marginBottom: 4,
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={!!edge.isQuickFix}
-          onChange={() => toggleEdgeQuickFix(edge.id)}
-          style={{ accentColor: "#38bdf8" }}
-        />
-        Quick Fix
-      </label>
       <div style={{ color: "#94a3b8", fontSize: 11, marginBottom: 2 }}>
         Edge weight
       </div>
@@ -118,6 +99,26 @@ export function EdgeWeightPopover() {
           OK
         </button>
       </div>
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          color: "#94a3b8",
+          fontSize: 11,
+          cursor: "pointer",
+          borderTop: "1px solid #334155",
+          paddingTop: 8,
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={!!edge.isQuickFix}
+          onChange={() => toggleEdgeQuickFix(edge.id)}
+          style={{ accentColor: "#38bdf8" }}
+        />
+        Quick Fix
+      </label>
     </div>
   );
 }

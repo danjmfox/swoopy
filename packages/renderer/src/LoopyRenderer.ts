@@ -142,10 +142,10 @@ function drawCurvedArrow(
   if (edge.isQuickFix) {
     const qp = bezierPoint(x1, y1, cx, cy, x2, y2, 0.65);
     ctx.fillStyle = colour;
-    ctx.font = "bold 10px system-ui";
+    ctx.font = "bold 13px system-ui";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("QF", qp.x, qp.y + 12);
+    ctx.fillText("QF", qp.x, qp.y + 14);
   }
 }
 
