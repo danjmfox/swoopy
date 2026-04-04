@@ -6,6 +6,7 @@ import type {
   PendingSignal,
   CausalEdge,
   ConstraintEdge,
+  Edge,
   Node,
 } from "./types.ts";
 import {
@@ -27,6 +28,18 @@ const DELAY_TICKS: Record<string, number> = {
 let signalSeq = 0;
 function nextSignalId(): string {
   return `s${++signalSeq}`;
+}
+
+function buildCausalEdgesFrom(edges: ReadonlyArray<Edge>): Map<string, CausalEdge[]> {
+  const map = new Map<string, CausalEdge[]>();
+  for (const e of edges) {
+    if (e.kind === "causal") {
+      const list = map.get(e.from) ?? [];
+      list.push(e);
+      map.set(e.from, list);
+    }
+  }
+  return map;
 }
 
 export function makeInitialSim(graph: Graph): SimState {
@@ -78,17 +91,10 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
   const displayPrevNodeValues = new Map(sim.nodeValues);
 
   const edgeById = new Map(graph.edges.map((e) => [e.id, e]));
-  const causalEdgesFrom = new Map<string, CausalEdge[]>();
-  const constraintEdges: ConstraintEdge[] = [];
-  for (const e of graph.edges) {
-    if (e.kind === "causal") {
-      const list = causalEdgesFrom.get(e.from) ?? [];
-      list.push(e);
-      causalEdgesFrom.set(e.from, list);
-    } else {
-      constraintEdges.push(e);
-    }
-  }
+  const causalEdgesFrom = buildCausalEdgesFrom(graph.edges);
+  const constraintEdges = graph.edges.filter(
+    (e): e is ConstraintEdge => e.kind === "constraint",
+  );
 
   // §7.2 step 1 — pre-clamp: resolve constraints before propagation
   resolveConstraints(nodeValues, graph.nodes, constraintEdges);
@@ -160,14 +166,7 @@ export function inject(
 ): SimState {
   const nodeValues = new Map(sim.nodeValues);
   nodeValues.set(nodeId, (nodeValues.get(nodeId) ?? 0) + strength);
-  const causalEdgesFrom = new Map<string, CausalEdge[]>();
-  for (const e of graph.edges) {
-    if (e.kind === "causal") {
-      const list = causalEdgesFrom.get(e.from) ?? [];
-      list.push(e);
-      causalEdgesFrom.set(e.from, list);
-    }
-  }
+  const causalEdgesFrom = buildCausalEdgesFrom(graph.edges);
   const { signals: newSignals, pending: newPending } = emitRelayFragments(
     causalEdgesFrom.get(nodeId) ?? [],
     strength,
@@ -210,10 +209,9 @@ function emitRelayFragments(
       continue;
     }
     const count = Math.round(edge.weight);
+    const staggerTicks = count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
     if (edge.delay !== "none") {
       const delayTicks = DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT;
-      const staggerTicks =
-        count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
       for (let i = 0; i < count; i++) {
         pending.push({
           signal: {
@@ -228,8 +226,6 @@ function emitRelayFragments(
       }
       continue;
     }
-    const staggerTicks =
-      count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
     for (let i = 0; i < count; i++) {
       signals.push({
         id: nextSignalId(),
