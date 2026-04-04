@@ -1124,7 +1124,11 @@ describe("GE-37: annotation store slice", () => {
 
 describe("GE-42 addEdge multi-edge", () => {
   beforeEach(() => {
-    useStore.setState({ graph: { ...seedGraph, edges: [] }, past: [], future: [] });
+    useStore.setState({
+      graph: { ...seedGraph, edges: [] },
+      past: [],
+      future: [],
+    });
   });
 
   it("second addEdge call on same pair creates a QF edge when a normal edge exists", () => {
@@ -1136,9 +1140,13 @@ describe("GE-42 addEdge multi-edge", () => {
 
     const edges = useStore
       .getState()
-      .graph.edges.filter((e) => e.kind === "causal" && e.from === from && e.to === to);
+      .graph.edges.filter(
+        (e) => e.kind === "causal" && e.from === from && e.to === to,
+      );
     expect(edges).toHaveLength(2);
-    const kinds = edges.map((e) => (e.kind === "causal" ? !!e.isQuickFix : null)).sort();
+    const kinds = edges
+      .map((e) => (e.kind === "causal" ? !!e.isQuickFix : null))
+      .sort();
     expect(kinds).toEqual([false, true]);
   });
 
@@ -1152,7 +1160,9 @@ describe("GE-42 addEdge multi-edge", () => {
 
     const edges = useStore
       .getState()
-      .graph.edges.filter((e) => e.kind === "causal" && e.from === from && e.to === to);
+      .graph.edges.filter(
+        (e) => e.kind === "causal" && e.from === from && e.to === to,
+      );
     expect(edges).toHaveLength(2);
   });
 
@@ -1161,16 +1171,22 @@ describe("GE-42 addEdge multi-edge", () => {
     const to = seedGraph.nodes[1].id;
 
     useStore.getState().addEdge(from, to); // creates normal
-    useStore.getState().toggleEdgeQuickFix(
-      useStore.getState().graph.edges.find(
-        (e) => e.kind === "causal" && e.from === from && e.to === to,
-      )!.id,
-    ); // flip to QF
+    useStore
+      .getState()
+      .toggleEdgeQuickFix(
+        useStore
+          .getState()
+          .graph.edges.find(
+            (e) => e.kind === "causal" && e.from === from && e.to === to,
+          )!.id,
+      ); // flip to QF
     useStore.getState().addEdge(from, to); // should create normal
 
     const edges = useStore
       .getState()
-      .graph.edges.filter((e) => e.kind === "causal" && e.from === from && e.to === to);
+      .graph.edges.filter(
+        (e) => e.kind === "causal" && e.from === from && e.to === to,
+      );
     expect(edges).toHaveLength(2);
     const hasNormal = edges.some((e) => e.kind === "causal" && !e.isQuickFix);
     expect(hasNormal).toBe(true);
@@ -1179,7 +1195,11 @@ describe("GE-42 addEdge multi-edge", () => {
 
 describe("GE-42 toggleEdgeQuickFix conflict guard", () => {
   beforeEach(() => {
-    useStore.setState({ graph: { ...seedGraph, edges: [] }, past: [], future: [] });
+    useStore.setState({
+      graph: { ...seedGraph, edges: [] },
+      past: [],
+      future: [],
+    });
   });
 
   it("toggle is a no-op when the target QF state already exists for the same pair", () => {
@@ -1191,13 +1211,21 @@ describe("GE-42 toggleEdgeQuickFix conflict guard", () => {
 
     const normalEdge = useStore
       .getState()
-      .graph.edges.find((e) => e.kind === "causal" && e.from === from && e.to === to && !e.isQuickFix)!;
+      .graph.edges.find(
+        (e) =>
+          e.kind === "causal" &&
+          e.from === from &&
+          e.to === to &&
+          !e.isQuickFix,
+      )!;
 
     useStore.getState().toggleEdgeQuickFix(normalEdge.id); // would duplicate QF — must be no-op
 
     const edges = useStore
       .getState()
-      .graph.edges.filter((e) => e.kind === "causal" && e.from === from && e.to === to);
+      .graph.edges.filter(
+        (e) => e.kind === "causal" && e.from === from && e.to === to,
+      );
     expect(edges).toHaveLength(2);
     const hasNormal = edges.some((e) => e.kind === "causal" && !e.isQuickFix);
     expect(hasNormal).toBe(true); // normal edge unchanged

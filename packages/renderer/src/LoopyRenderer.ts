@@ -292,7 +292,13 @@ export class LoopyRenderer {
         const y1 = from.y + uy * from.radius;
         const x2 = to.x - ux * to.radius;
         const y2 = to.y - uy * to.radius;
-        const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, causalEdges));
+        const { cx, cy } = controlPoint(
+          x1,
+          y1,
+          x2,
+          y2,
+          edgeBow(edge, causalEdges),
+        );
         for (const [t, region] of [
           [T_DELAY, "delay"],
           [T_WEIGHT, "weight"],

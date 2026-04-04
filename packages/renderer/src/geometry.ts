@@ -11,7 +11,10 @@ export const BOW = 28; // px perpendicular offset for parallel edge pairs
  * they are offset to opposite sides: normal → +BOW, QF → -BOW.
  * A lone edge uses +BOW (existing behaviour).
  */
-export function edgeBow(edge: CausalEdge, allCausal: ReadonlyArray<CausalEdge>): number {
+export function edgeBow(
+  edge: CausalEdge,
+  allCausal: ReadonlyArray<CausalEdge>,
+): number {
   const sibling = allCausal.some(
     (e) => e.id !== edge.id && e.from === edge.from && e.to === edge.to,
   );

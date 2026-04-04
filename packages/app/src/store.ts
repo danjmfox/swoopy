@@ -317,10 +317,12 @@ export const useStore = create<StoreState>((set, get) => ({
   addEdge: (from: NodeId, to: NodeId) => {
     const { graph, past } = get();
     const hasNormal = graph.edges.some(
-      (e) => e.kind === "causal" && e.from === from && e.to === to && !e.isQuickFix,
+      (e) =>
+        e.kind === "causal" && e.from === from && e.to === to && !e.isQuickFix,
     );
     const hasQF = graph.edges.some(
-      (e) => e.kind === "causal" && e.from === from && e.to === to && e.isQuickFix,
+      (e) =>
+        e.kind === "causal" && e.from === from && e.to === to && e.isQuickFix,
     );
     if (hasNormal && hasQF) return;
     const id = forkIfTransient(get, set);
@@ -408,7 +410,9 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   toggleEdgeQuickFix: (edgeId) => {
     const { graph, past } = get();
-    const edge = graph.edges.find((e) => e.id === edgeId && e.kind === "causal");
+    const edge = graph.edges.find(
+      (e) => e.id === edgeId && e.kind === "causal",
+    );
     if (!edge || edge.kind !== "causal") return;
     const targetQF = !edge.isQuickFix;
     const conflict = graph.edges.some(

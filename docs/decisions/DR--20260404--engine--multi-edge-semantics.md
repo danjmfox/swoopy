@@ -1,20 +1,20 @@
 ---
 id: DR--20260404--engine--multi-edge-semantics
-dateCreated: '2026-04-04'
+dateCreated: "2026-04-04"
 version: 1.0.0
 status: accepted
 changeType: creation
 domain: engine
 slug: multi-edge-semantics
 changelog:
-  - date: '2026-04-04'
+  - date: "2026-04-04"
     note: >-
       Initial creation — GE-42 pre-condition. Proposed, awaiting agreement
       before implementation.
-  - date: '2026-04-04'
+  - date: "2026-04-04"
     note: Marked as accepted
-lastEdited: '2026-04-04'
-dateAccepted: '2026-04-04'
+lastEdited: "2026-04-04"
+dateAccepted: "2026-04-04"
 ---
 
 # DR--20260404--engine--multi-edge-semantics
@@ -41,10 +41,10 @@ Four questions must be resolved before any code changes:
 
 ### Q1 — Double-propagation
 
-| Option | Description | Outcome |
-|--------|-------------|---------|
-| A | Two edges = 2× effect (additive, independent propagation) | **Accepted** |
-| B | Two edges share a propagation slot (mutually exclusive) | Rejected |
+| Option | Description                                               | Outcome      |
+| ------ | --------------------------------------------------------- | ------------ |
+| A      | Two edges = 2× effect (additive, independent propagation) | **Accepted** |
+| B      | Two edges share a propagation slot (mutually exclusive)   | Rejected     |
 
 **Rationale for A:** In the relay model, signals are bound to a specific `edgeId`. A relay
 from A fans out across all outgoing causal edges. If A→B_qf and A→B_normal both exist, B
@@ -59,11 +59,11 @@ relay model already handles the multi-edge case correctly with no changes needed
 
 ### Q2 — Edge identity
 
-| Option | Description | Outcome |
-|--------|-------------|---------|
-| A | Identity = `(from, to)` — one causal edge per pair (current) | Rejected for GE-42 |
-| B | Identity = `(from, to, isQuickFix)` — at most one QF + one normal per pair | **Accepted** |
-| C | Identity = `id` only — unlimited edges per pair | Rejected |
+| Option | Description                                                                | Outcome            |
+| ------ | -------------------------------------------------------------------------- | ------------------ |
+| A      | Identity = `(from, to)` — one causal edge per pair (current)               | Rejected for GE-42 |
+| B      | Identity = `(from, to, isQuickFix)` — at most one QF + one normal per pair | **Accepted**       |
+| C      | Identity = `id` only — unlimited edges per pair                            | Rejected           |
 
 **Rationale for B:** The archetype requires exactly the QF+normal pair. Unlimited edges (C)
 create an unbounded state space with no modelling benefit. The new uniqueness key is
@@ -73,8 +73,12 @@ The duplicate guard in `store.ts:addEdge` must update to:
 
 ```ts
 graph.edges.some(
-  (e) => e.kind === "causal" && e.from === from && e.to === to && e.isQuickFix === isQuickFix
-)
+  (e) =>
+    e.kind === "causal" &&
+    e.from === from &&
+    e.to === to &&
+    e.isQuickFix === isQuickFix,
+);
 ```
 
 ---
@@ -84,11 +88,11 @@ graph.edges.some(
 **Scenario:** E1 (QF=false) and E2 (QF=true) exist on pair A→B. User toggles QF off on E2.
 Without a guard, E2 becomes QF=false, duplicating E1.
 
-| Option | Description | Outcome |
-|--------|-------------|---------|
-| A | Allow toggle; silently delete the conflicting edge | Rejected — destructive and surprising |
-| B | Block toggle when target state conflicts (no-op) | **Accepted** |
-| C | Disable toggle control in popover when conflict exists | Deferred to GE-43 |
+| Option | Description                                            | Outcome                               |
+| ------ | ------------------------------------------------------ | ------------------------------------- |
+| A      | Allow toggle; silently delete the conflicting edge     | Rejected — destructive and surprising |
+| B      | Block toggle when target state conflicts (no-op)       | **Accepted**                          |
+| C      | Disable toggle control in popover when conflict exists | Deferred to GE-43                     |
 
 **Invariant:** `toggleEdgeQuickFix` must check whether a causal edge `(from, to, isQuickFix=target)`
 already exists. If one does, the action is a no-op. The UI toggle remains enabled but produces
@@ -100,11 +104,11 @@ no change. Disabling the control when a conflict exists is a UX improvement for 
 
 **Current behaviour:** Canvas `addEdge` call is a no-op when `(from, to)` already exists.
 
-| Option | Description | Outcome |
-|--------|-------------|---------|
-| A | Second drag auto-creates the QF variant; third drag is no-op | **Accepted** |
-| B | Second drag is ignored (current behaviour) | Rejected — invisible |
-| C | Context menu for edge type selection | Deferred to GE-43 |
+| Option | Description                                                  | Outcome              |
+| ------ | ------------------------------------------------------------ | -------------------- |
+| A      | Second drag auto-creates the QF variant; third drag is no-op | **Accepted**         |
+| B      | Second drag is ignored (current behaviour)                   | Rejected — invisible |
+| C      | Context menu for edge type selection                         | Deferred to GE-43    |
 
 **Rationale for A:** Most discoverable low-friction path. The store `addEdge(from, to)` action
 resolves which variant to create:

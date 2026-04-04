@@ -43,9 +43,9 @@ export const SIGNAL_SPEED = 0.65;
 export const EDGE_TRANSIT_TICKS = Math.round(1 / (SIGNAL_SPEED * (1 / 60))); // ≈ 92
 
 // Maximum edge traversals a signal may make before being consumed without relay.
-// Empirically chosen: saturates a simple 2-node reinforcing loop from 5→10 in one injection.
+// Empirically chosen at 8: saturates a simple 2-node reinforcing loop from 5→10 in one injection.
 // See packages/engine/src/characterise-relay.ts for evidence. (DR--20260401)
-export const MAX_HOPS = 8;
+export const MAX_HOPS = 26; //updated to 26 to accommodate more complex loops
 
 // Strength of a single user injection (positive or negative). One click = 1 unit
 // = 10% of the default 0–10 range. (PRD §7.6)
