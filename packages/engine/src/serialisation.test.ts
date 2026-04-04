@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { serialize, deserialize, makeEdgeId, makeNodeId } from "./index.ts";
 import { seedGraph } from "./population.test.ts";
-import type { Annotation, AnnotationId } from "./types.ts";
+import type { Annotation, AnnotationId, CausalEdge } from "./types.ts";
 
 // SE-01, SE-04
 describe("serialize", () => {
@@ -114,19 +114,14 @@ describe("QF flag serialisation", () => {
       ],
     };
     const restored = deserialize(serialize(qfGraph));
-    const edge = restored.edges[0];
-    expect(edge.kind).toBe("causal");
-    if (edge.kind === "causal") {
-      expect(edge.isQuickFix).toBe(true);
-    }
+    const edge = restored.edges.find((e): e is CausalEdge => e.kind === "causal")!;
+    expect(edge.isQuickFix).toBe(true);
   });
 
   it("round-trips an edge without isQuickFix (defaults to undefined)", () => {
     const restored = deserialize(serialize(seedGraph));
-    const edge = restored.edges[0];
-    if (edge.kind === "causal") {
-      expect(edge.isQuickFix).toBeUndefined();
-    }
+    const edge = restored.edges.find((e): e is CausalEdge => e.kind === "causal")!;
+    expect(edge.isQuickFix).toBeUndefined();
   });
 });
 
