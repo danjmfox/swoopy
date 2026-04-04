@@ -1363,3 +1363,145 @@ describe("GE-37 annotation rendering", () => {
     expect(blueStroke).toBeDefined();
   });
 });
+
+// GE-41: QF edge rendering
+describe("GE-41 QF edge rendering", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("calls setLineDash with a non-empty pattern for a QF edge", () => {
+    const setLineDashCalls: unknown[][] = [];
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      setLineDash: vi.fn().mockImplementation((...args: unknown[]) => {
+        setLineDashCalls.push(args);
+      }),
+      scale: vi.fn(),
+      fillText: vi.fn(),
+      fillStyle: "" as string,
+      strokeStyle: "" as string,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    const qfEdge: CausalEdge = {
+      ...edgeAB,
+      isQuickFix: true,
+    };
+
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: { nodes: [nodeA, nodeB], edges: [qfEdge], annotations: [] },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    // At least one setLineDash call must pass a non-empty array (the dashed pattern)
+    const dashedCall = setLineDashCalls.find(
+      (args) => Array.isArray(args[0]) && (args[0] as number[]).length > 0,
+    );
+    expect(dashedCall).toBeDefined();
+  });
+
+  it("renders a 'QF' label for a QF edge", () => {
+    const fillTexts: string[] = [];
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      setLineDash: vi.fn(),
+      scale: vi.fn(),
+      fillText: vi.fn().mockImplementation((text: string) => {
+        fillTexts.push(text);
+      }),
+      fillStyle: "" as string,
+      strokeStyle: "" as string,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    const qfEdge: CausalEdge = {
+      ...edgeAB,
+      isQuickFix: true,
+    };
+
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: { nodes: [nodeA, nodeB], edges: [qfEdge], annotations: [] },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    expect(fillTexts).toContain("QF");
+  });
+});
