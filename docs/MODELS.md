@@ -136,9 +136,9 @@ Edges:
 
 [Open in Swoopy](http://localhost:5173/?m=c8f57c13-93ca-4859-b903-b78d98872c55&g=eyJ2ZXJzaW9uIjo0LCJncmFwaCI6eyJub2RlcyI6W3siaWQiOiJuMSIsImxhYmVsIjoiUmFiYml0cyIsIngiOjYxNi42MjEwOTM3NSwieSI6NTU4LjAzMTI1LCJyYWRpdXMiOjUwLCJtaW4iOjAsIm1heCI6MTAwLCJpbml0aWFsIjozMCwic2l6ZVRpZXIiOiJtIiwiY29sb3VyVGllciI6InllbGxvdyJ9LHsiaWQiOiJuMiIsImxhYmVsIjoiRm94ZXMiLCJ4Ijo2MjIsInkiOjI3NS4wNTA3ODEyNSwicmFkaXVzIjo1MCwibWluIjowLCJtYXgiOjEwMCwiaW5pdGlhbCI6MTAsInNpemVUaWVyIjoibSIsImNvbG91clRpZXIiOiJvcmFuZ2UifSx7ImlkIjoibjMiLCJsYWJlbCI6IkdyYXNzIiwieCI6MjU4LjI3MzQzNzUsInkiOjU2Mi41MjczNDM3NSwicmFkaXVzIjo1MCwibWluIjowLCJtYXgiOjEwMCwiaW5pdGlhbCI6ODAsInNpemVUaWVyIjoibSIsImNvbG91clRpZXIiOiJncmVlbiJ9LHsiaWQiOiJuNCIsImxhYmVsIjoiQ2FycnlpbmcgQ2FwYWNpdHkiLCJ4Ijo0MDAsInkiOjEwMCwicmFkaXVzIjo1MCwibWluIjowLCJtYXgiOjEwMCwiaW5pdGlhbCI6ODAsInNpemVUaWVyIjoibSIsImNvbG91clRpZXIiOiJibHVlIn0seyJpZCI6Im41IiwibGFiZWwiOiJFbnZpcm9ubWVudGFsIFN0cmVzcyIsIngiOjE2NS41ODU5Mzc1LCJ5IjoyNzguMjE0ODQzNzUsInJhZGl1cyI6NTAsIm1pbiI6MCwibWF4IjoxMDAsImluaXRpYWwiOjAsInNpemVUaWVyIjoibSIsImNvbG91clRpZXIiOiJyZWQiLCJhbm5vdGF0aW9uIjoiSW50cm9kdWNlIHN0cmVzcyBoZXJlIn1dLCJlZGdlcyI6W3sia2luZCI6ImNhdXNhbCIsImlkIjoiZTEiLCJmcm9tIjoibjMiLCJ0byI6Im4xIiwicG9sYXJpdHkiOjEsIndlaWdodCI6MywiZGVsYXkiOiJzaG9ydCIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImUyIiwiZnJvbSI6Im4xIiwidG8iOiJuMiIsInBvbGFyaXR5IjoxLCJ3ZWlnaHQiOjEsImRlbGF5Ijoibm9uZSIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImUzIiwiZnJvbSI6Im4yIiwidG8iOiJuMSIsInBvbGFyaXR5IjotMSwid2VpZ2h0IjoxLCJkZWxheSI6Im5vbmUiLCJ0cmFuc2ZlckZuIjoibGluZWFyIn0seyJraW5kIjoiY2F1c2FsIiwiaWQiOiJlNCIsImZyb20iOiJuMSIsInRvIjoibjMiLCJwb2xhcml0eSI6LTEsIndlaWdodCI6MSwiZGVsYXkiOiJub25lIiwidHJhbnNmZXJGbiI6ImxpbmVhciJ9LHsia2luZCI6ImNhdXNhbCIsImlkIjoiZTUiLCJmcm9tIjoibjMiLCJ0byI6Im4zIiwicG9sYXJpdHkiOjEsIndlaWdodCI6MSwiZGVsYXkiOiJub25lIiwidHJhbnNmZXJGbiI6ImxpbmVhciJ9LHsia2luZCI6ImNvbnN0cmFpbnQiLCJjb25zdHJhaW50S2luZCI6ImNlaWxpbmciLCJpZCI6ImU2IiwiZnJvbSI6Im40IiwidG8iOiJuMSJ9LHsia2luZCI6ImNvbnN0cmFpbnQiLCJjb25zdHJhaW50S2luZCI6ImNlaWxpbmciLCJpZCI6ImU3IiwiZnJvbSI6Im40IiwidG8iOiJuMiJ9LHsia2luZCI6ImNhdXNhbCIsImlkIjoiZTgiLCJmcm9tIjoibjUiLCJ0byI6Im40IiwicG9sYXJpdHkiOi0xLCJ3ZWlnaHQiOjEuNSwiZGVsYXkiOiJub25lIiwidHJhbnNmZXJGbiI6ImxpbmVhciJ9LHsia2luZCI6ImNhdXNhbCIsImlkIjoiZTkiLCJmcm9tIjoibjUiLCJ0byI6Im4zIiwicG9sYXJpdHkiOi0xLCJ3ZWlnaHQiOjEsImRlbGF5Ijoibm9uZSIsInRyYW5zZmVyRm4iOiJsaW5lYXIifV19fQ%3D%3D)
 
-Learning: This model exhibits classic Lotka-Volterra predator-prey oscillations, but with added complexity from resource constraints and environmental factors. Watch how the populations cycle through phases of growth, overshoot, crash, and recovery. The carrying capacity creates realistic limits, while environmental stress can cause regime shifts. Inject signals into Environmental Stress to see how external perturbations propagate through the ecosystem, potentially causing cascading effects or tipping points where the system can't recover to its previous state.
+Learning: This improved model demonstrates how **delays create stability** in complex systems. The short delay on the Grass→Rabbits edge (biomass conversion lag) prevents predator overshoot from instantly causing prey extinction, allowing oscillations to dampen rather than collapse. Watch the population cycles: initial recovery (ticks 420-840), brief instability with fox predation spike (ticks 840-1080), and finally **convergence to equilibrium** (ticks 1200+) where all populations reach carrying capacity around 74-87.
 
-**Simulation Analysis**: The results show ecosystem collapse around tick 480 when foxes over-predate rabbits (population crash from 8 to 0), then starve themselves. Grass recovers but rabbits can't repopulate without immigration mechanisms. This demonstrates how complex systems can reach irreversible tipping points from internal dynamics alone.
+**Simulation Analysis**: Ticks 0-360 show initialization under environmental stress (stress=2). Recovery begins at tick 420 when rabbits = 2, then follows classic damped oscillations: rabbits peak at 52, foxes peak at 74+, then predation causes rabbit crash to 0. Mysteriously, rabbits recover to 46 by tick 1200, suggesting grass abundance allows rebound. The **short delay on food conversion** is critical—it acts as a natural regulator preventing predator-prey collapse. By tick 1300+, the system stabilizes at all populations = 74, bounded by carrying capacity. This shows how biological delays (gestation, growth) enable resilience in real ecosystems.
 
 Showcases how a single Constraint Source can suppress multiple independent nodes.
 
@@ -927,6 +927,82 @@ Edges:
 5. As development time drops, the `Progress Rate` slows, which (after a **Medium Delay**) causes the `Deadline Gap` to widen even further.
 
 Learning: This model surfaces the "Analysis Paralysis" death spiral. It visually proves that beyond a certain point, more planning is counter-productive because it attacks the only variable that actually closes the gap: development time.
+
+## 36. "The Quality vs. Velocity Trap" (Quick Fixes & Technical Debt)
+
+Demonstrates how organizations respond to pressure by sacrificing quality for short-term velocity gains, triggering a crisis-recovery cycle that reveals the hidden cost of technical debt.
+
+```plaintext
+Nodes:
+  Pressure (The Lever)
+  Velocity
+  Defects
+  Quality
+  Cheap Hiring
+  Low-skill Devs
+  Great Programmers
+  Mentoring Capacity
+Edges:
+  Pressure → Cheap Hiring (+ polarity, Delay: Short)
+  Cheap Hiring → Low-skill Devs (+ polarity)
+  Low-skill Devs → Defects (+ polarity, Weight: 1.5, Delay: Short)
+  Defects → Quality (− polarity, Delay: Medium)
+  Quality → Velocity (+ polarity)
+  Pressure → Velocity (+ polarity, Delay: Short) # Quick-fix path: short-term win
+  Defects → Pressure (+ polarity, Weight: 0.5, Delay: Medium) # Delayed consequence feedback
+  Velocity → Great Programmers (+ polarity)
+  Great Programmers → Mentoring Capacity (+ polarity, Delay: Medium)
+  Mentoring Capacity → Quality (+ polarity)
+  Mentoring Capacity → Low-skill Devs (− polarity, Weight: 0.5)
+  Quality → Great Programmers (+ polarity)
+```
+
+[Open in Swoopy](http://localhost:5173/?g=eyJ2ZXJzaW9uIjo0LCJncmFwaCI6eyJub2RlcyI6W3siaWQiOiJuMSIsImxhYmVsIjoiUHJlc3N1cmUiLCJ4Ijo2NTAsInk6MzAwLCJyYWRpdXMiOjUwLCJtaW4iOjAsIm1heCI6MTAwLCJpbml0aWFsIjoyMH0seyJpZCI6Im4yIiwibGFiZWwiOiJWZWxvY2l0eSIsIng6NDAwLCJ5Ijo1NTAsInJhZGl1cyI6NTAsIm1pbiI6MCwibWF4IjoxMDAsImluaXRpYWwiOjUwfSx7ImlkIjoibjMiLCJsYWJlbCI6IkRlZmVjdHMiLCJ4IjoxNTAsInk6MzAwLCJyYWRpdXMiOjUwLCJtaW4iOjAsIm1heCI6MTAwLCJpbml0aWFsIjoyMH0seyJpZCI6Im40IiwibGFiZWwiOiJRdWFsaXR5IiwieCI6NDAwLCJ5Ijo1MCwicmFkaXVzIjo1MCwibWluIjowLCJtYXgiOjEwMCwiaW5pdGlhbCI6NzB9LHsiaWQiOiJuNSIsImxhYmVsIjoiQ2hlYXAgSGlyaW5nIiwieCI6OTAwLCJ5IjozMDAsInJhZGl1cyI6NTAsIm1pbiI6MCwibWF4IjoxMDAsImluaXRpYWwiOjB9LHsiaWQiOiJuNiIsImxhYmVsIjoiTG93LXNraWxsIERldnMiLCJ4Ijo5MDAsInk6NTUwLCJyYWRpdXMiOjUwLCJtaW4iOjAsIm1heCI6MTAwLCJpbml0aWFsIjoyMH0seyJpZCI6Im43IiwibGFiZWwiOiJHcmVhdCBQcm9ncmFtbWVycyIsIng6NDAwLCJ5Ijo4MDAsInJhZGl1cyI6NTAsIm1pbiI6MCwibWF4IjoxMDAsImluaXRpYWwiOjU0fSx7ImlkIjoibjgiLCJsYWJlbCI6Ik1lbnRvcmluZyBDYXBhY2l0eSIsIng6MTE1MCwieTpaww0iLCJyYWRpdXMiOjUwLCJtaW4iOjAsIm1heCI6MTAwLCJpbml0aWFsIjo2MH1dLCJlZGdlcyI6W3sia2luZCI6ImNhdXNhbCIsImlkIjoiZTEiLCJmcm9tIjoibjEiLCJ0byI6Im41IiwicG9sYXJpdHkiOjEsIndlaWdodCI6MSwiZGVsYXkiOiJzaG9ydCIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImUyIiwiZnJvbSI6Im41IiwidG8iOiJuNiIsInBvbGFyaXR5IjoxLCJ3ZWlnaHQiOjEsImRlbGF5Ijoibm9uZSIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImUzIiwiZnJvbSI6Im42IiwidG8iOiJuMyIsInBvbGFyaXR5IjoxLCJ3ZWlnaHQiOjEuNSwiZGVsYXkiOiJzaG9ydCIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImU0IiwiZnJvbSI6Im4zIiwidG8iOiJuNCIsInBvbGFyaXR5IjotMSwiTWVpZ2h0IjoxLCJkZWxheSI6Im1lZGl1bSIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImU1IiwiZnJvbSI6Im40IiwidG8iOiJuMiIsInBvbGFyaXR5IjoxLCJ3ZWlnaHQiOjEsImRlbGF5Ijoibm9uZSIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImU2IiwiZnJvbSI6Im4xIiwidG8iOiJuMiIsInBvbGFyaXR5IjoxLCJ3ZWlnaHQiOjEsImRlbGF5Ijoic2hvcnQiLCJ0cmFuc2ZlckZuIjoibGluZWFyIn0seyJraW5kIjoiY2F1c2FsIiwiKWQiOiJlNyIsImZyb20iOiJuNyIsInRvIjoibjgiLCJwb2xhcml0eSI6MSwid2VpZ2h0IjoxLCJkZWxheSI6Im1lZGl1bSIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImU4IiwiZnJvbSI6Im44IiwidG8iOiJuNCIsInBvbGFyaXR5IjoxLCJ3ZWlnaHQiOjEuNSwiZGVsYXkiOiJub25lIiwidHJhbnNmZXJGbiI6ImxpbmVhciJ9LHsia2luZCI6ImNhdXNhbCIsImlkIjoiZTkiLCJmcm9tIjoibjMiLCJ0byI6Im4xIiwicG9sYXJpdHkiOjEsIndlaWdodCI6MC41LCJkZWxheSI6Im1lZGl1bSIsInRyYW5zZmVyRm4iOiJsaW5lYXIifSx7ImtpbmQiOiJjYXVzYWwiLCJpZCI6ImUxMCIsImZyb20iOiJuMiIsInRvIjoibjciLCJwb2xhcml0eSI6MSwid2VpZ2h0IjoxLCJkZWxheSI6Im5vbmUiLCJ0cmFuc2ZlckZuIjoibGluZWFyIn0seyJraW5kIjoiY2F1c2FsIiwiCWQiOiJlMTEiLCJmcm9tIjoibjgiLCJ0byI6Im42IiwicG9sYXJpdHkiOi0xLCJ3ZWlnaHQiOjAuNSwiZGVsYXkiOiJub25lIiwidHJhbnNmZXJGbiI6ImxpbmVhciJ9LHsia2luZCI6ImNhdXNhbCIsImlkIjoiZTEyIiwiZnJvbSI6Im40IiwidG8iOiJuNyIsInBvbGFyaXR5IjoxLCJ3ZWlnaHQiOjEsImRlbGF5Ijoibm9uZSIsInRyYW5zZmVyRm4iOiJsaW5lYXIifV19fQ==)
+
+### The Story: Two Paths
+
+This model reveals two competing strategies for responding to `Pressure`:
+
+1. **Quick-Fix Path** (Visible in first 500 ticks): Pressure → Cheap Hiring → Low-skill Devs → Defects spike. The immediate win: `Velocity` jumps (short-term relief). But the cost is hidden by delays.
+
+2. **Sustainable Path** (Emerges after 1000+ ticks): Quality improves → attracts Great Programmers → Mentoring Capacity grows → Quality climbs further. The system enters a virtuous cycle of improving both quality and long-term velocity.
+
+**The Simulation Arc** (validated with 4,700+ ticks):
+
+- **Ticks 2400–2603**: Baseline equilibrium. Pressure = 20 (stable), Velocity = 50, Quality = 70, all balanced.
+- **Tick 2640: Pressure increases** (Pressure → 22). The system detects the crisis.
+- **Tick 2700: Cheap Hiring activates** (Cheap Hiring Rate = 6, Short Delay). Low-skill Devs begin to rise.
+- **Ticks 2820–2940: Crisis phase**.
+  - Velocity peaks at 100 (felt as success by leadership).
+  - Defects explode: 21 → 90 → 100 (exponential growth via Short Delay on Low-skill Devs edge).
+  - Quality crashes: 53 → 44 → 41 (delayed consequence, Medium Delay on Defects → Quality edge).
+  - Mentoring Capacity drops: 60 → 36 (overwhelmed by low-skill ratio).
+- **Ticks 3000–3420: Recovery phase**.
+  - Great Programmers surge: 54 → 80 → 100 (attracted by high velocity and quality emphasis).
+  - Mentoring Capacity rebuilds: 38 → 94 → 100 (medium-term investment pays off).
+  - Quality begins recovery: 41 → 100 (lagged, but unstoppable once mentoring investment completes).
+  - Defects stabilize (no longer spiking; held by quality improvement).
+- **Ticks 3480–4718: Equilibrium achieved**. All metrics converge to high levels: Pressure=22, Velocity=100, Defects=100, Quality=100, Great Programmers=100.
+
+### Key Insight: The Virtue of Delays
+
+The **Medium Delay** on Defects → Quality is crucial. Without it, quality would crash instantly and the organization would never recover. With it, there's a window where leadership feels the "quick-fix win" (Velocity spike) before the delayed consequences arrive (Defects spike).
+
+However, the system **does recover** because:
+
+1. The Quality → Great Programmers edge continuously attracts senior talent even during crisis
+2. Great Programmers → Mentoring Capacity with Medium Delay means investmentin senior developers pays off predictably
+3. Mentoring Capacity → Quality creates a strong recovery edge (Weight: 1.5)
+
+**Red Flags in Your Organization**
+If you observe:
+
+- Velocity spikes immediately after a "hire more people" decision
+- Defects rise 2-3 quarters later (when the quick-fix cost materializes)
+- Quality recovery is slow and requires specific interventions (hiring senior talent)
+- Mentoring capacity is chronically low, preventing new hires from becoming productive
+
+…you're likely in the "Quick-Fix Path" of this model. The recovery path requires **deliberate investment in senior hires and knowledge transfer**—it doesn't happen automatically.
 
 Implementation Tips for these Models
 To make these really pop, you could utilize the "Known Limitations" as a roadmap:

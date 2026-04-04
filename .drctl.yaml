@@ -1,3 +1,7 @@
 repos:
   swoopy:
     path: .
+    domains:
+      engine: docs/decisions
+      app: docs/decisions
+      renderer: docs/decisions

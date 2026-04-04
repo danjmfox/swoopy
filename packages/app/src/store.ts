@@ -316,10 +316,15 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   addEdge: (from: NodeId, to: NodeId) => {
     const { graph, past } = get();
-    const duplicate = graph.edges.some(
-      (e) => e.kind === "causal" && e.from === from && e.to === to,
+    const hasNormal = graph.edges.some(
+      (e) =>
+        e.kind === "causal" && e.from === from && e.to === to && !e.isQuickFix,
     );
-    if (duplicate) return;
+    const hasQF = graph.edges.some(
+      (e) =>
+        e.kind === "causal" && e.from === from && e.to === to && e.isQuickFix,
+    );
+    if (hasNormal && hasQF) return;
     const id = forkIfTransient(get, set);
     const edge = {
       kind: "causal" as const,
@@ -330,6 +335,7 @@ export const useStore = create<StoreState>((set, get) => ({
       weight: 1.0,
       delay: "none" as const,
       transferFn: "linear" as const,
+      ...(hasNormal ? { isQuickFix: true as const } : {}),
     };
     const next = { ...graph, edges: [...graph.edges, edge] };
     set({ past: [...past, graph], future: [], graph: next });
@@ -404,12 +410,25 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   toggleEdgeQuickFix: (edgeId) => {
     const { graph, past } = get();
+    const edge = graph.edges.find(
+      (e) => e.id === edgeId && e.kind === "causal",
+    );
+    if (!edge || edge.kind !== "causal") return;
+    const targetQF = !edge.isQuickFix;
+    const conflict = graph.edges.some(
+      (e) =>
+        e.kind === "causal" &&
+        e.from === edge.from &&
+        e.to === edge.to &&
+        !!e.isQuickFix === targetQF,
+    );
+    if (conflict) return;
     const id = forkIfTransient(get, set);
     const next = {
       ...graph,
       edges: graph.edges.map((e) =>
         e.id === edgeId && e.kind === "causal"
-          ? { ...e, isQuickFix: !e.isQuickFix }
+          ? { ...e, isQuickFix: targetQF }
           : e,
       ),
     };

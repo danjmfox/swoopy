@@ -44,7 +44,7 @@ const twoNodeGraph: Graph = {
       transferFn: "linear",
     },
   ],
-      annotations: []
+  annotations: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -147,7 +147,7 @@ describe("step() — signal arrival", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     const initialC = 5;
     let sim = inject(makeInitialSim(chainGraph), chainGraph, nodeA, 1);
@@ -185,7 +185,7 @@ describe("step() — signal arrival", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     // Manually place a signal on A→B with hopsRemaining=0
     const sim0 = makeInitialSim(chainGraph);
@@ -233,7 +233,7 @@ describe("weight — amplitude fragments", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1);
     expect(sim1.signals.length).toBe(3);
@@ -254,7 +254,7 @@ describe("weight — amplitude fragments", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1);
     for (const s of sim1.signals) {
@@ -277,7 +277,7 @@ describe("weight — amplitude fragments", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     const sim1 = inject(makeInitialSim(heavyGraph), heavyGraph, nodeA, 1);
     const progressValues = sim1.signals.map((s) => s.progress);
@@ -320,7 +320,7 @@ describe("signal aging — hopsRemaining", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     const sim0 = makeInitialSim(chainGraph);
     const simWithSignal = {
@@ -390,7 +390,7 @@ describe("integration — reinforcing loop", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     let sim = inject(makeInitialSim(graph), graph, nodeLoopA, 1);
     // MAX_HOPS=8 × EDGE_TRANSIT_TICKS=92 ≈ 736 ticks to propagate full chain + buffer
@@ -428,7 +428,7 @@ describe("integration — balancing loop", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     let sim = inject(makeInitialSim(graph), graph, nodeBalA, 1);
     for (let i = 0; i < 900; i++) sim = step(graph, sim, 1 / 60);
@@ -495,7 +495,7 @@ describe("integration — diamond graph", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     let sim = inject(makeInitialSim(graph), graph, nodeDA, 1);
     for (let i = 0; i < 400; i++) sim = step(graph, sim, 1 / 60);
@@ -504,5 +504,56 @@ describe("integration — diamond graph", () => {
     expect(sim.nodeValues.get(nodeDC)).toBeGreaterThan(5);
     // D: +1 via B and -1 via C cancel out → should remain near 5
     expect(sim.nodeValues.get(nodeDD)).toBeCloseTo(5, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GE-42: Multi-edge per pair — QF + normal propagate independently
+// DR--20260404--engine--multi-edge-semantics
+// ---------------------------------------------------------------------------
+
+describe("GE-42 — multi-edge propagation", () => {
+  it("QF edge and normal edge between the same pair both deliver signals to the destination", () => {
+    // A→B via a normal edge (delay:long) + A→B via a QF edge (delay:none).
+    // Both should propagate. After sufficient steps, B should have moved more
+    // than if only one edge existed.
+    const nA = makeNodeId("me-A");
+    const nB = makeNodeId("me-B");
+    const multiGraph: Graph = {
+      nodes: [node(nA, "A"), node(nB, "B", 100)],
+      edges: [
+        {
+          id: makeEdgeId("me-AB-normal"),
+          kind: "causal",
+          from: nA,
+          to: nB,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+        {
+          id: makeEdgeId("me-AB-qf"),
+          kind: "causal",
+          from: nA,
+          to: nB,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+          isQuickFix: true,
+        },
+      ],
+      annotations: [],
+    };
+
+    // inject A +1 and let signals settle
+    let sim = inject(makeInitialSim(multiGraph), multiGraph, nA, 1);
+    for (let i = 0; i < 400; i++) sim = step(multiGraph, sim, 1 / 60);
+
+    // Both edges propagated: B should have received 2× the signal vs a single edge.
+    // Single-edge baseline would move B from 5 → 6; two edges → 7.
+    const bValue = sim.nodeValues.get(nB) ?? 5;
+    expect(bValue).toBeGreaterThan(6);
   });
 });

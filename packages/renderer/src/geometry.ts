@@ -1,7 +1,26 @@
 // Shared bezier geometry — used by both LoopyRenderer (drawing) and hitTest (interaction)
 // All coordinates in CSS pixels. DPR applied at draw time only.
 
+import type { CausalEdge } from "@swoopy/engine";
+
 export const BOW = 28; // px perpendicular offset for parallel edge pairs
+
+/**
+ * Returns the bow value for a causal edge.
+ * When two causal edges share the same (from, to) pair (one QF, one normal),
+ * they are offset to opposite sides: normal → +BOW, QF → -BOW.
+ * A lone edge uses +BOW (existing behaviour).
+ */
+export function edgeBow(
+  edge: CausalEdge,
+  allCausal: ReadonlyArray<CausalEdge>,
+): number {
+  const sibling = allCausal.some(
+    (e) => e.id !== edge.id && e.from === edge.from && e.to === edge.to,
+  );
+  if (!sibling) return BOW;
+  return edge.isQuickFix ? -BOW : BOW;
+}
 
 export const ANNOTATION_WIDTH = 180;
 export const ANNOTATION_MIN_HEIGHT = 40;
