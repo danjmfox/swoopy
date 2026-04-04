@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, act } from "@testing-library/react";
 import { useStore } from "./store.ts";
 import { seedGraph } from "./seed.ts";
-import { makeInitialSim, inject } from "@swoopy/engine";
+import { makeInitialSim, inject, makeEdgeId } from "@swoopy/engine";
 
 import { ConstraintChoiceDialog } from "./ConstraintChoiceDialog.tsx";
 
@@ -1119,5 +1119,55 @@ describe("GE-37: annotation store slice", () => {
     useStore.getState().openAnnotationEditor(id);
     useStore.getState().closeAnnotationEditor();
     expect(useStore.getState().editingAnnotationId).toBeNull();
+  });
+});
+
+describe("GE-41 toggleEdgeQuickFix", () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph, past: [], future: [] });
+  });
+
+  it("sets isQuickFix: true on a causal edge that has no flag", () => {
+    const edge = seedGraph.edges.find((e) => e.kind === "causal")!;
+    useStore.getState().toggleEdgeQuickFix(edge.id);
+    const updated = useStore
+      .getState()
+      .graph.edges.find((e) => e.id === edge.id)!;
+    expect(updated.kind === "causal" && updated.isQuickFix).toBe(true);
+  });
+
+  it("clears isQuickFix when already true", () => {
+    const edge = seedGraph.edges.find((e) => e.kind === "causal")!;
+    useStore.getState().toggleEdgeQuickFix(edge.id);
+    useStore.getState().toggleEdgeQuickFix(edge.id);
+    const updated = useStore
+      .getState()
+      .graph.edges.find((e) => e.id === edge.id)!;
+    expect(updated.kind === "causal" && updated.isQuickFix).toBeFalsy();
+  });
+
+  it("is a no-op on a constraint edge", () => {
+    const graphWithConstraint = {
+      ...seedGraph,
+      edges: [
+        ...seedGraph.edges,
+        {
+          kind: "constraint" as const,
+          constraintKind: "ceiling" as const,
+          id: makeEdgeId("c1"),
+          from: seedGraph.nodes[0].id,
+          to: seedGraph.nodes[1].id,
+        },
+      ],
+    };
+    useStore.setState({ graph: graphWithConstraint });
+    const constraintEdge = graphWithConstraint.edges.find(
+      (e) => e.kind === "constraint",
+    )!;
+    useStore.getState().toggleEdgeQuickFix(constraintEdge.id);
+    const updated = useStore
+      .getState()
+      .graph.edges.find((e) => e.id === constraintEdge.id)!;
+    expect(updated.kind).toBe("constraint");
   });
 });
