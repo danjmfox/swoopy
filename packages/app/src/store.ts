@@ -160,6 +160,18 @@ interface StoreState {
 type Get = () => StoreState;
 type Set = (partial: Partial<StoreState>) => void;
 
+function commitGraph(
+  get: Get,
+  set: Set,
+  next: Graph,
+  extra?: Partial<StoreState>,
+): void {
+  const { graph: prev, past } = get();
+  const modelId = forkIfTransient(get, set);
+  set({ past: [...past, prev], future: [], graph: next, ...extra });
+  persist(next, modelId);
+}
+
 function forkIfTransient(get: Get, set: Set): string {
   const { transient, modelId } = get();
   if (!transient) return modelId;
@@ -233,53 +245,34 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ focusedNodeId: nodes[(idx + 1) % nodes.length]!.id });
   },
   addAnnotation: (x: number, y: number) => {
-    const { graph, past } = get();
+    const { graph } = get();
     const id = makeAnnotationId(crypto.randomUUID());
-    const modelId = forkIfTransient(get, set);
-    const annotation = { id, x, y, text: "" };
-    const next = { ...graph, annotations: [...graph.annotations, annotation] };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, modelId);
+    const next = { ...graph, annotations: [...graph.annotations, { id, x, y, text: "" }] };
+    commitGraph(get, set, next);
     return id;
   },
   deleteAnnotation: (id: AnnotationId) => {
-    const { graph, past } = get();
-    const modelId = forkIfTransient(get, set);
-    const next = {
+    const { graph } = get();
+    commitGraph(get, set, {
       ...graph,
       annotations: graph.annotations.filter((a) => a.id !== id),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, modelId);
+    });
   },
   moveAnnotation: (id: AnnotationId, x: number, y: number) => {
-    const { graph, past } = get();
-    const modelId = forkIfTransient(get, set);
-    const next = {
-      ...graph,
-      annotations: graph.annotations.map((a) =>
-        a.id === id ? { ...a, x, y } : a,
-      ),
-    };
-    set({
-      past: [...past, graph],
-      future: [],
-      graph: next,
-      annotationDragPosition: null,
-    });
-    persist(next, modelId);
+    const { graph } = get();
+    commitGraph(
+      get,
+      set,
+      { ...graph, annotations: graph.annotations.map((a) => (a.id === id ? { ...a, x, y } : a)) },
+      { annotationDragPosition: null },
+    );
   },
   updateAnnotation: (id: AnnotationId, text: string) => {
-    const { graph, past } = get();
-    const modelId = forkIfTransient(get, set);
-    const next = {
+    const { graph } = get();
+    commitGraph(get, set, {
       ...graph,
-      annotations: graph.annotations.map((a) =>
-        a.id === id ? { ...a, text } : a,
-      ),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, modelId);
+      annotations: graph.annotations.map((a) => (a.id === id ? { ...a, text } : a)),
+    });
   },
   editingAnnotationId: null as AnnotationId | null,
   openAnnotationEditor: (id: AnnotationId) => set({ editingAnnotationId: id }),
@@ -296,8 +289,7 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ sim: step(graph, sim, dt) });
   },
   addNode: (x: number, y: number) => {
-    const { graph, past } = get();
-    const id = forkIfTransient(get, set);
+    const { graph } = get();
     const node = {
       id: makeNodeId(crypto.randomUUID()),
       label: "New Node",
@@ -310,22 +302,17 @@ export const useStore = create<StoreState>((set, get) => ({
       max: 10,
       initial: 5,
     };
-    const next = { ...graph, nodes: [...graph.nodes, node] };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, id);
+    commitGraph(get, set, { ...graph, nodes: [...graph.nodes, node] });
   },
   addEdge: (from: NodeId, to: NodeId) => {
-    const { graph, past } = get();
+    const { graph } = get();
     const hasNormal = graph.edges.some(
-      (e) =>
-        e.kind === "causal" && e.from === from && e.to === to && !e.isQuickFix,
+      (e) => e.kind === "causal" && e.from === from && e.to === to && !e.isQuickFix,
     );
     const hasQF = graph.edges.some(
-      (e) =>
-        e.kind === "causal" && e.from === from && e.to === to && e.isQuickFix,
+      (e) => e.kind === "causal" && e.from === from && e.to === to && e.isQuickFix,
     );
     if (hasNormal && hasQF) return;
-    const id = forkIfTransient(get, set);
     const edge = {
       kind: "causal" as const,
       id: makeEdgeId(crypto.randomUUID()),
@@ -337,16 +324,10 @@ export const useStore = create<StoreState>((set, get) => ({
       transferFn: "linear" as const,
       ...(hasNormal ? { isQuickFix: true as const } : {}),
     };
-    const next = { ...graph, edges: [...graph.edges, edge] };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, id);
+    commitGraph(get, set, { ...graph, edges: [...graph.edges, edge] });
   },
-  addConstraintEdge: (
-    from: NodeId,
-    to: NodeId,
-    constraintKind: ConstraintKind,
-  ) => {
-    const { graph, past } = get();
+  addConstraintEdge: (from: NodeId, to: NodeId, constraintKind: ConstraintKind) => {
+    const { graph } = get();
     const duplicate = graph.edges.some(
       (e) =>
         e.kind === "constraint" &&
@@ -355,7 +336,6 @@ export const useStore = create<StoreState>((set, get) => ({
         e.constraintKind === constraintKind,
     );
     if (duplicate) return;
-    const id = forkIfTransient(get, set);
     const edge = {
       kind: "constraint" as const,
       id: makeEdgeId(crypto.randomUUID()),
@@ -363,56 +343,43 @@ export const useStore = create<StoreState>((set, get) => ({
       to,
       constraintKind,
     };
-    const next = { ...graph, edges: [...graph.edges, edge] };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, id);
+    commitGraph(get, set, { ...graph, edges: [...graph.edges, edge] });
   },
   togglePolarity: (edgeId) => {
-    const { graph, past } = get();
-    const id = forkIfTransient(get, set);
-    const next = {
+    const { graph } = get();
+    commitGraph(get, set, {
       ...graph,
       edges: graph.edges.map((e) =>
         e.id === edgeId && e.kind === "causal"
           ? { ...e, polarity: (e.polarity === 1 ? -1 : 1) as 1 | -1 }
           : e,
       ),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, id);
+    });
   },
   cycleDelay: (edgeId) => {
-    const { graph, past } = get();
-    const id = forkIfTransient(get, set);
-    const next = {
+    const { graph } = get();
+    commitGraph(get, set, {
       ...graph,
       edges: graph.edges.map((e) => {
         if (e.id !== edgeId || e.kind !== "causal") return e;
         const idx = DELAY_CYCLE.indexOf(e.delay);
         return { ...e, delay: DELAY_CYCLE[(idx + 1) % DELAY_CYCLE.length]! };
       }),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, id);
+    });
   },
   setEdgeWeight: (edgeId, weight) => {
-    const { graph, past } = get();
-    const id = forkIfTransient(get, set);
+    const { graph } = get();
     const clamped = Math.min(5, Math.max(0, weight));
-    const next = {
+    commitGraph(get, set, {
       ...graph,
       edges: graph.edges.map((e) =>
         e.id === edgeId && e.kind === "causal" ? { ...e, weight: clamped } : e,
       ),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, id);
+    });
   },
   toggleEdgeQuickFix: (edgeId) => {
-    const { graph, past } = get();
-    const edge = graph.edges.find(
-      (e) => e.id === edgeId && e.kind === "causal",
-    );
+    const { graph } = get();
+    const edge = graph.edges.find((e) => e.id === edgeId && e.kind === "causal");
     if (!edge || edge.kind !== "causal") return;
     const targetQF = !edge.isQuickFix;
     const conflict = graph.edges.some(
@@ -423,103 +390,70 @@ export const useStore = create<StoreState>((set, get) => ({
         !!e.isQuickFix === targetQF,
     );
     if (conflict) return;
-    const id = forkIfTransient(get, set);
-    const next = {
+    commitGraph(get, set, {
       ...graph,
       edges: graph.edges.map((e) =>
-        e.id === edgeId && e.kind === "causal"
-          ? { ...e, isQuickFix: targetQF }
-          : e,
+        e.id === edgeId && e.kind === "causal" ? { ...e, isQuickFix: targetQF } : e,
       ),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, id);
+    });
   },
   updateNode: (id: NodeId, patch) => {
-    const { graph, past } = get();
-    const modelId = forkIfTransient(get, set);
-    const next = {
+    const { graph } = get();
+    commitGraph(get, set, {
       ...graph,
       nodes: graph.nodes.map((n) => {
         if (n.id !== id) return n;
         const min = patch.min ?? n.min;
         const max = patch.max ?? n.max;
-        const initial = Math.min(
-          max,
-          Math.max(min, patch.initial ?? n.initial),
-        );
-        const radius =
-          patch.sizeTier != null ? NODE_SIZE_RADII[patch.sizeTier] : n.radius;
+        const initial = Math.min(max, Math.max(min, patch.initial ?? n.initial));
+        const radius = patch.sizeTier != null ? NODE_SIZE_RADII[patch.sizeTier] : n.radius;
         return { ...n, ...patch, min, max, initial, radius };
       }),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, modelId);
+    });
   },
   moveNode: (id: NodeId, x: number, y: number) => {
-    const { graph, past } = get();
-    const modelId = forkIfTransient(get, set);
-    const next = {
-      ...graph,
-      nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)),
-    };
-    set({
-      past: [...past, graph],
-      future: [],
-      graph: next,
-      dragPosition: null,
-    });
-    persist(next, modelId);
+    const { graph } = get();
+    commitGraph(
+      get,
+      set,
+      { ...graph, nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)) },
+      { dragPosition: null },
+    );
   },
   nudgeNode: (id: NodeId, dx: number, dy: number) => {
-    const { graph, past } = get();
-    const modelId = forkIfTransient(get, set);
-    const next = {
+    const { graph } = get();
+    commitGraph(get, set, {
       ...graph,
-      nodes: graph.nodes.map((n) =>
-        n.id === id ? { ...n, x: n.x + dx, y: n.y + dy } : n,
-      ),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, modelId);
+      nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x: n.x + dx, y: n.y + dy } : n)),
+    });
   },
   deleteNode: (id: NodeId) => {
-    const { graph, past } = get();
-    const modelId = forkIfTransient(get, set);
-    const next = {
+    const { graph } = get();
+    commitGraph(get, set, {
       ...graph,
       nodes: graph.nodes.filter((n) => n.id !== id),
       edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
-    };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, modelId);
+    });
   },
   deleteEdge: (id: EdgeId) => {
-    const { graph, past } = get();
-    const modelId = forkIfTransient(get, set);
-    const next = { ...graph, edges: graph.edges.filter((e) => e.id !== id) };
-    set({ past: [...past, graph], future: [], graph: next });
-    persist(next, modelId);
+    const { graph } = get();
+    commitGraph(get, set, { ...graph, edges: graph.edges.filter((e) => e.id !== id) });
   },
   undo: () => {
     const { graph, past, future } = get();
     if (past.length === 0) return;
     const previous = past[past.length - 1]!;
-    const id = forkIfTransient(get, set);
-    set({
-      graph: previous,
-      past: past.slice(0, -1),
-      future: [graph, ...future],
-    });
-    persist(previous, id);
+    const modelId = forkIfTransient(get, set);
+    set({ graph: previous, past: past.slice(0, -1), future: [graph, ...future] });
+    persist(previous, modelId);
   },
   redo: () => {
     const { graph, past, future } = get();
     if (future.length === 0) return;
     const next = future[0]!;
-    const id = forkIfTransient(get, set);
+    const modelId = forkIfTransient(get, set);
     set({ graph: next, past: [...past, graph], future: future.slice(1) });
-    persist(next, id);
+    persist(next, modelId);
   },
   showHistory: false,
   toggleHistory: () => set({ showHistory: !get().showHistory }),
