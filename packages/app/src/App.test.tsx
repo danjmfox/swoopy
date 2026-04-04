@@ -27,9 +27,10 @@ describe("SE-07: startup restore", () => {
   beforeEach(() => {
     loadFromUrl = vi.fn();
     loadPersistedGraph = vi.fn();
-    useStore.setState({ loadFromUrl, loadPersistedGraph } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      loadFromUrl,
+      loadPersistedGraph,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   afterEach(() => {
@@ -100,9 +101,10 @@ describe("SE-10: welcome overlay", () => {
   beforeEach(() => {
     loadFromUrl = vi.fn();
     loadPersistedGraph = vi.fn();
-    useStore.setState({ loadFromUrl, loadPersistedGraph } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      loadFromUrl,
+      loadPersistedGraph,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   afterEach(() => {

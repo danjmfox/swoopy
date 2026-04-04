@@ -114,13 +114,17 @@ describe("QF flag serialisation", () => {
       ],
     };
     const restored = deserialize(serialize(qfGraph));
-    const edge = restored.edges.find((e): e is CausalEdge => e.kind === "causal")!;
+    const edge = restored.edges.find(
+      (e): e is CausalEdge => e.kind === "causal",
+    )!;
     expect(edge.isQuickFix).toBe(true);
   });
 
   it("round-trips an edge without isQuickFix (defaults to undefined)", () => {
     const restored = deserialize(serialize(seedGraph));
-    const edge = restored.edges.find((e): e is CausalEdge => e.kind === "causal")!;
+    const edge = restored.edges.find(
+      (e): e is CausalEdge => e.kind === "causal",
+    )!;
     expect(edge.isQuickFix).toBeUndefined();
   });
 });

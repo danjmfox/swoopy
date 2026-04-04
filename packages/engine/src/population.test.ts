@@ -118,7 +118,11 @@ describe("step", () => {
   it("node stays elevated after injection with no balancing loop (SI-06 — signal-driven model)", () => {
     // An isolated node has no incoming signals — only intrinsic decay would reduce it.
     // In the signal-driven model there is no decay: the node stays wherever injection left it.
-    const isolatedGraph: Graph = { nodes: [births], edges: [], annotations: [] };
+    const isolatedGraph: Graph = {
+      nodes: [births],
+      edges: [],
+      annotations: [],
+    };
     const sim0 = makeInitialSim(isolatedGraph);
     const sim1 = inject(sim0, isolatedGraph, birthsId, INJECT_STRENGTH);
     let sim = sim1;
@@ -268,7 +272,7 @@ describe("GE-SD staggered-density signals", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     let sim = makeInitialSim(graph);
     sim = inject(sim, graph, aId, INJECT_STRENGTH);
@@ -318,7 +322,7 @@ describe("GE-SD staggered-density signals", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     let sim = makeInitialSim(graph);
     sim = inject(sim, graph, aId, INJECT_STRENGTH);
@@ -368,7 +372,7 @@ describe("GE-SD staggered-density signals", () => {
           transferFn: "linear",
         },
       ],
-      annotations: []
+      annotations: [],
     };
     let sim = makeInitialSim(graph);
     sim = inject(sim, graph, aId, INJECT_STRENGTH);

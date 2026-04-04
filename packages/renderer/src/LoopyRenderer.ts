@@ -201,14 +201,17 @@ export class LoopyRenderer {
 
     const { graph, sim, mode, dragPosition, annotationDragPosition } = state;
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
-    const causalEdges = graph.edges.filter((e): e is CausalEdge => e.kind === "causal");
+    const causalEdges = graph.edges.filter(
+      (e): e is CausalEdge => e.kind === "causal",
+    );
     const constraintEdges = graph.edges.filter(
       (e): e is ConstraintEdge => e.kind === "constraint",
     );
 
     this.drawConstraintEdges(ctx, constraintEdges, nodeById);
     this.drawCausalEdges(ctx, causalEdges, nodeById, sim);
-    if (mode === "select") this.drawAffordanceDots(ctx, causalEdges, nodeById, state);
+    if (mode === "select")
+      this.drawAffordanceDots(ctx, causalEdges, nodeById, state);
     this.drawSignalParticles(ctx, causalEdges, nodeById, sim);
     this.drawNodes(ctx, graph, sim, dragPosition ?? null, state);
     this.drawAnnotations(ctx, graph, annotationDragPosition ?? null);
@@ -257,7 +260,9 @@ export class LoopyRenderer {
       if (!from || !to) continue;
       const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
       // SI-11: dim edge when signal count is high
-      const edgeSignalCount = sim.signals.filter((s) => s.edgeId === edge.id).length;
+      const edgeSignalCount = sim.signals.filter(
+        (s) => s.edgeId === edge.id,
+      ).length;
       const alpha = saturationAlpha(edgeSignalCount, MAX_SIGNALS);
       drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha);
     }
@@ -281,10 +286,13 @@ export class LoopyRenderer {
         [T_WEIGHT, "weight"],
       ] as [number, "delay" | "weight"][]) {
         const { x: px, y: py } = bezierPoint(x1, y1, cx, cy, x2, y2, t);
-        const isHovered = hovered?.edgeId === edge.id && hovered?.region === region;
+        const isHovered =
+          hovered?.edgeId === edge.id && hovered?.region === region;
         ctx.beginPath();
         ctx.arc(px, py, 8, 0, Math.PI * 2);
-        ctx.fillStyle = isHovered ? "rgba(148,163,184,0.9)" : "rgba(148,163,184,0.25)";
+        ctx.fillStyle = isHovered
+          ? "rgba(148,163,184,0.9)"
+          : "rgba(148,163,184,0.25)";
         ctx.fill();
         if (isHovered) {
           ctx.fillStyle = "rgba(148,163,184,0.9)";
@@ -311,7 +319,15 @@ export class LoopyRenderer {
       if (!from || !to) continue;
       const { x1, y1, x2, y2 } = edgeEndpoints(from, to);
       const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, edges));
-      const { x: px, y: py } = bezierPoint(x1, y1, cx, cy, x2, y2, signal.progress);
+      const { x: px, y: py } = bezierPoint(
+        x1,
+        y1,
+        cx,
+        cy,
+        x2,
+        y2,
+        signal.progress,
+      );
       ctx.beginPath();
       ctx.arc(px, py, 5, 0, Math.PI * 2);
       ctx.fillStyle = signal.strength > 0 ? "#7dd3fc" : "#fca5a5";
@@ -330,8 +346,17 @@ export class LoopyRenderer {
       const isDragging = dragPosition?.nodeId === node.id;
       const value = sim.nodeValues.get(node.id) ?? node.initial;
       const prevValue = sim.displayPrevNodeValues.get(node.id) ?? node.initial;
-      const { fill, trend: rawTrend } = stockIndicator(value, node.min, node.max, prevValue);
-      const trend = this.trendTracker.update(node.id, rawTrend, performance.now());
+      const { fill, trend: rawTrend } = stockIndicator(
+        value,
+        node.min,
+        node.max,
+        prevValue,
+      );
+      const trend = this.trendTracker.update(
+        node.id,
+        rawTrend,
+        performance.now(),
+      );
       if (isDragging) ctx.globalAlpha = 0.3;
 
       ctx.beginPath();
@@ -345,19 +370,22 @@ export class LoopyRenderer {
       // SI-12: stock fill arc
       if (fill > 0) {
         ctx.beginPath();
-        ctx.arc(node.x, node.y, node.radius - 4, -Math.PI / 2, -Math.PI / 2 + fill * Math.PI);
-        ctx.strokeStyle = fill > 0.75 ? "#f97316" : fill > 0.25 ? "#facc15" : "#4ade80";
+        ctx.arc(
+          node.x,
+          node.y,
+          node.radius - 4,
+          -Math.PI / 2,
+          -Math.PI / 2 + fill * Math.PI,
+        );
+        ctx.strokeStyle =
+          fill > 0.75 ? "#f97316" : fill > 0.25 ? "#facc15" : "#4ade80";
         ctx.lineWidth = 3;
         ctx.stroke();
       }
 
       // SI-19: delay queue arc
-      const { fraction: queueFraction, overflow: queueOverflow } = delayQueueIndicator(
-        sim.pending,
-        node.id,
-        graph.edges,
-        node.max,
-      );
+      const { fraction: queueFraction, overflow: queueOverflow } =
+        delayQueueIndicator(sim.pending, node.id, graph.edges, node.max);
       if (queueFraction > 0) {
         ctx.beginPath();
         ctx.arc(
@@ -404,7 +432,9 @@ export class LoopyRenderer {
 
       if (node.annotation) {
         const text =
-          node.annotation.length > 24 ? node.annotation.slice(0, 24) + "…" : node.annotation;
+          node.annotation.length > 24
+            ? node.annotation.slice(0, 24) + "…"
+            : node.annotation;
         ctx.font = "10px system-ui, sans-serif";
         ctx.fillStyle = "#94a3b8";
         ctx.textAlign = "center";
@@ -422,8 +452,14 @@ export class LoopyRenderer {
     annotationDragPosition: { id: AnnotationId; x: number; y: number } | null,
   ): void {
     for (const ann of graph.annotations ?? []) {
-      const ax = annotationDragPosition?.id === ann.id ? annotationDragPosition.x : ann.x;
-      const ay = annotationDragPosition?.id === ann.id ? annotationDragPosition.y : ann.y;
+      const ax =
+        annotationDragPosition?.id === ann.id
+          ? annotationDragPosition.x
+          : ann.x;
+      const ay =
+        annotationDragPosition?.id === ann.id
+          ? annotationDragPosition.y
+          : ann.y;
       const lines = ann.text ? ann.text.split("\n") : [];
       const lineHeight = 16;
       const height = Math.max(

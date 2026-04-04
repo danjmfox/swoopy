@@ -47,7 +47,11 @@ export function deserialize(blob: unknown): Graph {
     );
   }
   // Cast once at the boundary; each migration function handles its own field access.
-  let g = graph as unknown as { nodes: unknown[]; edges: unknown[]; annotations?: unknown[] };
+  let g = graph as unknown as {
+    nodes: unknown[];
+    edges: unknown[];
+    annotations?: unknown[];
+  };
   if (version < 2) g = migrateV1toV2(g) as typeof g;
   if (version < 3) g = migrateV2toV3(g) as typeof g;
   if (version < 4) return migrateV3toV4(g);

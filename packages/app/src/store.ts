@@ -247,7 +247,10 @@ export const useStore = create<StoreState>((set, get) => ({
   addAnnotation: (x: number, y: number) => {
     const { graph } = get();
     const id = makeAnnotationId(crypto.randomUUID());
-    const next = { ...graph, annotations: [...graph.annotations, { id, x, y, text: "" }] };
+    const next = {
+      ...graph,
+      annotations: [...graph.annotations, { id, x, y, text: "" }],
+    };
     commitGraph(get, set, next);
     return id;
   },
@@ -263,7 +266,12 @@ export const useStore = create<StoreState>((set, get) => ({
     commitGraph(
       get,
       set,
-      { ...graph, annotations: graph.annotations.map((a) => (a.id === id ? { ...a, x, y } : a)) },
+      {
+        ...graph,
+        annotations: graph.annotations.map((a) =>
+          a.id === id ? { ...a, x, y } : a,
+        ),
+      },
       { annotationDragPosition: null },
     );
   },
@@ -271,7 +279,9 @@ export const useStore = create<StoreState>((set, get) => ({
     const { graph } = get();
     commitGraph(get, set, {
       ...graph,
-      annotations: graph.annotations.map((a) => (a.id === id ? { ...a, text } : a)),
+      annotations: graph.annotations.map((a) =>
+        a.id === id ? { ...a, text } : a,
+      ),
     });
   },
   editingAnnotationId: null as AnnotationId | null,
@@ -307,10 +317,12 @@ export const useStore = create<StoreState>((set, get) => ({
   addEdge: (from: NodeId, to: NodeId) => {
     const { graph } = get();
     const hasNormal = graph.edges.some(
-      (e) => e.kind === "causal" && e.from === from && e.to === to && !e.isQuickFix,
+      (e) =>
+        e.kind === "causal" && e.from === from && e.to === to && !e.isQuickFix,
     );
     const hasQF = graph.edges.some(
-      (e) => e.kind === "causal" && e.from === from && e.to === to && e.isQuickFix,
+      (e) =>
+        e.kind === "causal" && e.from === from && e.to === to && e.isQuickFix,
     );
     if (hasNormal && hasQF) return;
     const edge = {
@@ -326,7 +338,11 @@ export const useStore = create<StoreState>((set, get) => ({
     };
     commitGraph(get, set, { ...graph, edges: [...graph.edges, edge] });
   },
-  addConstraintEdge: (from: NodeId, to: NodeId, constraintKind: ConstraintKind) => {
+  addConstraintEdge: (
+    from: NodeId,
+    to: NodeId,
+    constraintKind: ConstraintKind,
+  ) => {
     const { graph } = get();
     const duplicate = graph.edges.some(
       (e) =>
@@ -379,7 +395,9 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   toggleEdgeQuickFix: (edgeId) => {
     const { graph } = get();
-    const edge = graph.edges.find((e) => e.id === edgeId && e.kind === "causal");
+    const edge = graph.edges.find(
+      (e) => e.id === edgeId && e.kind === "causal",
+    );
     if (!edge || edge.kind !== "causal") return;
     const targetQF = !edge.isQuickFix;
     const conflict = graph.edges.some(
@@ -393,7 +411,9 @@ export const useStore = create<StoreState>((set, get) => ({
     commitGraph(get, set, {
       ...graph,
       edges: graph.edges.map((e) =>
-        e.id === edgeId && e.kind === "causal" ? { ...e, isQuickFix: targetQF } : e,
+        e.id === edgeId && e.kind === "causal"
+          ? { ...e, isQuickFix: targetQF }
+          : e,
       ),
     });
   },
@@ -405,8 +425,12 @@ export const useStore = create<StoreState>((set, get) => ({
         if (n.id !== id) return n;
         const min = patch.min ?? n.min;
         const max = patch.max ?? n.max;
-        const initial = Math.min(max, Math.max(min, patch.initial ?? n.initial));
-        const radius = patch.sizeTier != null ? NODE_SIZE_RADII[patch.sizeTier] : n.radius;
+        const initial = Math.min(
+          max,
+          Math.max(min, patch.initial ?? n.initial),
+        );
+        const radius =
+          patch.sizeTier != null ? NODE_SIZE_RADII[patch.sizeTier] : n.radius;
         return { ...n, ...patch, min, max, initial, radius };
       }),
     });
@@ -416,7 +440,10 @@ export const useStore = create<StoreState>((set, get) => ({
     commitGraph(
       get,
       set,
-      { ...graph, nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)) },
+      {
+        ...graph,
+        nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)),
+      },
       { dragPosition: null },
     );
   },
@@ -424,7 +451,9 @@ export const useStore = create<StoreState>((set, get) => ({
     const { graph } = get();
     commitGraph(get, set, {
       ...graph,
-      nodes: graph.nodes.map((n) => (n.id === id ? { ...n, x: n.x + dx, y: n.y + dy } : n)),
+      nodes: graph.nodes.map((n) =>
+        n.id === id ? { ...n, x: n.x + dx, y: n.y + dy } : n,
+      ),
     });
   },
   deleteNode: (id: NodeId) => {
@@ -437,14 +466,21 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   deleteEdge: (id: EdgeId) => {
     const { graph } = get();
-    commitGraph(get, set, { ...graph, edges: graph.edges.filter((e) => e.id !== id) });
+    commitGraph(get, set, {
+      ...graph,
+      edges: graph.edges.filter((e) => e.id !== id),
+    });
   },
   undo: () => {
     const { graph, past, future } = get();
     if (past.length === 0) return;
     const previous = past[past.length - 1]!;
     const modelId = forkIfTransient(get, set);
-    set({ graph: previous, past: past.slice(0, -1), future: [graph, ...future] });
+    set({
+      graph: previous,
+      past: past.slice(0, -1),
+      future: [graph, ...future],
+    });
     persist(previous, modelId);
   },
   redo: () => {

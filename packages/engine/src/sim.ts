@@ -30,7 +30,9 @@ function nextSignalId(): string {
   return `s${++signalSeq}`;
 }
 
-function buildCausalEdgesFrom(edges: ReadonlyArray<Edge>): Map<string, CausalEdge[]> {
+function buildCausalEdgesFrom(
+  edges: ReadonlyArray<Edge>,
+): Map<string, CausalEdge[]> {
   const map = new Map<string, CausalEdge[]>();
   for (const e of edges) {
     if (e.kind === "causal") {
@@ -209,7 +211,8 @@ function emitRelayFragments(
       continue;
     }
     const count = Math.round(edge.weight);
-    const staggerTicks = count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
+    const staggerTicks =
+      count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
     if (edge.delay !== "none") {
       const delayTicks = DELAY_TICKS[edge.delay] ?? DELAY_TICKS_SHORT;
       for (let i = 0; i < count; i++) {

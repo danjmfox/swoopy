@@ -178,9 +178,10 @@ describe("GE-03/20 Canvas drag — one moveNode call on pointerup", () => {
 
   it("pointermove while dragging in select mode calls setDragPosition", async () => {
     const setDragPosition = vi.fn();
-    useStore.setState({ mode: "select", setDragPosition } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      mode: "select",
+      setDragPosition,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: popNode.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
@@ -740,9 +741,10 @@ describe("GE-18 dblclick — opens node editor in non-simulate modes", () => {
   beforeEach(() => {
     openNodeEditor = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, openNodeEditor } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      graph: seedGraph,
+      openNodeEditor,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("dblclick on node in select mode calls openNodeEditor", async () => {
@@ -781,9 +783,10 @@ describe("GE-08 dblclick — toggle polarity on edge-polarity hit region", () =>
   beforeEach(() => {
     togglePolarity = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, togglePolarity } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      graph: seedGraph,
+      togglePolarity,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("dblclick on edge-polarity calls togglePolarity", async () => {
@@ -829,9 +832,10 @@ describe("GE-19 dblclick — open weight editor on edge-weight hit region", () =
   beforeEach(() => {
     openEdgeWeightEditor = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, openEdgeWeightEditor } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      graph: seedGraph,
+      openEdgeWeightEditor,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("dblclick on edge-weight calls openEdgeWeightEditor", async () => {
@@ -853,9 +857,10 @@ describe("GE-18 dblclick — no-op in simulate mode", () => {
   beforeEach(() => {
     openNodeEditor = vi.fn();
     mockHitTest.mockReset();
-    useStore.setState({ graph: seedGraph, openNodeEditor } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      graph: seedGraph,
+      openNodeEditor,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
   });
 
   it("dblclick on node in simulate mode does NOT open editor", async () => {
@@ -935,7 +940,10 @@ describe("GE-30 hover feedback", () => {
 });
 
 describe("GE-32 spring-loaded modes — Canvas interaction", () => {
-  const [nodeA, nodeB] = seedGraph.nodes as [typeof seedGraph.nodes[0], typeof seedGraph.nodes[1]];
+  const [nodeA, nodeB] = seedGraph.nodes as [
+    (typeof seedGraph.nodes)[0],
+    (typeof seedGraph.nodes)[1],
+  ];
 
   beforeEach(() => {
     mockHitTest.mockReset();
@@ -963,7 +971,9 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
   // Task 6 — pointer-up on different node while spring add-edge → addEdge + exit spring
   it("pointer-up on a different node in spring add-edge creates an edge and exits spring", async () => {
     const addEdge = vi.fn();
-    useStore.setState({ addEdge } as unknown as Parameters<typeof useStore.setState>[0]);
+    useStore.setState({ addEdge } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
@@ -981,7 +991,9 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
   // Task 8 — Shift-up while in spring add-edge → exitSpringMode
   it("Shift-up while in spring mode exits spring without creating edge", async () => {
     const addEdge = vi.fn();
-    useStore.setState({ addEdge } as unknown as Parameters<typeof useStore.setState>[0]);
+    useStore.setState({ addEdge } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
@@ -997,7 +1009,9 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
   // Task 10/12 — Shift+pointerdown on blank → create node immediately (no spring intermediary)
   it("Shift+pointerdown on blank canvas creates a node immediately", async () => {
     const addNode = vi.fn();
-    useStore.setState({ addNode } as unknown as Parameters<typeof useStore.setState>[0]);
+    useStore.setState({ addNode } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
     mockHitTest.mockReturnValue(null);
     const { container } = render(<Canvas />);
     await act(async () => {});
@@ -1027,9 +1041,10 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
 
   // Task 15 — Escape while NOT in spring → mode = "select"
   it("Escape while not in spring mode returns to select", async () => {
-    useStore.setState({ mode: "add-node", previousMode: null } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      mode: "add-node",
+      previousMode: null,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     render(<Canvas />);
     await act(async () => {});
     fireEvent.keyDown(document, { key: "Escape" });
@@ -1059,9 +1074,10 @@ describe("GE-32 spring-loaded modes — Canvas interaction", () => {
 
   // Task 19 — simulate mode exempt from spring-loading
   it("Shift+pointerdown on node while in simulate mode does NOT enter spring mode", async () => {
-    useStore.setState({ mode: "simulate", previousMode: null } as unknown as Parameters<
-      typeof useStore.setState
-    >[0]);
+    useStore.setState({
+      mode: "simulate",
+      previousMode: null,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
     mockHitTest.mockReturnValue({ kind: "node", id: nodeA.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
