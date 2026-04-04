@@ -8,7 +8,7 @@ import type {
 import {
   bezierPoint,
   controlPoint,
-  BOW,
+  edgeBow,
   EDGE_HIT_RADIUS,
   T_DELAY,
   T_POLARITY,
@@ -51,8 +51,7 @@ export function hitTest(graph: Graph, x: number, y: number): HitTarget | null {
     const y1 = from.y + uy * from.radius;
     const x2 = to.x - ux * to.radius;
     const y2 = to.y - uy * to.radius;
-    const bow = BOW;
-    const { cx, cy } = controlPoint(x1, y1, x2, y2, bow);
+    const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, causalEdges));
 
     const regions: Array<[number, HitTarget]> = [
       [T_POLARITY, { kind: "edge-polarity", edgeId: edge.id }],

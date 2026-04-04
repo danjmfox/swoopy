@@ -506,3 +506,57 @@ describe("integration — diamond graph", () => {
     expect(sim.nodeValues.get(nodeDD)).toBeCloseTo(5, 0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// GE-42: Multi-edge per pair — QF + normal propagate independently
+// DR--20260404--engine--multi-edge-semantics
+// ---------------------------------------------------------------------------
+
+describe("GE-42 — multi-edge propagation", () => {
+  it("QF edge and normal edge between the same pair both deliver signals to the destination", () => {
+    // A→B via a normal edge (delay:long) + A→B via a QF edge (delay:none).
+    // Both should propagate. After sufficient steps, B should have moved more
+    // than if only one edge existed.
+    const nA = makeNodeId("me-A");
+    const nB = makeNodeId("me-B");
+    const multiGraph: Graph = {
+      nodes: [
+        node(nA, "A"),
+        node(nB, "B", 100),
+      ],
+      edges: [
+        {
+          id: makeEdgeId("me-AB-normal"),
+          kind: "causal",
+          from: nA,
+          to: nB,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+        {
+          id: makeEdgeId("me-AB-qf"),
+          kind: "causal",
+          from: nA,
+          to: nB,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+          isQuickFix: true,
+        },
+      ],
+      annotations: [],
+    };
+
+    // inject A +1 and let signals settle
+    let sim = inject(makeInitialSim(multiGraph), multiGraph, nA, 1);
+    for (let i = 0; i < 400; i++) sim = step(multiGraph, sim, 1 / 60);
+
+    // Both edges propagated: B should have received 2× the signal vs a single edge.
+    // Single-edge baseline would move B from 5 → 6; two edges → 7.
+    const bValue = sim.nodeValues.get(nB) ?? 5;
+    expect(bValue).toBeGreaterThan(6);
+  });
+});

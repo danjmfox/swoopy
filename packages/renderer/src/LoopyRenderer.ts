@@ -18,6 +18,7 @@ import {
   bezierPoint,
   controlPoint,
   BOW,
+  edgeBow,
   T_DELAY,
   T_POLARITY,
   T_WEIGHT,
@@ -270,7 +271,7 @@ export class LoopyRenderer {
         to.x - ux * to.radius,
         to.y - uy * to.radius,
         edge,
-        BOW,
+        edgeBow(edge, causalEdges),
         alpha,
       );
     }
@@ -291,7 +292,7 @@ export class LoopyRenderer {
         const y1 = from.y + uy * from.radius;
         const x2 = to.x - ux * to.radius;
         const y2 = to.y - uy * to.radius;
-        const { cx, cy } = controlPoint(x1, y1, x2, y2, BOW);
+        const { cx, cy } = controlPoint(x1, y1, x2, y2, edgeBow(edge, causalEdges));
         for (const [t, region] of [
           [T_DELAY, "delay"],
           [T_WEIGHT, "weight"],
@@ -333,7 +334,7 @@ export class LoopyRenderer {
       const y1 = from.y + uy * from.radius;
       const x2 = to.x - ux * to.radius;
       const y2 = to.y - uy * to.radius;
-      const bow = BOW;
+      const bow = edgeBow(edge, causalEdges);
       const { cx, cy } = controlPoint(x1, y1, x2, y2, bow);
       const { x: px, y: py } = bezierPoint(
         x1,
