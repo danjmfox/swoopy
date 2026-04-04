@@ -335,7 +335,7 @@ export const useStore = create<StoreState>((set, get) => ({
       weight: 1.0,
       delay: "none" as const,
       transferFn: "linear" as const,
-      isQuickFix: hasNormal ? true : undefined,
+      ...(hasNormal ? { isQuickFix: true as const } : {}),
     };
     const next = { ...graph, edges: [...graph.edges, edge] };
     set({ past: [...past, graph], future: [], graph: next });
@@ -428,7 +428,7 @@ export const useStore = create<StoreState>((set, get) => ({
       ...graph,
       edges: graph.edges.map((e) =>
         e.id === edgeId && e.kind === "causal"
-          ? { ...e, isQuickFix: targetQF || undefined }
+          ? { ...e, isQuickFix: targetQF }
           : e,
       ),
     };
