@@ -1,6 +1,6 @@
 import type { Graph, Node } from "./types.ts";
 
-const CURRENT_VERSION = 4;
+const CURRENT_VERSION = 5;
 
 export interface SerializedGraph {
   version: number;
@@ -16,7 +16,12 @@ function migrateV1toV2(graph: { nodes: unknown[]; edges: unknown[] }): Graph {
     const node = n as Record<string, unknown>;
     return { ...node, sizeTier: node["sizeTier"] ?? "m" } as Node;
   });
-  return { nodes, edges: graph.edges as Graph["edges"], annotations: [] };
+  return {
+    nodes,
+    edges: graph.edges as Graph["edges"],
+    annotations: [],
+    modulators: [],
+  };
 }
 
 function migrateV2toV3(graph: { nodes: unknown[]; edges: unknown[] }): Graph {
@@ -24,7 +29,12 @@ function migrateV2toV3(graph: { nodes: unknown[]; edges: unknown[] }): Graph {
     const node = n as Record<string, unknown>;
     return { ...node, colourTier: node["colourTier"] ?? "blue" } as Node;
   });
-  return { nodes, edges: graph.edges as Graph["edges"], annotations: [] };
+  return {
+    nodes,
+    edges: graph.edges as Graph["edges"],
+    annotations: [],
+    modulators: [],
+  };
 }
 
 function migrateV3toV4(graph: {
@@ -36,6 +46,21 @@ function migrateV3toV4(graph: {
     nodes: graph.nodes as Graph["nodes"],
     edges: graph.edges as Graph["edges"],
     annotations: (graph.annotations ?? []) as Graph["annotations"],
+    modulators: [],
+  };
+}
+
+function migrateV4toV5(graph: {
+  nodes: unknown[];
+  edges: unknown[];
+  annotations?: unknown[];
+  modulators?: unknown[];
+}): Graph {
+  return {
+    nodes: graph.nodes as Graph["nodes"],
+    edges: graph.edges as Graph["edges"],
+    annotations: (graph.annotations ?? []) as Graph["annotations"],
+    modulators: [],
   };
 }
 
@@ -51,9 +76,11 @@ export function deserialize(blob: unknown): Graph {
     nodes: unknown[];
     edges: unknown[];
     annotations?: unknown[];
+    modulators?: unknown[];
   };
-  if (version < 2) g = migrateV1toV2(g) as typeof g;
-  if (version < 3) g = migrateV2toV3(g) as typeof g;
-  if (version < 4) return migrateV3toV4(g);
+  if (version < 2) g = migrateV1toV2(g) as unknown as typeof g;
+  if (version < 3) g = migrateV2toV3(g) as unknown as typeof g;
+  if (version < 4) g = migrateV3toV4(g) as unknown as typeof g;
+  if (version < 5) return migrateV4toV5(g);
   return graph;
 }

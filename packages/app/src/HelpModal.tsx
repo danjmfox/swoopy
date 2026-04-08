@@ -76,7 +76,12 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
 const MODES = [
   { name: "Select", shortcut: "S", description: "Select, drag, configure" },
   { name: "Add Node", shortcut: "N", description: "Click canvas to add" },
-  { name: "Add Edge", shortcut: "E", description: "Click source then target" },
+  {
+    name: "Add Edge",
+    shortcut: "E",
+    description:
+      "Click source then target node. Click an edge badge to add a modulator — then click any node as source.",
+  },
   {
     name: "Simulate",
     shortcut: "R",
@@ -98,6 +103,7 @@ const SHORTCUTS = [
   { label: "Ctrl+Shift+Z", description: "Redo" },
   { label: "H", description: "History overlay" },
   { label: "?", description: "Toggle this panel" },
+  { label: "Esc", description: "Cancel pending modulator / return to select" },
 ];
 
 const sectionLabel: React.CSSProperties = {

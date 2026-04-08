@@ -6,7 +6,7 @@ import type { NodeId } from "@swoopy/engine";
 
 function setup() {
   useStore.setState({
-    graph: { nodes: [], edges: [], annotations: [] },
+    graph: { nodes: [], edges: [], annotations: [], modulators: [] },
     past: [],
     future: [],
   });

@@ -5,6 +5,8 @@ import type {
   ConstraintEdge,
   NodeId,
   AnnotationId,
+  Node,
+  EdgeId,
 } from "@swoopy/engine";
 import { MAX_SIGNALS } from "@swoopy/engine";
 import {
@@ -48,6 +50,7 @@ export interface RendererStore {
   dragPosition?: { nodeId: NodeId; x: number; y: number } | null;
   annotationDragPosition?: { id: AnnotationId; x: number; y: number } | null;
   hoveredEdgeRegion?: { edgeId: string; region: "delay" | "weight" } | null;
+  pendingModulatorTarget?: EdgeId | null;
 }
 
 export function arrowheadDimensions(weight: number): {
@@ -199,7 +202,14 @@ export class LoopyRenderer {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    const { graph, sim, mode, dragPosition, annotationDragPosition } = state;
+    const {
+      graph,
+      sim,
+      mode,
+      dragPosition,
+      annotationDragPosition,
+      pendingModulatorTarget,
+    } = state;
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
     const causalEdges = graph.edges.filter(
       (e): e is CausalEdge => e.kind === "causal",
@@ -209,7 +219,20 @@ export class LoopyRenderer {
     );
 
     this.drawConstraintEdges(ctx, constraintEdges, nodeById);
-    this.drawCausalEdges(ctx, causalEdges, nodeById, sim);
+    this.drawCausalEdges(
+      ctx,
+      causalEdges,
+      nodeById,
+      sim,
+      pendingModulatorTarget ?? null,
+    );
+    this.drawModulators(ctx, graph, nodeById);
+    if (pendingModulatorTarget) {
+      const edge = causalEdges.find((e) => e.id === pendingModulatorTarget);
+      const fromLabel = edge ? (nodeById.get(edge.from)?.label ?? "") : "";
+      const toLabel = edge ? (nodeById.get(edge.to)?.label ?? "") : "";
+      this.drawPendingModulatorHint(ctx, w, fromLabel, toLabel);
+    }
     if (mode === "select")
       this.drawAffordanceDots(ctx, causalEdges, nodeById, state);
     this.drawSignalParticles(ctx, causalEdges, nodeById, sim);
@@ -253,6 +276,7 @@ export class LoopyRenderer {
     edges: CausalEdge[],
     nodeById: Map<string, { x: number; y: number; radius: number }>,
     sim: SimState,
+    pendingModulatorTarget: EdgeId | null,
   ): void {
     for (const edge of edges) {
       const from = nodeById.get(edge.from);
@@ -265,6 +289,87 @@ export class LoopyRenderer {
       ).length;
       const alpha = saturationAlpha(edgeSignalCount, MAX_SIGNALS);
       drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha);
+
+      if (pendingModulatorTarget === edge.id) {
+        const bow = edgeBow(edge, edges);
+        const { cx, cy } = controlPoint(x1, y1, x2, y2, bow);
+        const mid = bezierPoint(x1, y1, cx, cy, x2, y2, T_POLARITY);
+        ctx.beginPath();
+        ctx.arc(mid.x, mid.y, 14, 0, Math.PI * 2);
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+    }
+  }
+
+  private drawPendingModulatorHint(
+    ctx: CanvasRenderingContext2D,
+    canvasWidth: number,
+    fromLabel: string,
+    toLabel: string,
+  ): void {
+    const label =
+      fromLabel && toLabel ? `${fromLabel} → ${toLabel}` : "selected edge";
+    const text = `Modulating: ${label} — click source node`;
+    ctx.font = "13px system-ui, sans-serif";
+    const measured = ctx.measureText(text);
+    const pad = 10;
+    const bw = measured.width + pad * 2;
+    const bh = 28;
+    const bx = (canvasWidth - bw) / 2;
+    const by = 12;
+    ctx.fillStyle = "rgba(245,158,11,0.15)";
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 6);
+    ctx.fill();
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = "#92400e";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, canvasWidth / 2, by + bh / 2);
+  }
+
+  private drawModulators(
+    ctx: CanvasRenderingContext2D,
+    graph: Graph,
+    nodeById: Map<string, Node>,
+  ): void {
+    const edgeById = new Map(graph.edges.map((e) => [e.id, e]));
+    for (const mod of graph.modulators) {
+      const srcNode = nodeById.get(mod.from);
+      const edge = edgeById.get(mod.target);
+      if (!srcNode || !edge || edge.kind !== "causal") continue;
+      const fromNode = nodeById.get(edge.from);
+      const toNode = nodeById.get(edge.to);
+      if (!fromNode || !toNode) continue;
+
+      const { x1, y1, x2, y2 } = edgeEndpoints(fromNode, toNode);
+      const bow = edgeBow(
+        edge,
+        graph.edges.filter((e): e is CausalEdge => e.kind === "causal"),
+      );
+      const { cx, cy } = controlPoint(x1, y1, x2, y2, bow);
+      const mid = bezierPoint(x1, y1, cx, cy, x2, y2, T_POLARITY);
+
+      const colour = mod.polarity === 1 ? "#3b82f6" : "#ef4444";
+
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(srcNode.x, srcNode.y);
+      ctx.lineTo(mid.x, mid.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const TERMINUS_R = 4;
+      ctx.beginPath();
+      ctx.arc(mid.x, mid.y, TERMINUS_R, 0, Math.PI * 2);
+      ctx.fillStyle = colour;
+      ctx.fill();
     }
   }
 

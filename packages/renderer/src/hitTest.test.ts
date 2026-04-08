@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { hitTest } from "./hitTest.ts";
-import { makeNodeId, makeAnnotationId } from "@swoopy/engine";
+import { makeNodeId, makeAnnotationId, makeEdgeId } from "@swoopy/engine";
 import type { Graph } from "@swoopy/engine";
 
 const id = makeNodeId("pop");
@@ -21,6 +21,7 @@ const graph: Graph = {
   ],
   edges: [],
   annotations: [],
+  modulators: [],
 };
 
 // PRD §5.3: hit testing testable without a canvas instance
@@ -39,7 +40,11 @@ describe("hitTest", () => {
 
   it("returns null for an empty graph", () => {
     expect(
-      hitTest({ nodes: [], edges: [], annotations: [] }, 100, 100),
+      hitTest(
+        { nodes: [], edges: [], annotations: [], modulators: [] },
+        100,
+        100,
+      ),
     ).toBeNull();
   });
 });
@@ -53,6 +58,7 @@ describe("hitTest — annotations", () => {
     nodes: [],
     edges: [],
     annotations: [{ id: annId, x: 200, y: 150, text: "" }],
+    modulators: [],
   };
 
   it("returns annotation hit when point is inside the rect", () => {
@@ -69,5 +75,63 @@ describe("hitTest — annotations", () => {
 
   it("returns null when point is to the right of the annotation rect", () => {
     expect(hitTest(annotatedGraph, 385, 160)).toBeNull(); // 200 + 180 = 380 right edge
+  });
+});
+
+// GE-43: constraint edges must be hittable in delete mode
+describe("hitTest — constraint edges", () => {
+  const nodeAId = makeNodeId("na");
+  const nodeBId = makeNodeId("nb");
+  const edgeId = makeEdgeId("ce1");
+  // nodeA=(100,100,r=30) nodeB=(300,100,r=30): midpoint of straight line = (200,100)
+  const constraintGraph: Graph = {
+    nodes: [
+      {
+        id: nodeAId,
+        label: "A",
+        x: 100,
+        y: 100,
+        radius: 30,
+        sizeTier: "m",
+        colourTier: "blue",
+        min: 0,
+        max: 10,
+        initial: 5,
+      },
+      {
+        id: nodeBId,
+        label: "B",
+        x: 300,
+        y: 100,
+        radius: 30,
+        sizeTier: "m",
+        colourTier: "blue",
+        min: 0,
+        max: 10,
+        initial: 5,
+      },
+    ],
+    edges: [
+      {
+        kind: "constraint",
+        id: edgeId,
+        from: nodeAId,
+        to: nodeBId,
+        constraintKind: "floor",
+      },
+    ],
+    annotations: [],
+    modulators: [],
+  };
+
+  it("returns edge-constraint when clicking near the midpoint of a constraint edge", () => {
+    expect(hitTest(constraintGraph, 200, 100)).toEqual({
+      kind: "edge-constraint",
+      edgeId,
+    });
+  });
+
+  it("returns null when clicking far from the constraint edge midpoint", () => {
+    expect(hitTest(constraintGraph, 200, 200)).toBeNull();
   });
 });

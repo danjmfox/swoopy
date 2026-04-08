@@ -2,6 +2,7 @@ import type {
   Graph,
   SimState,
   NodeId,
+  EdgeId,
   Signal,
   PendingSignal,
   CausalEdge,
@@ -42,6 +43,36 @@ function buildCausalEdgesFrom(
     }
   }
   return map;
+}
+
+export function computeEffectiveWeights(
+  graph: Graph,
+  nodeValues: ReadonlyMap<NodeId, number>,
+): Map<EdgeId, number> {
+  const result = new Map<EdgeId, number>();
+  for (const edge of graph.edges) {
+    if (edge.kind !== "causal") continue;
+    result.set(edge.id, edge.weight);
+  }
+  for (const mod of graph.modulators) {
+    const edge = graph.edges.find(
+      (e) => e.id === mod.target && e.kind === "causal",
+    );
+    if (!edge || edge.kind !== "causal") continue;
+    const srcNode = graph.nodes.find((n) => n.id === mod.from);
+    if (!srcNode) continue;
+    const nodeValue = nodeValues.get(mod.from) ?? srcNode.initial;
+    const range = srcNode.max - srcNode.min;
+    const factor =
+      range === 0
+        ? 1
+        : mod.polarity === 1
+          ? (2 * (nodeValue - srcNode.min)) / range
+          : (2 * (srcNode.max - nodeValue)) / range;
+    const effective = Math.max(0, Math.min(5, edge.weight * factor));
+    result.set(edge.id, effective);
+  }
+  return result;
 }
 
 export function makeInitialSim(graph: Graph): SimState {
@@ -97,6 +128,7 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
   const constraintEdges = graph.edges.filter(
     (e): e is ConstraintEdge => e.kind === "constraint",
   );
+  const effectiveWeights = computeEffectiveWeights(graph, sim.nodeValues);
 
   // §7.2 step 1 — pre-clamp: resolve constraints before propagation
   resolveConstraints(nodeValues, graph.nodes, constraintEdges);
@@ -120,6 +152,7 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
             causalEdgesFrom.get(edge.to) ?? [],
             s.strength,
             s.hopsRemaining - 1,
+            effectiveWeights,
           );
           newSignals.push(...relay.signals);
           newPending.push(...relay.pending);
@@ -166,6 +199,7 @@ export function inject(
   nodeId: NodeId,
   strength: number,
 ): SimState {
+  const effectiveWeights = computeEffectiveWeights(graph, sim.nodeValues);
   const nodeValues = new Map(sim.nodeValues);
   nodeValues.set(nodeId, (nodeValues.get(nodeId) ?? 0) + strength);
   const causalEdgesFrom = buildCausalEdgesFrom(graph.edges);
@@ -173,6 +207,7 @@ export function inject(
     causalEdgesFrom.get(nodeId) ?? [],
     strength,
     MAX_HOPS,
+    effectiveWeights,
   );
   return {
     ...sim,
@@ -186,18 +221,20 @@ function emitRelayFragments(
   outgoingEdges: CausalEdge[],
   strength: number,
   hopsRemaining: number,
+  effectiveWeights: Map<EdgeId, number>,
 ): { signals: Signal[]; pending: PendingSignal[] } {
   const signals: Signal[] = [];
   const pending: PendingSignal[] = [];
   for (const edge of outgoingEdges) {
-    if (edge.weight === 0) continue;
+    const weight = effectiveWeights.get(edge.id) ?? edge.weight;
+    if (weight === 0) continue;
     // Sub-unit weight: single attenuated fragment (preserves weight-as-attenuation 0–1).
-    if (edge.weight < 1) {
+    if (weight < 1) {
       const fragment = {
         id: nextSignalId(),
         edgeId: edge.id,
         progress: 0,
-        strength: strength * edge.weight,
+        strength: strength * weight,
         hopsRemaining,
       };
       if (edge.delay !== "none") {
@@ -210,7 +247,7 @@ function emitRelayFragments(
       }
       continue;
     }
-    const count = Math.round(edge.weight);
+    const count = Math.round(weight);
     const staggerTicks =
       count > 1 ? Math.max(1, Math.round(EDGE_TRANSIT_TICKS / count)) : 0;
     if (edge.delay !== "none") {

@@ -4,6 +4,7 @@ import type {
   SimState,
   NodeId,
   EdgeId,
+  ModulatorId,
   Node,
   DelayLevel,
   ConstraintKind,
@@ -26,6 +27,7 @@ import {
   makeNodeId,
   makeEdgeId,
   makeAnnotationId,
+  makeModulatorId,
   step,
   serialize,
   deserialize,
@@ -120,6 +122,18 @@ interface StoreState {
   setPendingConstraintEdge: (from: NodeId, to: NodeId) => void;
   confirmConstraintEdge: (kind: ConstraintKind) => void;
   cancelConstraintEdge: () => void;
+
+  // Modulator actions
+  addModulator: (
+    from: NodeId,
+    targetEdge: EdgeId,
+    polarity: 1 | -1,
+  ) => ModulatorId;
+  deleteModulator: (id: ModulatorId) => void;
+  pendingModulatorTarget: EdgeId | null;
+  setPendingModulatorTarget: (edgeId: EdgeId) => void;
+  confirmModulator: (from: NodeId, polarity: 1 | -1) => void;
+  cancelModulator: () => void;
 
   // Annotation actions
   addAnnotation: (x: number, y: number) => AnnotationId;
@@ -244,6 +258,41 @@ export const useStore = create<StoreState>((set, get) => ({
     const idx = nodes.findIndex((n) => n.id === focusedNodeId);
     set({ focusedNodeId: nodes[(idx + 1) % nodes.length]!.id });
   },
+  addModulator: (from: NodeId, targetEdge: EdgeId, polarity: 1 | -1) => {
+    const { graph } = get();
+    const duplicate = graph.modulators.find(
+      (m) => m.from === from && m.target === targetEdge,
+    );
+    if (duplicate) return duplicate.id;
+    const id = makeModulatorId(crypto.randomUUID());
+    commitGraph(get, set, {
+      ...graph,
+      modulators: [
+        ...graph.modulators,
+        { id, from, target: targetEdge, polarity },
+      ],
+    });
+    return id;
+  },
+  deleteModulator: (id: ModulatorId) => {
+    const { graph } = get();
+    commitGraph(get, set, {
+      ...graph,
+      modulators: graph.modulators.filter((m) => m.id !== id),
+    });
+  },
+
+  pendingModulatorTarget: null as EdgeId | null,
+  setPendingModulatorTarget: (edgeId: EdgeId) =>
+    set({ pendingModulatorTarget: edgeId }),
+  confirmModulator: (from: NodeId, polarity: 1 | -1) => {
+    const { pendingModulatorTarget } = get();
+    if (!pendingModulatorTarget) return;
+    get().addModulator(from, pendingModulatorTarget, polarity);
+    set({ pendingModulatorTarget: null });
+  },
+  cancelModulator: () => set({ pendingModulatorTarget: null }),
+
   addAnnotation: (x: number, y: number) => {
     const { graph } = get();
     const id = makeAnnotationId(crypto.randomUUID());
@@ -462,6 +511,7 @@ export const useStore = create<StoreState>((set, get) => ({
       ...graph,
       nodes: graph.nodes.filter((n) => n.id !== id),
       edges: graph.edges.filter((e) => e.from !== id && e.to !== id),
+      modulators: graph.modulators.filter((m) => m.from !== id),
     });
   },
   deleteEdge: (id: EdgeId) => {
@@ -469,6 +519,7 @@ export const useStore = create<StoreState>((set, get) => ({
     commitGraph(get, set, {
       ...graph,
       edges: graph.edges.filter((e) => e.id !== id),
+      modulators: graph.modulators.filter((m) => m.target !== id),
     });
   },
   undo: () => {
@@ -526,7 +577,12 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   newModel: () => {
     const newId = crypto.randomUUID();
-    const emptyGraph: Graph = { nodes: [], edges: [], annotations: [] };
+    const emptyGraph: Graph = {
+      nodes: [],
+      edges: [],
+      annotations: [],
+      modulators: [],
+    };
     persist(emptyGraph, newId);
     localStorage.setItem("swoopy_current_model", newId);
     const url = new URL(window.location.href);

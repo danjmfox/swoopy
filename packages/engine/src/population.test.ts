@@ -75,6 +75,7 @@ export const seedGraph: Graph = {
     edge("deaths-pop", deathsId, popId, -1), // balancing
   ],
   annotations: [],
+  modulators: [],
 };
 
 // GE-11, GE-12
@@ -122,6 +123,7 @@ describe("step", () => {
       nodes: [births],
       edges: [],
       annotations: [],
+      modulators: [],
     };
     const sim0 = makeInitialSim(isolatedGraph);
     const sim1 = inject(sim0, isolatedGraph, birthsId, INJECT_STRENGTH);
@@ -273,6 +275,7 @@ describe("GE-SD staggered-density signals", () => {
         },
       ],
       annotations: [],
+      modulators: [],
     };
     let sim = makeInitialSim(graph);
     sim = inject(sim, graph, aId, INJECT_STRENGTH);
@@ -323,6 +326,7 @@ describe("GE-SD staggered-density signals", () => {
         },
       ],
       annotations: [],
+      modulators: [],
     };
     let sim = makeInitialSim(graph);
     sim = inject(sim, graph, aId, INJECT_STRENGTH);
@@ -373,6 +377,7 @@ describe("GE-SD staggered-density signals", () => {
         },
       ],
       annotations: [],
+      modulators: [],
     };
     let sim = makeInitialSim(graph);
     sim = inject(sim, graph, aId, INJECT_STRENGTH);

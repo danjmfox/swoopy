@@ -5,9 +5,9 @@ import type { Annotation, AnnotationId, CausalEdge } from "./types.ts";
 
 // SE-01, SE-04
 describe("serialize", () => {
-  it("emits version 4", () => {
+  it("emits version 5", () => {
     const blob = serialize(seedGraph);
-    expect(blob).toMatchObject({ version: 4 });
+    expect(blob).toMatchObject({ version: 5 });
   });
 });
 
@@ -31,9 +31,14 @@ describe("deserialize", () => {
     );
   });
 
-  it("throws for version 5 (future unknown version)", () => {
-    expect(() => deserialize({ version: 5, graph: seedGraph })).toThrow(
-      /version 5/,
+  it("emits version 5", () => {
+    const blob = serialize(seedGraph);
+    expect(blob).toMatchObject({ version: 5 });
+  });
+
+  it("throws for version 6 (future unknown version)", () => {
+    expect(() => deserialize({ version: 6, graph: seedGraph })).toThrow(
+      /version 6/,
     );
   });
 });
@@ -156,5 +161,21 @@ describe("Annotation type", () => {
     };
     const restored = deserialize(serialize(graphWithAnnotation));
     expect(restored.annotations).toEqual(graphWithAnnotation.annotations);
+  });
+});
+
+// V4→V5 migration
+describe("deserialize v4 migration", () => {
+  it("adds modulators: [] to a v4 blob that has none", () => {
+    const v4Blob = {
+      version: 4,
+      graph: {
+        nodes: seedGraph.nodes,
+        edges: seedGraph.edges,
+        annotations: [],
+      },
+    };
+    const restored = deserialize(v4Blob);
+    expect(restored.modulators).toEqual([]);
   });
 });

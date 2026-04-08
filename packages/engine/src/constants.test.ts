@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NODE_SIZE_RADII, NODE_COLOURS } from "./constants.js";
+import { NODE_SIZE_RADII, NODE_COLOURS, NODE_MID } from "./constants.js";
 import type { SizeTier, ColourTier } from "./constants.js";
 import { makeNodeId } from "./index.js";
 import type { Node } from "./types.js";
@@ -89,5 +89,11 @@ describe("Node.colourTier", () => {
       initial: 5,
     };
     expect(node.colourTier).toBe("green");
+  });
+});
+
+describe("NODE_MID", () => {
+  it("is 5 — the midpoint of the 0–10 node value range", () => {
+    expect(NODE_MID).toBe(5);
   });
 });

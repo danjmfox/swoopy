@@ -41,7 +41,7 @@ for (let i = 0; i < N; i++) {
     });
   }
 }
-const capGraph: Graph = { nodes, edges, annotations: [] };
+const capGraph: Graph = { nodes, edges, annotations: [], modulators: [] };
 
 // SI-11: signal count is capped at MAX_SIGNALS
 describe("SI-11 MAX_SIGNALS constant and cap", () => {

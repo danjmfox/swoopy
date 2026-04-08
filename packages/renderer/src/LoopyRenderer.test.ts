@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { LoopyRenderer, arrowheadDimensions } from "./LoopyRenderer.ts";
 import type { RendererStore } from "./LoopyRenderer.ts";
+import { makeNodeId, makeEdgeId, makeModulatorId } from "@swoopy/engine";
 import type { Node, CausalEdge } from "@swoopy/engine";
 
 function makeCanvas(): HTMLCanvasElement {
@@ -16,7 +17,7 @@ function makeStore(tickSim = vi.fn()): () => RendererStore {
     tickSim,
     simRunning: true,
     simSpeed: 1,
-    graph: { nodes: [], edges: [], annotations: [] },
+    graph: { nodes: [], edges: [], annotations: [], modulators: [] },
     sim: {
       signals: [],
       pending: [],
@@ -227,7 +228,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [node], edges: [], annotations: [] },
+        graph: { nodes: [node], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -265,7 +266,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [node], edges: [], annotations: [] },
+        graph: { nodes: [node], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -291,7 +292,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -316,7 +322,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -342,7 +353,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -367,7 +383,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -396,7 +417,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -425,7 +451,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -451,7 +482,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -479,7 +515,12 @@ describe("LoopyRenderer", () => {
           tickSim: vi.fn(),
           simRunning: false,
           simSpeed: 1,
-          graph: { nodes: [nodeA, nodeB], edges: [edge] },
+          graph: {
+            nodes: [nodeA, nodeB],
+            edges: [edge],
+            annotations: [],
+            modulators: [],
+          },
           sim: {
             signals: [],
             pending: [],
@@ -550,7 +591,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [heavyEdge] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [heavyEdge],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -599,7 +645,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [], annotations: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -628,7 +674,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: true,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [], annotations: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -653,7 +699,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: true,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [], annotations: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -713,7 +759,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [], annotations: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -777,7 +823,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [], annotations: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -843,7 +889,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [], annotations: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -916,7 +962,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [
@@ -986,7 +1037,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [
@@ -1049,7 +1105,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [edgeAB] },
+        graph: {
+          nodes: [nodeA],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [
@@ -1135,7 +1196,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [annotatedNode], edges: [] },
+        graph: {
+          nodes: [annotatedNode],
+          edges: [],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -1202,7 +1268,12 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [annotatedNode], edges: [] },
+        graph: {
+          nodes: [annotatedNode],
+          edges: [],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -1265,7 +1336,7 @@ describe("LoopyRenderer", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA], edges: [], annotations: [] },
+        graph: { nodes: [nodeA], edges: [], annotations: [], modulators: [] },
         sim: {
           signals: [],
           pending: [],
@@ -1342,6 +1413,7 @@ describe("GE-37 annotation rendering", () => {
           nodes: [],
           edges: [],
           annotations: [{ id: "a1", x: 100, y: 100, text: "hello" }],
+          modulators: [],
         },
         sim: {
           signals: [],
@@ -1417,7 +1489,12 @@ describe("GE-41 QF edge rendering", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [qfEdge], annotations: [] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [qfEdge],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -1485,7 +1562,12 @@ describe("GE-41 QF edge rendering", () => {
         tickSim: vi.fn(),
         simRunning: false,
         simSpeed: 1,
-        graph: { nodes: [nodeA, nodeB], edges: [qfEdge], annotations: [] },
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [qfEdge],
+          annotations: [],
+          modulators: [],
+        },
         sim: {
           signals: [],
           pending: [],
@@ -1503,5 +1585,279 @@ describe("GE-41 QF edge rendering", () => {
     renderer.stop();
 
     expect(fillTexts).toContain("QF");
+  });
+});
+
+// GE-44: modulator terminus must land at the T_POLARITY Bézier midpoint of the
+// target edge. Bug: drawModulators computed cx/cy without normalising by edge
+// length, so for long or diagonal edges the terminus landed far off-screen.
+describe("GE-44 modulator terminus position", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("terminus arc lands at the T_POLARITY point of the target QF edge (same as polarity badge)", () => {
+    const arcCalls: { x: number; y: number; r: number }[] = [];
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn().mockImplementation((x: number, y: number, r: number) => {
+        arcCalls.push({ x, y, r });
+      }),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      fillText: vi.fn(),
+      setLineDash: vi.fn(),
+      fillStyle: "" as string,
+      strokeStyle: "" as string,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // Two parallel edges so the QF edge gets bow = -BOW (has a sibling).
+    // nodeA=(100,100) → nodeB=(300,100): horizontal, edge length 200px,
+    // clipped endpoints x1=130 y1=100, x2=270 y2=100.
+    // controlPoint(130,100,270,100,-28): len=140, cy = 100+28 = 128.
+    // bezierPoint(..., 0.5) → (200, 114).  That is where both polarity
+    // badge and modulator terminus must land after the fix.
+    const normalEdge: CausalEdge = {
+      id: "e-normal" as import("@swoopy/engine").EdgeId,
+      kind: "causal",
+      from: nodeA.id,
+      to: nodeB.id,
+      polarity: 1,
+      weight: 1,
+      delay: "none",
+      transferFn: "linear",
+    };
+    const qfEdge: CausalEdge = {
+      id: "e-qf" as import("@swoopy/engine").EdgeId,
+      kind: "causal",
+      from: nodeA.id,
+      to: nodeB.id,
+      polarity: 1,
+      weight: 1,
+      delay: "none",
+      transferFn: "linear",
+      isQuickFix: true,
+    };
+    const nodeC: Node = {
+      id: "c" as import("@swoopy/engine").NodeId,
+      label: "C",
+      x: 400,
+      y: 300,
+      radius: 30,
+      sizeTier: "m",
+      colourTier: "blue",
+      min: 0,
+      max: 10,
+      initial: 5,
+    };
+
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: {
+          nodes: [nodeA, nodeB, nodeC],
+          edges: [normalEdge, qfEdge],
+          annotations: [],
+          modulators: [
+            {
+              id: "m1" as import("@swoopy/engine").ModulatorId,
+              from: nodeC.id,
+              target: qfEdge.id,
+              polarity: 1 as const,
+            },
+          ],
+        },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    const TERMINUS_R = 4;
+    const BADGE_R = 9;
+    const EXPECTED_X = 200;
+    const EXPECTED_Y = 114; // bezierPoint at t=0.5 using correct controlPoint
+
+    const terminus = arcCalls.find((a) => a.r === TERMINUS_R);
+    // The QF edge polarity badge lands at (200, 114) when using the correct
+    // normalised controlPoint formula.
+    const qfBadge = arcCalls.find(
+      (a) => a.r === BADGE_R && Math.abs(a.y - EXPECTED_Y) < 1,
+    );
+
+    expect(
+      terminus,
+      "modulator terminus arc (r=4) must be drawn",
+    ).toBeDefined();
+    expect(
+      qfBadge,
+      "QF polarity badge arc (r=9) at y≈114 must be drawn",
+    ).toBeDefined();
+    expect(terminus!.x).toBeCloseTo(EXPECTED_X, 0);
+    expect(terminus!.y).toBeCloseTo(EXPECTED_Y, 0);
+    expect(terminus!.x).toBeCloseTo(qfBadge!.x, 0);
+    expect(terminus!.y).toBeCloseTo(qfBadge!.y, 0);
+  });
+});
+
+// ─── Modulator arc rendering ─────────────────────────────────────────────────
+
+describe("drawModulators — dotted arc from source node to edge midpoint", () => {
+  it("draws a line and terminus circle for each modulator", () => {
+    const lineTos: { x: number; y: number }[] = [];
+    const moveTos: { x: number; y: number }[] = [];
+    const setLineDashes: unknown[][] = [];
+    const arcs: { x: number; y: number; r: number }[] = [];
+
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn().mockImplementation((x: number, y: number, r: number) => {
+        arcs.push({ x, y, r });
+      }),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn().mockImplementation((x: number, y: number) => {
+        moveTos.push({ x, y });
+      }),
+      lineTo: vi.fn().mockImplementation((x: number, y: number) => {
+        lineTos.push({ x, y });
+      }),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      fillText: vi.fn(),
+      setLineDash: vi.fn().mockImplementation((d: unknown) => {
+        setLineDashes.push(d as unknown[]);
+      }),
+      fillStyle: "" as string | CanvasGradient | CanvasPattern,
+      strokeStyle: "" as string | CanvasGradient | CanvasPattern,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+      scale: vi.fn(),
+    };
+
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    const srcNode: Node = {
+      id: makeNodeId("src"),
+      label: "Src",
+      x: 100,
+      y: 100,
+      radius: 30,
+      sizeTier: "m",
+      colourTier: "blue",
+      min: 0,
+      max: 10,
+      initial: 5,
+    };
+    const tgtNode: Node = {
+      id: makeNodeId("tgt"),
+      label: "Tgt",
+      x: 300,
+      y: 100,
+      radius: 30,
+      sizeTier: "m",
+      colourTier: "blue",
+      min: 0,
+      max: 10,
+      initial: 5,
+    };
+    const edge: CausalEdge = {
+      id: makeEdgeId("e1"),
+      kind: "causal",
+      from: srcNode.id,
+      to: tgtNode.id,
+      polarity: 1,
+      weight: 2,
+      delay: "none",
+      transferFn: "linear",
+    };
+
+    const getState = () => ({
+      tickSim: vi.fn(),
+      simRunning: false,
+      simSpeed: 1,
+      graph: {
+        nodes: [srcNode, tgtNode],
+        edges: [edge],
+        annotations: [],
+        modulators: [
+          {
+            id: makeModulatorId("m1"),
+            from: srcNode.id,
+            target: edge.id,
+            polarity: 1 as const,
+          },
+        ],
+      },
+      sim: {
+        signals: [],
+        pending: [],
+        nodeValues: new Map([
+          [srcNode.id, 5],
+          [tgtNode.id, 5],
+        ]),
+        displayPrevNodeValues: new Map(),
+        tick: 0,
+      },
+      focusedNodeId: null,
+      mode: "select" as const,
+    });
+
+    vi.useFakeTimers();
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    vi.useRealTimers();
+
+    // Should have called setLineDash with a non-empty array (dotted line)
+    const hasDash = setLineDashes.some(
+      (d) => Array.isArray(d) && (d as number[]).length > 0,
+    );
+    expect(hasDash).toBe(true);
+    // Should have drawn a line (moveTo + lineTo for the arc)
+    expect(lineTos.length).toBeGreaterThan(0);
+    // Should have drawn a small circle (terminus)
+    expect(arcs.length).toBeGreaterThan(0);
   });
 });

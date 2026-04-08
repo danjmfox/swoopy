@@ -3,6 +3,7 @@ import type { ColourTier, SizeTier } from "./constants.js";
 export type NodeId = string & { readonly __brand: "NodeId" };
 export type EdgeId = string & { readonly __brand: "EdgeId" };
 export type AnnotationId = string & { readonly __brand: "AnnotationId" };
+export type ModulatorId = string & { readonly __brand: "ModulatorId" };
 
 export interface Annotation {
   readonly id: AnnotationId;
@@ -74,8 +75,16 @@ export interface SimState {
   readonly tick: number;
 }
 
+export interface Modulator {
+  readonly id: ModulatorId;
+  readonly from: NodeId;
+  readonly target: EdgeId;
+  readonly polarity: 1 | -1;
+}
+
 export interface Graph {
   readonly nodes: ReadonlyArray<Node>;
   readonly edges: ReadonlyArray<Edge>;
   readonly annotations: ReadonlyArray<Annotation>;
+  readonly modulators: ReadonlyArray<Modulator>;
 }
