@@ -2,7 +2,7 @@
 id: DR--20260408--engine--signal-direction
 dateCreated: '2026-04-08'
 version: 1.0.0
-status: proposed
+status: accepted
 changeType: creation
 domain: engine
 slug: signal-direction
@@ -13,7 +13,10 @@ changelog:
     note: Marked as draft
   - date: '2026-04-08'
     note: Marked as proposed
+  - date: '2026-04-08'
+    note: Marked as accepted
 lastEdited: '2026-04-08'
+dateAccepted: '2026-04-08'
 ---
 # Signal Direction as First-Class Engine Property
 
