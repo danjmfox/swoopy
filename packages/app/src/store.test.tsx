@@ -1394,4 +1394,14 @@ describe("pending modulator flow", () => {
     expect(useStore.getState().pendingModulatorTarget).toBeNull();
     expect(useStore.getState().graph.modulators).toHaveLength(0);
   });
+
+  it("toggleModulatorPolarity flips polarity from 1 to -1", () => {
+    const edgeId = seedGraph.edges.find((e) => e.kind === "causal")!.id;
+    const srcId = seedGraph.nodes[0]!.id;
+    useStore.getState().setPendingModulatorTarget(edgeId);
+    useStore.getState().confirmModulator(srcId, 1);
+    const modulator = useStore.getState().graph.modulators[0]!;
+    useStore.getState().toggleModulatorPolarity(modulator.id);
+    expect(useStore.getState().graph.modulators[0]!.polarity).toBe(-1);
+  });
 });

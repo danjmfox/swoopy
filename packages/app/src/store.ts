@@ -130,6 +130,7 @@ interface StoreState {
     polarity: 1 | -1,
   ) => ModulatorId;
   deleteModulator: (id: ModulatorId) => void;
+  toggleModulatorPolarity: (id: ModulatorId) => void;
   pendingModulatorTarget: EdgeId | null;
   setPendingModulatorTarget: (edgeId: EdgeId) => void;
   confirmModulator: (from: NodeId, polarity: 1 | -1) => void;
@@ -279,6 +280,17 @@ export const useStore = create<StoreState>((set, get) => ({
     commitGraph(get, set, {
       ...graph,
       modulators: graph.modulators.filter((m) => m.id !== id),
+    });
+  },
+  toggleModulatorPolarity: (id: ModulatorId) => {
+    const { graph } = get();
+    commitGraph(get, set, {
+      ...graph,
+      modulators: graph.modulators.map((m) =>
+        m.id === id
+          ? { ...m, polarity: (m.polarity === 1 ? -1 : 1) as 1 | -1 }
+          : m,
+      ),
     });
   },
 

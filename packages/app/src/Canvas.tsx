@@ -185,6 +185,8 @@ export function Canvas() {
           hit?.kind === "edge-constraint"
         ) {
           useStore.getState().deleteEdge(hit.edgeId);
+        } else if (hit?.kind === "modulator") {
+          useStore.getState().deleteModulator(hit.id);
         }
       } else {
         // select / add-edge — track drag source; select mode also sets keyboard focus
@@ -283,7 +285,7 @@ export function Canvas() {
 
       // Confirm pending modulator: any node click while a target edge is pending
       if (pendingModulatorTarget && releaseHit?.kind === "node") {
-        confirmModulator(releaseHit.id, 1);
+        confirmModulator(releaseHit.id, constraintModifierHeld ? -1 : 1);
         useStore.setState({ dragPosition: null });
         dragNodeId = null;
         return;
@@ -330,6 +332,8 @@ export function Canvas() {
       else if (hit?.kind === "edge-polarity") togglePolarity(hit.edgeId);
       else if (hit?.kind === "edge-delay") cycleDelay(hit.edgeId);
       else if (hit?.kind === "edge-weight") openEdgeWeightEditor(hit.edgeId);
+      else if (hit?.kind === "modulator")
+        useStore.getState().toggleModulatorPolarity(hit.id);
     }
 
     const NUDGE_PX = 8;

@@ -2,6 +2,7 @@ import type {
   Graph,
   NodeId,
   EdgeId,
+  ModulatorId,
   CausalEdge,
   ConstraintEdge,
   AnnotationId,
@@ -25,6 +26,7 @@ export type HitTarget =
   | { kind: "edge-delay"; edgeId: EdgeId }
   | { kind: "edge-weight"; edgeId: EdgeId }
   | { kind: "edge-constraint"; edgeId: EdgeId }
+  | { kind: "modulator"; id: ModulatorId }
   | { kind: "annotation"; id: AnnotationId };
 
 // All coordinates in CSS pixels — DPR applied at draw time only (docs/decisions/DR--20260327--renderer--dpr-css-pixel-geometry.md)
@@ -72,6 +74,30 @@ export function hitTest(graph: Graph, x: number, y: number): HitTarget | null {
     const my = (y1 + y2) / 2;
     if (Math.hypot(x - mx, y - my) <= EDGE_HIT_RADIUS)
       return { kind: "edge-constraint", edgeId: edge.id };
+  }
+
+  // Modulators — hit zone at arc midpoint (midpoint of straight line: srcNode → terminus)
+  const causalById = new Map(causalEdges.map((e) => [e.id, e]));
+  for (const mod of graph.modulators ?? []) {
+    const srcNode = nodeById.get(mod.from);
+    const targetEdge = causalById.get(mod.target);
+    if (!srcNode || !targetEdge) continue;
+    const fromNode = nodeById.get(targetEdge.from);
+    const toNode = nodeById.get(targetEdge.to);
+    if (!fromNode || !toNode) continue;
+    const { x1, y1, x2, y2 } = edgeEndpoints(fromNode, toNode);
+    const { cx, cy } = controlPoint(
+      x1,
+      y1,
+      x2,
+      y2,
+      edgeBow(targetEdge, causalEdges),
+    );
+    const terminus = bezierPoint(x1, y1, cx, cy, x2, y2, T_POLARITY);
+    const mx = (srcNode.x + terminus.x) / 2;
+    const my = (srcNode.y + terminus.y) / 2;
+    if (Math.hypot(x - mx, y - my) <= EDGE_HIT_RADIUS)
+      return { kind: "modulator", id: mod.id };
   }
 
   // Annotations — rect hit (x, y, ANNOTATION_WIDTH, ANNOTATION_MIN_HEIGHT minimum)

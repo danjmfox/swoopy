@@ -1702,30 +1702,37 @@ describe("GE-44 modulator terminus position", () => {
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
 
-    const TERMINUS_R = 4;
     const BADGE_R = 9;
-    const EXPECTED_X = 200;
-    const EXPECTED_Y = 114; // bezierPoint at t=0.5 using correct controlPoint
+    const MOD_BADGE_R = 7;
+    const TERMINUS_X = 200;
+    const TERMINUS_Y = 114; // bezierPoint at t=0.5 using correct controlPoint
+    // nodeC=(400,300), terminus=(200,114) → arc midpoint=(300,207)
+    const MOD_BADGE_X = 300;
+    const MOD_BADGE_Y = 207;
 
-    const terminus = arcCalls.find((a) => a.r === TERMINUS_R);
     // The QF edge polarity badge lands at (200, 114) when using the correct
     // normalised controlPoint formula.
     const qfBadge = arcCalls.find(
-      (a) => a.r === BADGE_R && Math.abs(a.y - EXPECTED_Y) < 1,
+      (a) => a.r === BADGE_R && Math.abs(a.y - TERMINUS_Y) < 1,
+    );
+    // Modulator polarity badge (r=7) at arc midpoint (300, 207)
+    const modBadge = arcCalls.find(
+      (a) =>
+        a.r === MOD_BADGE_R &&
+        Math.abs(a.x - MOD_BADGE_X) < 1 &&
+        Math.abs(a.y - MOD_BADGE_Y) < 1,
     );
 
-    expect(
-      terminus,
-      "modulator terminus arc (r=4) must be drawn",
-    ).toBeDefined();
     expect(
       qfBadge,
       "QF polarity badge arc (r=9) at y≈114 must be drawn",
     ).toBeDefined();
-    expect(terminus!.x).toBeCloseTo(EXPECTED_X, 0);
-    expect(terminus!.y).toBeCloseTo(EXPECTED_Y, 0);
-    expect(terminus!.x).toBeCloseTo(qfBadge!.x, 0);
-    expect(terminus!.y).toBeCloseTo(qfBadge!.y, 0);
+    expect(
+      modBadge,
+      "modulator polarity badge arc (r=7) at arc midpoint (300,207) must be drawn",
+    ).toBeDefined();
+    expect(qfBadge!.x).toBeCloseTo(TERMINUS_X, 0);
+    expect(qfBadge!.y).toBeCloseTo(TERMINUS_Y, 0);
   });
 });
 
@@ -1857,7 +1864,130 @@ describe("drawModulators — dotted arc from source node to edge midpoint", () =
     expect(hasDash).toBe(true);
     // Should have drawn a line (moveTo + lineTo for the arc)
     expect(lineTos.length).toBeGreaterThan(0);
-    // Should have drawn a small circle (terminus)
+    // Should have drawn a small circle (badge or terminus)
     expect(arcs.length).toBeGreaterThan(0);
+  });
+
+  it("draws a polarity badge (+/-) at the arc midpoint", () => {
+    // srcNode(100,100), terminus(200,86) → arc midpoint (150, 93)
+    const fillTexts: { text: string; x: number; y: number }[] = [];
+
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      fillText: vi
+        .fn()
+        .mockImplementation((text: string, x: number, y: number) => {
+          fillTexts.push({ text, x, y });
+        }),
+      setLineDash: vi.fn(),
+      fillStyle: "" as string | CanvasGradient | CanvasPattern,
+      strokeStyle: "" as string | CanvasGradient | CanvasPattern,
+      lineWidth: 1 as number,
+      globalAlpha: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+      scale: vi.fn(),
+    };
+
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    const srcNode: Node = {
+      id: makeNodeId("src"),
+      label: "Src",
+      x: 100,
+      y: 100,
+      radius: 30,
+      sizeTier: "m",
+      colourTier: "blue",
+      min: 0,
+      max: 10,
+      initial: 5,
+    };
+    const tgtNode: Node = {
+      id: makeNodeId("tgt"),
+      label: "Tgt",
+      x: 300,
+      y: 100,
+      radius: 30,
+      sizeTier: "m",
+      colourTier: "blue",
+      min: 0,
+      max: 10,
+      initial: 5,
+    };
+    const edge: CausalEdge = {
+      id: makeEdgeId("e1"),
+      kind: "causal",
+      from: srcNode.id,
+      to: tgtNode.id,
+      polarity: 1,
+      weight: 2,
+      delay: "none",
+      transferFn: "linear",
+    };
+
+    const getState = () => ({
+      tickSim: vi.fn(),
+      simRunning: false,
+      simSpeed: 1,
+      graph: {
+        nodes: [srcNode, tgtNode],
+        edges: [edge],
+        annotations: [],
+        modulators: [
+          {
+            id: makeModulatorId("m1"),
+            from: srcNode.id,
+            target: edge.id,
+            polarity: 1 as const,
+          },
+        ],
+      },
+      sim: {
+        signals: [],
+        pending: [],
+        nodeValues: new Map([
+          [srcNode.id, 5],
+          [tgtNode.id, 5],
+        ]),
+        displayPrevNodeValues: new Map(),
+        tick: 0,
+      },
+      focusedNodeId: null,
+      mode: "select" as const,
+    });
+
+    vi.useFakeTimers();
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    vi.useRealTimers();
+
+    // arc midpoint: ((100+200)/2, (100+86)/2) = (150, 93)
+    // (causal edge badge is at (200, 86) — filter by position)
+    const modPolarityCall = fillTexts.find(
+      (c) =>
+        (c.text === "+" || c.text === "−") &&
+        Math.abs(c.x - 150) < 2 &&
+        Math.abs(c.y - 93) < 2,
+    );
+    expect(modPolarityCall).toBeDefined();
   });
 });

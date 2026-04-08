@@ -365,11 +365,21 @@ export class LoopyRenderer {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      const TERMINUS_R = 4;
+      // Polarity badge at arc midpoint (mirrors causal edge badge, r=7 for lighter weight)
+      const bx = (srcNode.x + mid.x) / 2;
+      const by = (srcNode.y + mid.y) / 2;
       ctx.beginPath();
-      ctx.arc(mid.x, mid.y, TERMINUS_R, 0, Math.PI * 2);
-      ctx.fillStyle = colour;
+      ctx.arc(bx, by, 7, 0, Math.PI * 2);
+      ctx.fillStyle = "#0f172a";
       ctx.fill();
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.fillStyle = colour;
+      ctx.font = "bold 10px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(mod.polarity === 1 ? "+" : "−", bx, by);
     }
   }
 
