@@ -48,6 +48,7 @@ describe("GE-24 ceiling constraint", () => {
       nodes: [node("A", 5), node("B", 8)],
       edges: [ceiling("A-B", "A", "B")],
       annotations: [],
+      modulators: [],
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -64,6 +65,7 @@ describe("GE-24 floor constraint", () => {
       nodes: [node("A", 7), node("B", 0)],
       edges: [floor("A-B", "A", "B")],
       annotations: [],
+      modulators: [],
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -80,6 +82,7 @@ describe("SI-13 floor wins when effective_min > effective_max", () => {
       nodes: [node("C", 4), node("D", 7), node("B", 0)],
       edges: [ceiling("C-B", "C", "B"), floor("D-B", "D", "B")],
       annotations: [],
+      modulators: [],
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -95,6 +98,7 @@ describe("GE-25 multiple incoming constraints combine", () => {
       nodes: [node("C1", 6), node("C2", 3), node("B", 8)],
       edges: [ceiling("C1-B", "C1", "B"), ceiling("C2-B", "C2", "B")],
       annotations: [],
+      modulators: [],
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -107,6 +111,7 @@ describe("GE-25 multiple incoming constraints combine", () => {
       nodes: [node("F1", 2), node("F2", 6), node("B", 0)],
       edges: [floor("F1-B", "F1", "B"), floor("F2-B", "F2", "B")],
       annotations: [],
+      modulators: [],
     };
     const sim = makeInitialSim(graph);
     const next = step(graph, sim, 1 / 60);
@@ -125,6 +130,7 @@ describe("GE-24 dynamic source variation", () => {
       nodes: [node("A", 2), node("B", 8)],
       edges: [ceiling("A-B", "A", "B")],
       annotations: [],
+      modulators: [],
     };
     const sim0 = makeInitialSim(graph);
     const sim1 = step(graph, sim0, 1 / 60);
@@ -148,6 +154,7 @@ describe("SE-01 serialise round-trip with constraint edges", () => {
       nodes: [node("A", 5), node("B", 0)],
       edges: [ceiling("A-B", "A", "B")],
       annotations: [],
+      modulators: [],
     };
     const restored = deserialize(serialize(graph));
     expect(restored.edges).toEqual(graph.edges);

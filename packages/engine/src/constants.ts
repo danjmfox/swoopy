@@ -34,6 +34,10 @@ export const NODE_COLOURS: Record<
   grey: { swatch: "#64748b", low: "#334155", high: "#64748b" }, // 700→500
 };
 
+// Midpoint of the 0–10 node value range. Used as the neutral point in modulator
+// formula: clamp(baseWeight × nodeValue / NODE_MID, 0, 5).
+export const NODE_MID = 5;
+
 // Signal travel speed — fraction of edge traversed per second.
 // Provisional: visually legible at typical canvas edge lengths. (PRD §7.6)
 export const SIGNAL_SPEED = 0.65;

@@ -11,7 +11,7 @@ describe("persistence round-trip (integration)", () => {
   beforeEach(() => {
     localStorage.clear();
     useStore.setState({
-      graph: { nodes: [], edges: [], annotations: [] },
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
       past: [],
       future: [],
     });
@@ -35,7 +35,9 @@ describe("persistence round-trip (integration)", () => {
     ).mock.calls[0]![0] as string;
     const search = new URL(sharedUrl).search;
 
-    useStore.setState({ graph: { nodes: [], edges: [], annotations: [] } });
+    useStore.setState({
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+    });
     useStore.getState().loadFromUrl(search);
 
     const { graph: restored } = useStore.getState();

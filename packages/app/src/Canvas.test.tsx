@@ -387,6 +387,20 @@ describe("GE-26 delete mode — pointerdown on edge hit region removes it", () =
     });
     expect(deleteEdge).toHaveBeenCalledWith(targetEdge.id);
   });
+
+  it("pointerdown on edge-constraint calls deleteEdge", async () => {
+    mockHitTest.mockReturnValue({
+      kind: "edge-constraint",
+      edgeId: targetEdge.id,
+    });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(deleteEdge).toHaveBeenCalledWith(targetEdge.id);
+  });
 });
 
 describe("GE-04 add-edge mode — drag node to node creates edge", () => {
@@ -1283,5 +1297,76 @@ describe("GE-38 H key — history toggle", () => {
     await act(async () => {});
     fireEvent.keyDown(document, { key: "h" });
     expect(toggleHistory).toHaveBeenCalledOnce();
+  });
+});
+
+// ─── Modulator creation — canvas interaction (Task 13) ──────────────────────
+
+describe("modulator creation — drag from node to edge in add-edge mode", () => {
+  const nodeA = seedGraph.nodes[0]!;
+  const causalEdge = seedGraph.edges.find((e) => e.kind === "causal")!;
+
+  beforeEach(() => {
+    mockHitTest.mockReset();
+    useStore.setState({
+      graph: seedGraph,
+      mode: "add-edge",
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("pointer-down on an edge region calls setPendingModulatorTarget with the edge id", async () => {
+    const setPendingModulatorTarget = vi.fn();
+    useStore.setState({
+      setPendingModulatorTarget,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+
+    mockHitTest.mockReturnValueOnce({
+      kind: "edge-weight",
+      edgeId: causalEdge.id,
+    });
+
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+
+    fireEvent.pointerDown(canvas, { clientX: 200, clientY: 100 });
+
+    expect(setPendingModulatorTarget).toHaveBeenCalledWith(causalEdge.id);
+  });
+
+  it("pointer-up on a node when pendingModulatorTarget is set calls confirmModulator", async () => {
+    const confirmModulator = vi.fn();
+    useStore.setState({
+      pendingModulatorTarget: causalEdge.id,
+      confirmModulator,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+
+    mockHitTest
+      .mockReturnValueOnce({ kind: "node", id: nodeA.id })
+      .mockReturnValueOnce({ kind: "node", id: nodeA.id });
+
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+    fireEvent.pointerUp(canvas, { clientX: 0, clientY: 0 });
+
+    expect(confirmModulator).toHaveBeenCalledWith(nodeA.id, 1);
+  });
+
+  it("Escape while pendingModulatorTarget is set calls cancelModulator instead of changing mode", async () => {
+    const cancelModulator = vi.fn();
+    useStore.setState({
+      mode: "add-edge",
+      previousMode: null,
+      pendingModulatorTarget: causalEdge.id,
+      cancelModulator,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+    render(<Canvas />);
+    await act(async () => {});
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(cancelModulator).toHaveBeenCalled();
+    expect(useStore.getState().mode).toBe("add-edge");
   });
 });

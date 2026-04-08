@@ -80,4 +80,5 @@ export const seedGraph: Graph = {
     },
   ],
   annotations: [],
+  modulators: [],
 };

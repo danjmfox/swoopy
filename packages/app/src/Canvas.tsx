@@ -52,11 +52,18 @@ export function Canvas() {
         simRunning,
         pauseSim,
         resumeSim,
+        pendingModulatorTarget,
+        cancelModulator,
       } = useStore.getState();
       if (e.key === "Escape") {
         e.preventDefault();
-        if (previousMode !== null) exitSpringMode();
-        else useStore.setState({ mode: "select", previousMode: null });
+        if (pendingModulatorTarget) {
+          cancelModulator();
+        } else if (previousMode !== null) {
+          exitSpringMode();
+        } else {
+          useStore.setState({ mode: "select", previousMode: null });
+        }
         return;
       }
       if (e.key === " ") {
@@ -174,7 +181,8 @@ export function Canvas() {
         } else if (
           hit?.kind === "edge-polarity" ||
           hit?.kind === "edge-delay" ||
-          hit?.kind === "edge-weight"
+          hit?.kind === "edge-weight" ||
+          hit?.kind === "edge-constraint"
         ) {
           useStore.getState().deleteEdge(hit.edgeId);
         }
@@ -193,6 +201,13 @@ export function Canvas() {
           dragNodeId = hit.id;
           hasDragged = false;
           if (mode === "select") useStore.getState().setFocusedNode(hit.id);
+        } else if (
+          mode === "add-edge" &&
+          (hit?.kind === "edge-polarity" ||
+            hit?.kind === "edge-delay" ||
+            hit?.kind === "edge-weight")
+        ) {
+          useStore.getState().setPendingModulatorTarget(hit.edgeId);
         } else if (mode === "select") {
           useStore.getState().setFocusedNode(null);
         }
@@ -256,6 +271,8 @@ export function Canvas() {
         previousMode,
         addEdge,
         setPendingConstraintEdge,
+        confirmModulator,
+        pendingModulatorTarget,
         moveNode,
         setDragPosition,
         exitSpringMode,
@@ -263,6 +280,14 @@ export function Canvas() {
       const releaseHit = hitTest(graph, x, y);
       const releasedOnDifferentNode =
         releaseHit?.kind === "node" && releaseHit.id !== dragNodeId;
+
+      // Confirm pending modulator: any node click while a target edge is pending
+      if (pendingModulatorTarget && releaseHit?.kind === "node") {
+        confirmModulator(releaseHit.id, 1);
+        useStore.setState({ dragPosition: null });
+        dragNodeId = null;
+        return;
+      }
 
       if (releasedOnDifferentNode && (constraintModifierHeld || e.altKey)) {
         setPendingConstraintEdge(

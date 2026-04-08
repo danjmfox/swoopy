@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, act } from "@testing-library/react";
 import { useStore } from "./store.ts";
 import { seedGraph } from "./seed.ts";
-import { makeInitialSim, inject, makeEdgeId } from "@swoopy/engine";
+import { makeInitialSim, inject, makeEdgeId, makeNodeId } from "@swoopy/engine";
 
 import { ConstraintChoiceDialog } from "./ConstraintChoiceDialog.tsx";
 
@@ -199,7 +199,10 @@ describe("SE-08: model identity", () => {
 
   it("non-transient mutations preserve modelId", () => {
     const { modelId } = useStore.getState();
-    useStore.setState({ graph: { nodes: [], edges: [] }, transient: false });
+    useStore.setState({
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+      transient: false,
+    });
     useStore.getState().addNode(1, 2);
     expect(useStore.getState().modelId).toBe(modelId);
     expect(useStore.getState().transient).toBe(false);
@@ -207,14 +210,19 @@ describe("SE-08: model identity", () => {
 
   it("loadFromUrl sets transient to true", () => {
     const encoded = btoa(
-      JSON.stringify({ version: 1, graph: { nodes: [], edges: [] } }),
+      JSON.stringify({
+        version: 1,
+        graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+      }),
     );
     useStore.getState().loadFromUrl(`?g=${encoded}`);
     expect(useStore.getState().transient).toBe(true);
   });
 
   it("persists to swoopy_graph_<modelId> after a mutation", () => {
-    useStore.setState({ graph: { nodes: [], edges: [] } });
+    useStore.setState({
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+    });
     const { modelId } = useStore.getState();
     useStore.getState().addNode(100, 100);
     expect(localStorage.getItem(`swoopy_graph_${modelId}`)).not.toBeNull();
@@ -240,7 +248,9 @@ describe("store initialisation", () => {
 
 describe("GE-01: addNode", () => {
   beforeEach(() => {
-    useStore.setState({ graph: { nodes: [], edges: [] } });
+    useStore.setState({
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+    });
   });
 
   it("adds a node at the given coordinates to graph.nodes", () => {
@@ -416,7 +426,9 @@ describe("GE-26: deleteEdge", () => {
 
 describe("GE-21: undo", () => {
   beforeEach(() => {
-    useStore.setState({ graph: { nodes: [], edges: [] } });
+    useStore.setState({
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+    });
   });
 
   it("restores the graph to its state before the last mutation", () => {
@@ -428,7 +440,9 @@ describe("GE-21: undo", () => {
 
 describe("GE-22: redo", () => {
   beforeEach(() => {
-    useStore.setState({ graph: { nodes: [], edges: [] } });
+    useStore.setState({
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+    });
   });
 
   it("reapplies the last undone mutation", () => {
@@ -471,7 +485,7 @@ describe("SE-07: localStorage auto-save", () => {
   beforeEach(() => {
     localStorage.clear();
     useStore.setState({
-      graph: { nodes: [], edges: [] },
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
       past: [],
       future: [],
     });
@@ -519,7 +533,9 @@ describe("SE-07: localStorage auto-save", () => {
     useStore.getState().addNode(42, 99);
     const saved = useStore.getState().graph;
 
-    useStore.setState({ graph: { nodes: [], edges: [] } });
+    useStore.setState({
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+    });
     useStore.getState().loadPersistedGraph();
 
     const restored = useStore.getState().graph;
@@ -538,7 +554,7 @@ describe("SE-07: localStorage auto-save", () => {
 describe("SE-02 / SE-06: shareGraph", () => {
   beforeEach(() => {
     useStore.setState({
-      graph: { nodes: [], edges: [] },
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
       past: [],
       future: [],
     });
@@ -569,7 +585,7 @@ describe("SE-02 / SE-06: shareGraph", () => {
 describe("SE-03: loadFromUrl", () => {
   beforeEach(() => {
     useStore.setState({
-      graph: { nodes: [], edges: [] },
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
       past: [],
       future: [],
     });
@@ -580,7 +596,9 @@ describe("SE-03: loadFromUrl", () => {
     const graph = useStore.getState().graph;
     const encoded = btoa(JSON.stringify({ version: 1, graph }));
 
-    useStore.setState({ graph: { nodes: [], edges: [] } });
+    useStore.setState({
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
+    });
     useStore.getState().loadFromUrl(`?g=${encoded}`);
 
     const restored = useStore.getState().graph;
@@ -964,7 +982,7 @@ describe("AppMode — mode field and setMode", () => {
 describe("Zustand slice boundary — PRD §5.1, §6.2", () => {
   beforeEach(() => {
     useStore.setState({
-      graph: { nodes: [], edges: [] },
+      graph: { nodes: [], edges: [], annotations: [], modulators: [] },
       sim: {
         signals: [],
         pending: [],
@@ -1279,5 +1297,101 @@ describe("GE-41 toggleEdgeQuickFix", () => {
       .getState()
       .graph.edges.find((e) => e.id === constraintEdge.id)!;
     expect(updated.kind).toBe("constraint");
+  });
+});
+
+// ─── Modulator store actions ─────────────────────────────────────────────────
+
+describe("addModulator", () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph });
+  });
+
+  it("adds a modulator to graph.modulators", () => {
+    const srcId = seedGraph.nodes[0]!.id;
+    const edgeId = seedGraph.edges.find((e) => e.kind === "causal")!.id;
+    useStore.getState().addModulator(srcId, edgeId, 1);
+    expect(useStore.getState().graph.modulators).toHaveLength(1);
+    expect(useStore.getState().graph.modulators[0]).toMatchObject({
+      from: srcId,
+      target: edgeId,
+      polarity: 1,
+    });
+  });
+
+  it("duplicate guard: calling addModulator twice for same from+target returns the existing id", () => {
+    const srcId = seedGraph.nodes[0]!.id;
+    const edgeId = seedGraph.edges.find((e) => e.kind === "causal")!.id;
+    const id1 = useStore.getState().addModulator(srcId, edgeId, 1);
+    const id2 = useStore.getState().addModulator(srcId, edgeId, 1);
+    expect(id1).toBe(id2);
+    expect(useStore.getState().graph.modulators).toHaveLength(1);
+  });
+});
+
+describe("deleteModulator", () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph });
+  });
+
+  it("removes the modulator with the given id", () => {
+    const srcId = seedGraph.nodes[0]!.id;
+    const edgeId = seedGraph.edges.find((e) => e.kind === "causal")!.id;
+    const id = useStore.getState().addModulator(srcId, edgeId, 1);
+    useStore.getState().deleteModulator(id);
+    expect(useStore.getState().graph.modulators).toHaveLength(0);
+  });
+});
+
+describe("cascade delete modulators", () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph });
+  });
+
+  it("deleteNode removes modulators where from === nodeId", () => {
+    const srcId = seedGraph.nodes[0]!.id;
+    const edgeId = seedGraph.edges.find((e) => e.kind === "causal")!.id;
+    useStore.getState().addModulator(srcId, edgeId, 1);
+    expect(useStore.getState().graph.modulators).toHaveLength(1);
+    useStore.getState().deleteNode(srcId);
+    expect(useStore.getState().graph.modulators).toHaveLength(0);
+  });
+
+  it("deleteEdge removes modulators where target === edgeId", () => {
+    const srcId = seedGraph.nodes[0]!.id;
+    const edge = seedGraph.edges.find((e) => e.kind === "causal")!;
+    useStore.getState().addModulator(srcId, edge.id, 1);
+    expect(useStore.getState().graph.modulators).toHaveLength(1);
+    useStore.getState().deleteEdge(edge.id);
+    expect(useStore.getState().graph.modulators).toHaveLength(0);
+  });
+});
+
+describe("pending modulator flow", () => {
+  beforeEach(() => {
+    useStore.setState({ graph: seedGraph });
+  });
+
+  it("setPendingModulatorTarget sets the target edge id", () => {
+    const edgeId = seedGraph.edges.find((e) => e.kind === "causal")!.id;
+    useStore.getState().setPendingModulatorTarget(edgeId);
+    expect(useStore.getState().pendingModulatorTarget).toBe(edgeId);
+  });
+
+  it("confirmModulator creates the modulator and clears pending state", () => {
+    const edgeId = seedGraph.edges.find((e) => e.kind === "causal")!.id;
+    const srcId = seedGraph.nodes[0]!.id;
+    useStore.getState().setPendingModulatorTarget(edgeId);
+    useStore.getState().confirmModulator(srcId, 1);
+    expect(useStore.getState().pendingModulatorTarget).toBeNull();
+    expect(useStore.getState().graph.modulators).toHaveLength(1);
+  });
+
+  it("cancelModulator clears pending state without creating modulator", () => {
+    const edgeId = seedGraph.edges.find((e) => e.kind === "causal")!.id;
+    useStore.getState().setPendingModulatorTarget(edgeId);
+    useStore.getState().cancelModulator();
+    expect(useStore.getState().pendingModulatorTarget).toBeNull();
+    expect(useStore.getState().graph.modulators).toHaveLength(0);
   });
 });
