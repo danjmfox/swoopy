@@ -53,6 +53,57 @@ export interface RendererStore {
   pendingModulatorTarget?: EdgeId | null;
 }
 
+// ---------------------------------------------------------------------------
+// Signal chevron visual logic — pure function, exported for testing
+// ---------------------------------------------------------------------------
+
+const ANIM_START = 0.45;
+const ANIM_END = 0.55;
+const BLUE = { r: 125, g: 211, b: 252 } as const; // #7dd3fc
+const RED = { r: 252, g: 165, b: 165 } as const; // #fca5a5
+
+function angleForSign(sign: 1 | -1): number {
+  return sign === 1 ? -Math.PI / 2 : Math.PI / 2;
+}
+
+function colorForSign(sign: 1 | -1): { r: number; g: number; b: number } {
+  return sign === 1 ? BLUE : RED;
+}
+
+/**
+ * Returns angle (radians) and color for the signal chevron at a given progress.
+ *
+ * +ve edges: visual is constant (signal.sign throughout).
+ * -ve edges: starts as the parent sign (signal.sign × −1), animates to signal.sign
+ *            between progress 0.45–0.55 (both angle and color interpolate linearly).
+ */
+export function signalChevronVisuals(
+  progress: number,
+  sign: 1 | -1,
+  edgePolarity: 1 | -1,
+): { angle: number; color: string } {
+  if (edgePolarity === 1) {
+    const { r, g, b } = colorForSign(sign);
+    return { angle: angleForSign(sign), color: `rgb(${r},${g},${b})` };
+  }
+  // -ve edge: visual transitions from parent sign to signal sign
+  const startSign = (sign * -1) as 1 | -1;
+  const frac =
+    progress < ANIM_START
+      ? 0
+      : progress > ANIM_END
+        ? 1
+        : (progress - ANIM_START) / (ANIM_END - ANIM_START);
+  const angle =
+    angleForSign(startSign) + (angleForSign(sign) - angleForSign(startSign)) * frac;
+  const sc = colorForSign(startSign);
+  const ec = colorForSign(sign);
+  const r = Math.round(sc.r + (ec.r - sc.r) * frac);
+  const g = Math.round(sc.g + (ec.g - sc.g) * frac);
+  const b = Math.round(sc.b + (ec.b - sc.b) * frac);
+  return { angle, color: `rgb(${r},${g},${b})` };
+}
+
 export function arrowheadDimensions(weight: number): {
   len: number;
   half: number;
@@ -443,12 +494,15 @@ export class LoopyRenderer {
         y2,
         signal.progress,
       );
-      // Chevron points screen-up (sign=1, increasing) or screen-down (sign=-1, decreasing)
-      const angle = signal.sign === 1 ? -Math.PI / 2 : Math.PI / 2;
+      const { angle, color } = signalChevronVisuals(
+        signal.progress,
+        signal.sign,
+        edge.polarity,
+      );
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(angle);
-      ctx.fillStyle = signal.sign === 1 ? "#7dd3fc" : "#fca5a5";
+      ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(6, 0);
       ctx.lineTo(-4, -4);

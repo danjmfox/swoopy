@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { LoopyRenderer, arrowheadDimensions } from "./LoopyRenderer.ts";
+import {
+  LoopyRenderer,
+  arrowheadDimensions,
+  signalChevronVisuals,
+} from "./LoopyRenderer.ts";
 import type { RendererStore } from "./LoopyRenderer.ts";
 import { makeNodeId, makeEdgeId, makeModulatorId } from "@swoopy/engine";
 import type { Node, CausalEdge } from "@swoopy/engine";
@@ -549,7 +553,7 @@ describe("LoopyRenderer", () => {
     expect(w1).toBeLessThan(w5);
   });
 
-  it("signal with sign=1 renders blue dot (#7dd3fc)", () => {
+  it("signal with sign=1 on +ve edge renders blue chevron", () => {
     const { canvas, fills } = makeArcFillCanvas();
     const getState = () =>
       ({
@@ -585,11 +589,11 @@ describe("LoopyRenderer", () => {
     renderer.start();
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
-    // Chevron uses triangle path (no arc) — filter by color which is unique to signals
-    expect(fills().some((f) => f.style === "#7dd3fc")).toBe(true);
+    // Chevron uses triangle path (no arc) — color is unique to signals
+    expect(fills().some((f) => f.style === "rgb(125,211,252)")).toBe(true);
   });
 
-  it("signal with sign=-1 renders red chevron (#fca5a5)", () => {
+  it("signal with sign=-1 on +ve edge renders red chevron", () => {
     const { canvas, fills } = makeArcFillCanvas();
     const getState = () =>
       ({
@@ -625,8 +629,8 @@ describe("LoopyRenderer", () => {
     renderer.start();
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
-    // Chevron uses triangle path (no arc) — filter by color which is unique to signals
-    expect(fills().some((f) => f.style === "#fca5a5")).toBe(true);
+    // Chevron uses triangle path (no arc) — color is unique to signals
+    expect(fills().some((f) => f.style === "rgb(252,165,165)")).toBe(true);
   });
 
   it("signal with sign=1 rotates chevron screen-up (−π/2) and sign=-1 screen-down (+π/2)", () => {
@@ -2156,5 +2160,59 @@ describe("drawModulators — dotted arc from source node to edge midpoint", () =
         Math.abs(c.y - 93) < 2,
     );
     expect(modPolarityCall).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// signalChevronVisuals — pure visual logic for signal direction animation
+// ---------------------------------------------------------------------------
+
+describe("signalChevronVisuals", () => {
+  // +ve edge: sign stays constant throughout — no animation
+  it("+ve edge, sign=1: angle=-π/2 (up) and blue at all progress values", () => {
+    for (const t of [0, 0.44, 0.5, 0.56, 1]) {
+      const v = signalChevronVisuals(t, 1, 1);
+      expect(v.angle).toBeCloseTo(-Math.PI / 2, 5);
+      expect(v.color).toBe("rgb(125,211,252)");
+    }
+  });
+
+  it("+ve edge, sign=-1: angle=+π/2 (down) and red at all progress values", () => {
+    for (const t of [0, 0.44, 0.5, 0.56, 1]) {
+      const v = signalChevronVisuals(t, -1, 1);
+      expect(v.angle).toBeCloseTo(Math.PI / 2, 5);
+      expect(v.color).toBe("rgb(252,165,165)");
+    }
+  });
+
+  // -ve edge, sign=-1: parent was +1 (up/blue) → transitions to -1 (down/red)
+  it("-ve edge, sign=-1: starts up/blue (t<0.45)", () => {
+    const v = signalChevronVisuals(0.3, -1, -1);
+    expect(v.angle).toBeCloseTo(-Math.PI / 2, 5); // up
+    expect(v.color).toBe("rgb(125,211,252)"); // blue
+  });
+
+  it("-ve edge, sign=-1: ends down/red (t>0.55)", () => {
+    const v = signalChevronVisuals(0.7, -1, -1);
+    expect(v.angle).toBeCloseTo(Math.PI / 2, 5); // down
+    expect(v.color).toBe("rgb(252,165,165)"); // red
+  });
+
+  it("-ve edge, sign=-1: angle is halfway at t=0.5 (midpoint of animation)", () => {
+    const v = signalChevronVisuals(0.5, -1, -1);
+    expect(v.angle).toBeCloseTo(0, 5); // midpoint between -π/2 and +π/2
+  });
+
+  // -ve edge, sign=+1: parent was -1 (down/red) → transitions to +1 (up/blue)
+  it("-ve edge, sign=+1: starts down/red (t<0.45)", () => {
+    const v = signalChevronVisuals(0.3, 1, -1);
+    expect(v.angle).toBeCloseTo(Math.PI / 2, 5); // down
+    expect(v.color).toBe("rgb(252,165,165)"); // red
+  });
+
+  it("-ve edge, sign=+1: ends up/blue (t>0.55)", () => {
+    const v = signalChevronVisuals(0.7, 1, -1);
+    expect(v.angle).toBeCloseTo(-Math.PI / 2, 5); // up
+    expect(v.color).toBe("rgb(125,211,252)"); // blue
   });
 });
