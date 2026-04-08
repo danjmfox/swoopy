@@ -77,6 +77,27 @@ export function controlPoint(
   return { cx: (x1 + x2) / 2 + px * bow, cy: (y1 + y2) / 2 + py * bow };
 }
 
+/**
+ * Quadratic bezier tangent (unit vector) at parameter t.
+ * B'(t) = 2(1−t)(cp − start) + 2t(end − cp), then normalized.
+ */
+export function bezierTangent(
+  x1: number,
+  y1: number,
+  cx: number,
+  cy: number,
+  x2: number,
+  y2: number,
+  t: number,
+): { dx: number; dy: number } {
+  const mt = 1 - t;
+  const rawDx = 2 * mt * (cx - x1) + 2 * t * (x2 - cx);
+  const rawDy = 2 * mt * (cy - y1) + 2 * t * (y2 - cy);
+  const len = Math.hypot(rawDx, rawDy);
+  if (len < 1e-6) return { dx: 1, dy: 0 };
+  return { dx: rawDx / len, dy: rawDy / len };
+}
+
 /** Hit radius for each edge badge region (CSS px). */
 export const EDGE_HIT_RADIUS = 10;
 
