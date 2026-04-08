@@ -53,6 +53,59 @@ export interface RendererStore {
   pendingModulatorTarget?: EdgeId | null;
 }
 
+// ---------------------------------------------------------------------------
+// Signal chevron visual logic — pure function, exported for testing
+// ---------------------------------------------------------------------------
+
+export const ANIM_START = 0.45;
+export const ANIM_END = 0.55;
+const BLUE = { r: 125, g: 211, b: 252 } as const; // #7dd3fc
+const RED = { r: 252, g: 165, b: 165 } as const; // #fca5a5
+
+function angleForSign(sign: 1 | -1): number {
+  return sign === 1 ? -Math.PI / 2 : Math.PI / 2;
+}
+
+function colorForSign(sign: 1 | -1): { r: number; g: number; b: number } {
+  return sign === 1 ? BLUE : RED;
+}
+
+/**
+ * Returns angle (radians) and color for the signal chevron at a given progress.
+ *
+ * +ve edges: visual is constant (signal.sign throughout).
+ * -ve edges: starts as the parent sign (signal.sign × −1), animates to signal.sign
+ *            between progress 0.45–0.55 (both angle and color interpolate linearly).
+ */
+export function signalChevronVisuals(
+  progress: number,
+  sign: 1 | -1,
+  edgePolarity: 1 | -1,
+): { angle: number; color: string } {
+  if (edgePolarity === 1) {
+    const { r, g, b } = colorForSign(sign);
+    return { angle: angleForSign(sign), color: `rgb(${r},${g},${b})` };
+  }
+  // -ve edge: visual transitions from parent sign to signal sign
+  const startSign = (sign * -1) as 1 | -1;
+  const t =
+    progress < ANIM_START
+      ? 0
+      : progress > ANIM_END
+        ? 1
+        : (progress - ANIM_START) / (ANIM_END - ANIM_START);
+  const frac = t * t * (3 - 2 * t);
+  const angle =
+    angleForSign(startSign) +
+    (angleForSign(sign) - angleForSign(startSign)) * frac;
+  const sc = colorForSign(startSign);
+  const ec = colorForSign(sign);
+  const r = Math.round(sc.r + (ec.r - sc.r) * frac);
+  const g = Math.round(sc.g + (ec.g - sc.g) * frac);
+  const b = Math.round(sc.b + (ec.b - sc.b) * frac);
+  return { angle, color: `rgb(${r},${g},${b})` };
+}
+
 export function arrowheadDimensions(weight: number): {
   len: number;
   half: number;
@@ -443,10 +496,22 @@ export class LoopyRenderer {
         y2,
         signal.progress,
       );
+      const { angle, color } = signalChevronVisuals(
+        signal.progress,
+        signal.sign,
+        edge.polarity,
+      );
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(angle);
+      ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(px, py, 5, 0, Math.PI * 2);
-      ctx.fillStyle = signal.strength > 0 ? "#7dd3fc" : "#fca5a5";
+      ctx.moveTo(6, 0);
+      ctx.lineTo(-4, -4);
+      ctx.lineTo(-4, 4);
+      ctx.closePath();
       ctx.fill();
+      ctx.restore();
     }
   }
 

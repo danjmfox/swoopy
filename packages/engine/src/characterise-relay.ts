@@ -2,17 +2,24 @@
  * Characterisation script — relay propagation model (pre-implementation)
  * Run with: node --experimental-strip-types packages/engine/src/characterise-relay.ts
  *
- * Implements the relay model inline (engine not yet rewritten) to characterise
- * behaviour across MAX_HOPS candidates {3, 5, 8, 13} on three scenarios:
+ * Implements the NEW relay model (DR--20260408--engine--signal-direction) inline
+ * to characterise behaviour across MAX_HOPS candidates {3, 5, 8, 13} on four scenarios:
  *
- *   1. Reinforcing loop  A→B→A (+/+) — expect: both nodes saturate at max
- *   2. Balancing loop    A→B→A (+/-) — expect: system corrects, no runaway
- *   3. Diamond           A→B→D(+), A→C→D(-) — expect: D receives from BOTH paths
+ *   1. Reinforcing loop  A→B→A (+/+)       — expect: both nodes saturate at max
+ *   2. Balancing loop    A→B→A (+/-)       — expect: system corrects, no runaway
+ *   3. Diamond           A→B→D(+)/A→C→D(-) — expect: D receives from BOTH paths
+ *   4. Polarity chain    A→B(−1)→C(+1)     — expect: B decreases AND C decreases
+ *
+ * New formula (Option C from DR--20260408):
+ *   - Each signal carries sign: 1 | -1 (accumulated polarity chain)
+ *   - Injection:  signal.sign = edge.polarity
+ *   - Relay:      relay.sign  = parent.sign × outgoing_edge.polarity
+ *   - Arrival:    nodeValues += strength × sign  (not strength × edge.polarity)
  *
  * Metrics reported per scenario × MAX_HOPS:
  *   - Node values at tick 60, 120, 200
  *   - Peak travelling signal count
- *   - Verdict: SATURATE / CORRECT / BOTH-PATHS / RUNAWAY / STALE
+ *   - Verdict: SATURATE / CORRECT / BOTH-PATHS / CHAIN-OK / RUNAWAY / STALE
  */
 
 import { SIGNAL_SPEED, EDGE_TRANSIT_TICKS } from "./constants.ts";
@@ -41,6 +48,7 @@ interface RSignal {
   progress: number;
   strength: number;
   hopsRemaining: number;
+  sign: 1 | -1; // accumulated polarity chain (DR--20260408--engine--signal-direction)
 }
 
 interface RState {
@@ -72,7 +80,8 @@ function relayInject(
   node.value = Math.min(node.max, Math.max(node.min, node.value + strength));
   const outgoing = edges.filter((e) => e.from === nodeId);
   for (const edge of outgoing) {
-    emitFragments(state.signals, edge, strength, MAX_HOPS);
+    // sign = edge.polarity at injection (Option C, DR--20260408)
+    emitFragments(state.signals, edge, strength, MAX_HOPS, edge.polarity);
   }
 }
 
@@ -81,6 +90,7 @@ function emitFragments(
   edge: REdge,
   strength: number,
   hopsRemaining: number,
+  sign: 1 | -1,
 ): void {
   const count = Math.max(1, Math.round(edge.weight));
   const staggerTicks =
@@ -96,6 +106,7 @@ function emitFragments(
       progress: Math.min(preAdvance, 0.99),
       strength,
       hopsRemaining,
+      sign,
     });
   }
 }
@@ -121,19 +132,26 @@ function relayStep(
   for (const s of state.signals) {
     const advanced = { ...s, progress: s.progress + SIGNAL_SPEED * safeDt };
     if (advanced.progress >= 1) {
-      // Arrived — apply to destination node
+      // Arrived — apply to destination node using accumulated sign (not edge.polarity)
       const edge = edgeMap.get(s.edgeId)!;
       const node = state.nodes.get(edge.to)!;
       node.value = Math.min(
         node.max,
-        Math.max(node.min, node.value + s.strength * edge.polarity),
+        Math.max(node.min, node.value + s.strength * s.sign),
       );
 
-      // Relay: if hops remain, fan out on all outgoing edges of destination
+      // Relay: if hops remain, fan out; relay sign = parent.sign × outgoing_edge.polarity
       if (s.hopsRemaining > 0) {
         const outgoing = outgoingMap.get(edge.to) ?? [];
         for (const outEdge of outgoing) {
-          emitFragments(newSignals, outEdge, s.strength, s.hopsRemaining - 1);
+          const relaySign = (s.sign * outEdge.polarity) as 1 | -1;
+          emitFragments(
+            newSignals,
+            outEdge,
+            s.strength,
+            s.hopsRemaining - 1,
+            relaySign,
+          );
         }
       }
     } else {
@@ -196,6 +214,23 @@ function scenarioDiamond(MAX_HOPS: number): ScenarioResult {
   const state = makeState(nodes);
   relayInject(state, edges, "A", 1, MAX_HOPS);
   return runScenario(state, edges, MAX_HOPS, ["A", "B", "C", "D"]);
+}
+
+function scenarioPolarityChain(MAX_HOPS: number): ScenarioResult {
+  // A→B (−1) → B→C (+1); inject A
+  // With new formula: B decreases (sign −1), C also decreases (sign −1 × +1 = −1)
+  const nodes: RNode[] = [
+    { id: "A", value: 5, min: 0, max: 10 },
+    { id: "B", value: 5, min: 0, max: 10 },
+    { id: "C", value: 5, min: 0, max: 10 },
+  ];
+  const edges: REdge[] = [
+    { id: "AB", from: "A", to: "B", polarity: -1, weight: 1 },
+    { id: "BC", from: "B", to: "C", polarity: 1, weight: 1 },
+  ];
+  const state = makeState(nodes);
+  relayInject(state, edges, "A", 1, MAX_HOPS);
+  return runScenario(state, edges, MAX_HOPS, ["A", "B", "C"]);
 }
 
 // ---------------------------------------------------------------------------
@@ -276,6 +311,14 @@ function verdict(
       ? `BOTH-PATHS ✓ (B=${final.B?.toFixed(2)} C=${final.C?.toFixed(2)} D=${final.D?.toFixed(2)})`
       : `STALE ✗ (B=${final.B?.toFixed(2)} C=${final.C?.toFixed(2)})`;
   }
+  if (name === "polarity-chain") {
+    // A→B(−1)→C(+1): B should decrease below 5, C should also decrease below 5
+    const bDecreased = (final.B ?? 5) < 5 - 0.01;
+    const cDecreased = (final.C ?? 5) < 5 - 0.01;
+    return bDecreased && cDecreased
+      ? `CHAIN-OK ✓ (B=${final.B?.toFixed(2)} C=${final.C?.toFixed(2)})`
+      : `CHAIN-FAIL ✗ (B=${final.B?.toFixed(2)} C=${final.C?.toFixed(2)}) — C should decrease`;
+  }
   return "?";
 }
 
@@ -309,6 +352,12 @@ const scenarios: Array<{
     fn: scenarioDiamond,
     nodes: ["A", "B", "C", "D"],
   },
+  {
+    name: "polarity-chain",
+    label: "Polarity chain    A→B(−1)→C(+1)      — new formula only",
+    fn: scenarioPolarityChain,
+    nodes: ["A", "B", "C"],
+  },
 ];
 
 console.log("=== Relay propagation characterisation ===");
@@ -336,8 +385,8 @@ for (const scenario of scenarios) {
 }
 
 console.log(
-  "Recommendation: choose lowest MAX_HOPS where all three verdicts pass.",
+  "Recommendation: choose lowest MAX_HOPS where all four verdicts pass.",
 );
 console.log(
-  "Record choice and evidence in DR--20260401--engine--relay-propagation-model.",
+  "Record results in DR--20260408--engine--signal-direction and advance to Proposed.",
 );

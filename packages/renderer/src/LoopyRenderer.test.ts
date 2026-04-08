@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { LoopyRenderer, arrowheadDimensions } from "./LoopyRenderer.ts";
+import {
+  LoopyRenderer,
+  arrowheadDimensions,
+  signalChevronVisuals,
+  ANIM_START,
+  ANIM_END,
+} from "./LoopyRenderer.ts";
 import type { RendererStore } from "./LoopyRenderer.ts";
 import { makeNodeId, makeEdgeId, makeModulatorId } from "@swoopy/engine";
 import type { Node, CausalEdge } from "@swoopy/engine";
@@ -136,6 +142,10 @@ function makeArcFillCanvas(): {
       texts.push(text);
     }),
     setLineDash: vi.fn(),
+    save: vi.fn(),
+    restore: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
     fillStyle: "" as string,
     strokeStyle: "" as string,
     lineWidth: 1 as number,
@@ -543,6 +553,169 @@ describe("LoopyRenderer", () => {
     const w5 = edgeCurveWidthForWeight(5);
     expect(w0).toBeLessThan(w1);
     expect(w1).toBeLessThan(w5);
+  });
+
+  it("signal with sign=1 on +ve edge renders blue chevron", () => {
+    const { canvas, fills } = makeArcFillCanvas();
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
+        sim: {
+          signals: [
+            {
+              id: "s1",
+              edgeId: edgeAB.id,
+              progress: 0.5,
+              strength: 1,
+              hopsRemaining: 8,
+              sign: 1 as const,
+            },
+          ],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    // Chevron uses triangle path (no arc) — color is unique to signals
+    expect(fills().some((f) => f.style === "rgb(125,211,252)")).toBe(true);
+  });
+
+  it("signal with sign=-1 on +ve edge renders red chevron", () => {
+    const { canvas, fills } = makeArcFillCanvas();
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
+        sim: {
+          signals: [
+            {
+              id: "s1",
+              edgeId: edgeAB.id,
+              progress: 0.5,
+              strength: 1,
+              hopsRemaining: 8,
+              sign: -1 as const,
+            },
+          ],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    // Chevron uses triangle path (no arc) — color is unique to signals
+    expect(fills().some((f) => f.style === "rgb(252,165,165)")).toBe(true);
+  });
+
+  it("signal with sign=1 rotates chevron screen-up (−π/2) and sign=-1 screen-down (+π/2)", () => {
+    function rotateAnglesForSign(sign: 1 | -1): number[] {
+      const rotates: number[] = [];
+      const ctx = {
+        setTransform: vi.fn(),
+        clearRect: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        quadraticCurveTo: vi.fn(),
+        closePath: vi.fn(),
+        fillText: vi.fn(),
+        setLineDash: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        rotate: vi.fn().mockImplementation((a: number) => rotates.push(a)),
+        scale: vi.fn(),
+        fillStyle: "",
+        strokeStyle: "",
+        lineWidth: 1,
+        globalAlpha: 1,
+        font: "",
+        textAlign: "",
+        textBaseline: "",
+      };
+      const canvas = {
+        clientWidth: 800,
+        clientHeight: 600,
+        width: 0,
+        height: 0,
+        getContext: () => ctx,
+      } as unknown as HTMLCanvasElement;
+      const getState = () =>
+        ({
+          tickSim: vi.fn(),
+          simRunning: false,
+          simSpeed: 1,
+          graph: {
+            nodes: [nodeA, nodeB],
+            edges: [edgeAB],
+            annotations: [],
+            modulators: [],
+          },
+          sim: {
+            signals: [
+              {
+                id: "s1",
+                edgeId: edgeAB.id,
+                progress: 0.5,
+                strength: 1,
+                hopsRemaining: 8,
+                sign,
+              },
+            ],
+            pending: [],
+            nodeValues: new Map(),
+            displayPrevNodeValues: new Map(),
+            tick: 0,
+          },
+          focusedNodeId: null,
+          mode: "select",
+        }) as unknown as RendererStore;
+      const renderer = new LoopyRenderer(canvas, getState);
+      renderer.start();
+      vi.advanceTimersByTime(1000 / 60);
+      renderer.stop();
+      return rotates;
+    }
+
+    const positiveAngles = rotateAnglesForSign(1);
+    const negativeAngles = rotateAnglesForSign(-1);
+    // Both should have exactly one rotate call (the signal chevron)
+    expect(positiveAngles.length).toBe(1);
+    expect(negativeAngles.length).toBe(1);
+    // sign=1 → screen-up (−π/2), sign=-1 → screen-down (+π/2)
+    expect(positiveAngles[0]).toBeCloseTo(-Math.PI / 2, 5);
+    expect(negativeAngles[0]).toBeCloseTo(Math.PI / 2, 5);
   });
 
   it("stroke path ends at arrowhead base, not tip, so thick lines don't square off the arrowhead", () => {
@@ -1989,5 +2162,82 @@ describe("drawModulators — dotted arc from source node to edge midpoint", () =
         Math.abs(c.y - 93) < 2,
     );
     expect(modPolarityCall).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// signalChevronVisuals — pure visual logic for signal direction animation
+// ---------------------------------------------------------------------------
+
+describe("signalChevronVisuals", () => {
+  // +ve edge: sign stays constant throughout — no animation
+  it("+ve edge, sign=1: angle=-π/2 (up) and blue at all progress values", () => {
+    for (const t of [0, 0.44, 0.5, 0.56, 1]) {
+      const v = signalChevronVisuals(t, 1, 1);
+      expect(v.angle).toBeCloseTo(-Math.PI / 2, 5);
+      expect(v.color).toBe("rgb(125,211,252)");
+    }
+  });
+
+  it("+ve edge, sign=-1: angle=+π/2 (down) and red at all progress values", () => {
+    for (const t of [0, 0.44, 0.5, 0.56, 1]) {
+      const v = signalChevronVisuals(t, -1, 1);
+      expect(v.angle).toBeCloseTo(Math.PI / 2, 5);
+      expect(v.color).toBe("rgb(252,165,165)");
+    }
+  });
+
+  // -ve edge, sign=-1: parent was +1 (up/blue) → transitions to -1 (down/red)
+  it("-ve edge, sign=-1: starts up/blue (t<0.45)", () => {
+    const v = signalChevronVisuals(0.3, -1, -1);
+    expect(v.angle).toBeCloseTo(-Math.PI / 2, 5); // up
+    expect(v.color).toBe("rgb(125,211,252)"); // blue
+  });
+
+  it("-ve edge, sign=-1: ends down/red (t>0.55)", () => {
+    const v = signalChevronVisuals(0.7, -1, -1);
+    expect(v.angle).toBeCloseTo(Math.PI / 2, 5); // down
+    expect(v.color).toBe("rgb(252,165,165)"); // red
+  });
+
+  it("-ve edge, sign=-1: angle is halfway at t=0.5 (midpoint of animation)", () => {
+    const v = signalChevronVisuals(0.5, -1, -1);
+    expect(v.angle).toBeCloseTo(0, 5); // midpoint between -π/2 and +π/2
+  });
+
+  // -ve edge, sign=+1: parent was -1 (down/red) → transitions to +1 (up/blue)
+  it("-ve edge, sign=+1: starts down/red (t<0.45)", () => {
+    const v = signalChevronVisuals(0.3, 1, -1);
+    expect(v.angle).toBeCloseTo(Math.PI / 2, 5); // down
+    expect(v.color).toBe("rgb(252,165,165)"); // red
+  });
+
+  it("-ve edge, sign=+1: ends up/blue (t>0.55)", () => {
+    const v = signalChevronVisuals(0.7, 1, -1);
+    expect(v.angle).toBeCloseTo(-Math.PI / 2, 5); // up
+    expect(v.color).toBe("rgb(125,211,252)"); // blue
+  });
+});
+
+describe("signalChevronVisuals easing — smoothstep not linear", () => {
+  // At t=0.475, linear frac=0.25; smoothstep frac=0.15625 (3t²−2t³)
+  // sign=-1 on -ve edge: startSign=+1 → angleForSign(+1)=−π/2 (up), end=+π/2 (down)
+  // smoothstep → angle = −π/2 + π * 0.15625 ≈ −1.0799 rad (stays closer to start)
+  // linear    → angle = −π/2 + π * 0.25    ≈ −0.7854 rad
+  it("-ve edge sign=-1 at t=0.475: angle follows smoothstep not linear frac", () => {
+    const v = signalChevronVisuals(0.475, -1, -1);
+    const smoothstepFrac = 0.15625;
+    const expected = -Math.PI / 2 + Math.PI * smoothstepFrac;
+    expect(v.angle).toBeCloseTo(expected, 3);
+  });
+});
+
+describe("ANIM_START / ANIM_END exported constants", () => {
+  it("ANIM_START is 0.45", () => {
+    expect(ANIM_START).toBe(0.45);
+  });
+
+  it("ANIM_END is 0.55", () => {
+    expect(ANIM_END).toBe(0.55);
   });
 });
