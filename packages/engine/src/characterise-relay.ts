@@ -145,7 +145,13 @@ function relayStep(
         const outgoing = outgoingMap.get(edge.to) ?? [];
         for (const outEdge of outgoing) {
           const relaySign = (s.sign * outEdge.polarity) as 1 | -1;
-          emitFragments(newSignals, outEdge, s.strength, s.hopsRemaining - 1, relaySign);
+          emitFragments(
+            newSignals,
+            outEdge,
+            s.strength,
+            s.hopsRemaining - 1,
+            relaySign,
+          );
         }
       }
     } else {

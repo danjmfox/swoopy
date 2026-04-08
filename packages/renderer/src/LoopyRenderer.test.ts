@@ -629,7 +629,7 @@ describe("LoopyRenderer", () => {
     expect(fills().some((f) => f.style === "#fca5a5")).toBe(true);
   });
 
-  it("signal with sign=-1 is rotated π radians from sign=1 (chevron flips for decreasing signals)", () => {
+  it("signal with sign=1 rotates chevron screen-up (−π/2) and sign=-1 screen-down (+π/2)", () => {
     function rotateAnglesForSign(sign: 1 | -1): number[] {
       const rotates: number[] = [];
       const ctx = {
@@ -707,9 +707,9 @@ describe("LoopyRenderer", () => {
     // Both should have exactly one rotate call (the signal chevron)
     expect(positiveAngles.length).toBe(1);
     expect(negativeAngles.length).toBe(1);
-    // The angle should differ by π (chevron flips)
-    const diff = Math.abs(negativeAngles[0]! - positiveAngles[0]!);
-    expect(diff).toBeCloseTo(Math.PI, 5);
+    // sign=1 → screen-up (−π/2), sign=-1 → screen-down (+π/2)
+    expect(positiveAngles[0]).toBeCloseTo(-Math.PI / 2, 5);
+    expect(negativeAngles[0]).toBeCloseTo(Math.PI / 2, 5);
   });
 
   it("stroke path ends at arrowhead base, not tip, so thick lines don't square off the arrowhead", () => {
