@@ -445,7 +445,7 @@ export class LoopyRenderer {
       );
       ctx.beginPath();
       ctx.arc(px, py, 5, 0, Math.PI * 2);
-      ctx.fillStyle = signal.strength > 0 ? "#7dd3fc" : "#fca5a5";
+      ctx.fillStyle = signal.sign === 1 ? "#7dd3fc" : "#fca5a5";
       ctx.fill();
     }
   }

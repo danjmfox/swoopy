@@ -545,6 +545,86 @@ describe("LoopyRenderer", () => {
     expect(w1).toBeLessThan(w5);
   });
 
+  it("signal with sign=1 renders blue dot (#7dd3fc)", () => {
+    const { canvas, fills } = makeArcFillCanvas();
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
+        sim: {
+          signals: [
+            {
+              id: "s1",
+              edgeId: edgeAB.id,
+              progress: 0.5,
+              strength: 1,
+              hopsRemaining: 8,
+              sign: 1 as const,
+            },
+          ],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    const signalDots = fills().filter((f) => f.r === 5);
+    expect(signalDots.some((f) => f.style === "#7dd3fc")).toBe(true);
+  });
+
+  it("signal with sign=-1 renders red dot (#fca5a5)", () => {
+    const { canvas, fills } = makeArcFillCanvas();
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edgeAB],
+          annotations: [],
+          modulators: [],
+        },
+        sim: {
+          signals: [
+            {
+              id: "s1",
+              edgeId: edgeAB.id,
+              progress: 0.5,
+              strength: 1,
+              hopsRemaining: 8,
+              sign: -1 as const,
+            },
+          ],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "select",
+      }) as unknown as RendererStore;
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    const signalDots = fills().filter((f) => f.r === 5);
+    expect(signalDots.some((f) => f.style === "#fca5a5")).toBe(true);
+  });
+
   it("stroke path ends at arrowhead base, not tip, so thick lines don't square off the arrowhead", () => {
     const quadCurves: Array<{
       cpx: number;
