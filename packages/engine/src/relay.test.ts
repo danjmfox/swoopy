@@ -62,8 +62,28 @@ describe("Signal type — hopsRemaining field", () => {
       progress: 0,
       strength: 1,
       hopsRemaining: 8,
+      sign: 1,
     };
     expect(s.hopsRemaining).toBe(8);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DR--20260408: Signal type has sign field (1 | -1)
+// ---------------------------------------------------------------------------
+
+describe("Signal type — sign field", () => {
+  it("Signal accepts sign: 1 | -1", () => {
+    // Type-level assertion: fails TS typecheck until Signal.sign is added.
+    const s: Signal = {
+      id: "s-sign",
+      edgeId: makeEdgeId("e1"),
+      progress: 0,
+      strength: 1,
+      hopsRemaining: 8,
+      sign: -1,
+    };
+    expect(s.sign).toBe(-1);
   });
 });
 
@@ -201,6 +221,7 @@ describe("step() — signal arrival", () => {
           progress: 0.99, // about to arrive
           strength: 1,
           hopsRemaining: 0,
+          sign: 1 as const,
         },
       ],
     };
@@ -339,6 +360,7 @@ describe("signal aging — hopsRemaining", () => {
           progress: 0.99,
           strength: 1,
           hopsRemaining: 3,
+          sign: 1 as const,
         },
       ],
     };
@@ -349,6 +371,56 @@ describe("signal aging — hopsRemaining", () => {
     const relaySignal = sim1.signals.find((s) => s.edgeId === edgeBC);
     expect(relaySignal).toBeDefined();
     expect(relaySignal!.hopsRemaining).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DR--20260408: polarity chain — multi-hop sign propagation
+// ---------------------------------------------------------------------------
+
+describe("integration — polarity chain (signal direction)", () => {
+  it("A→B(−1)→C(+1): B decreases AND C decreases after inject A", () => {
+    // With the new formula, sign accumulates: B receives sign=−1, C receives sign=−1×+1=−1.
+    // Old formula: C would have increased (sign not carried — arrived as unsigned positive).
+    const nodePC_A = makeNodeId("PC-A");
+    const nodePC_B = makeNodeId("PC-B");
+    const nodePC_C = makeNodeId("PC-C");
+    const graph: Graph = {
+      nodes: [
+        node(nodePC_A, "A"),
+        node(nodePC_B, "B", 100),
+        node(nodePC_C, "C", 200),
+      ],
+      edges: [
+        {
+          id: makeEdgeId("pc-ab"),
+          kind: "causal",
+          from: nodePC_A,
+          to: nodePC_B,
+          polarity: -1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+        {
+          id: makeEdgeId("pc-bc"),
+          kind: "causal",
+          from: nodePC_B,
+          to: nodePC_C,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+      ],
+      annotations: [],
+      modulators: [],
+    };
+    let sim = inject(makeInitialSim(graph), graph, nodePC_A, 1);
+    // 2 edge transits ≈ 185 ticks; add buffer for full chain
+    for (let i = 0; i < 300; i++) sim = step(graph, sim, 1 / 60);
+    expect(sim.nodeValues.get(nodePC_B)).toBeLessThan(5); // B decreases
+    expect(sim.nodeValues.get(nodePC_C)).toBeLessThan(5); // C also decreases (sign preserved)
   });
 });
 

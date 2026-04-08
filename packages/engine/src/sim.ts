@@ -146,13 +146,14 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
       const edge = edgeById.get(s.edgeId);
       if (edge?.kind === "causal") {
         const prev = nodeValues.get(edge.to) ?? 0;
-        nodeValues.set(edge.to, prev + s.strength * edge.polarity);
+        nodeValues.set(edge.to, prev + s.strength * s.sign);
         if (s.hopsRemaining > 0) {
           const relay = emitRelayFragments(
             causalEdgesFrom.get(edge.to) ?? [],
             s.strength,
             s.hopsRemaining - 1,
             effectiveWeights,
+            s.sign,
           );
           newSignals.push(...relay.signals);
           newPending.push(...relay.pending);
@@ -208,6 +209,7 @@ export function inject(
     strength,
     MAX_HOPS,
     effectiveWeights,
+    1, // injection: positive impulse at source node — sign = edge.polarity per edge
   );
   return {
     ...sim,
@@ -222,12 +224,14 @@ function emitRelayFragments(
   strength: number,
   hopsRemaining: number,
   effectiveWeights: Map<EdgeId, number>,
+  parentSign: 1 | -1,
 ): { signals: Signal[]; pending: PendingSignal[] } {
   const signals: Signal[] = [];
   const pending: PendingSignal[] = [];
   for (const edge of outgoingEdges) {
     const weight = effectiveWeights.get(edge.id) ?? edge.weight;
     if (weight === 0) continue;
+    const sign = (parentSign * edge.polarity) as 1 | -1;
     // Sub-unit weight: single attenuated fragment (preserves weight-as-attenuation 0–1).
     if (weight < 1) {
       const fragment = {
@@ -236,6 +240,7 @@ function emitRelayFragments(
         progress: 0,
         strength: strength * weight,
         hopsRemaining,
+        sign,
       };
       if (edge.delay !== "none") {
         pending.push({
@@ -260,6 +265,7 @@ function emitRelayFragments(
             progress: 0,
             strength,
             hopsRemaining,
+            sign,
           },
           ticksRemaining: delayTicks + i * staggerTicks,
         });
@@ -273,6 +279,7 @@ function emitRelayFragments(
         progress: staggerTicks > 0 ? Math.min(i / count, 0.99) : 0,
         strength,
         hopsRemaining,
+        sign,
       });
     }
   }

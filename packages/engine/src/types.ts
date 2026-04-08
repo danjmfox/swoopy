@@ -58,6 +58,7 @@ export interface Signal {
   readonly progress: number;
   readonly strength: number;
   readonly hopsRemaining: number;
+  readonly sign: 1 | -1; // accumulated polarity chain — DR--20260408--engine--signal-direction
 }
 
 export interface PendingSignal {
