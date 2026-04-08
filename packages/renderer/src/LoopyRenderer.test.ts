@@ -136,6 +136,10 @@ function makeArcFillCanvas(): {
       texts.push(text);
     }),
     setLineDash: vi.fn(),
+    save: vi.fn(),
+    restore: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
     fillStyle: "" as string,
     strokeStyle: "" as string,
     lineWidth: 1 as number,
@@ -581,11 +585,11 @@ describe("LoopyRenderer", () => {
     renderer.start();
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
-    const signalDots = fills().filter((f) => f.r === 5);
-    expect(signalDots.some((f) => f.style === "#7dd3fc")).toBe(true);
+    // Chevron uses triangle path (no arc) — filter by color which is unique to signals
+    expect(fills().some((f) => f.style === "#7dd3fc")).toBe(true);
   });
 
-  it("signal with sign=-1 renders red dot (#fca5a5)", () => {
+  it("signal with sign=-1 renders red chevron (#fca5a5)", () => {
     const { canvas, fills } = makeArcFillCanvas();
     const getState = () =>
       ({
@@ -621,8 +625,91 @@ describe("LoopyRenderer", () => {
     renderer.start();
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
-    const signalDots = fills().filter((f) => f.r === 5);
-    expect(signalDots.some((f) => f.style === "#fca5a5")).toBe(true);
+    // Chevron uses triangle path (no arc) — filter by color which is unique to signals
+    expect(fills().some((f) => f.style === "#fca5a5")).toBe(true);
+  });
+
+  it("signal with sign=-1 is rotated π radians from sign=1 (chevron flips for decreasing signals)", () => {
+    function rotateAnglesForSign(sign: 1 | -1): number[] {
+      const rotates: number[] = [];
+      const ctx = {
+        setTransform: vi.fn(),
+        clearRect: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        quadraticCurveTo: vi.fn(),
+        closePath: vi.fn(),
+        fillText: vi.fn(),
+        setLineDash: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        rotate: vi.fn().mockImplementation((a: number) => rotates.push(a)),
+        scale: vi.fn(),
+        fillStyle: "",
+        strokeStyle: "",
+        lineWidth: 1,
+        globalAlpha: 1,
+        font: "",
+        textAlign: "",
+        textBaseline: "",
+      };
+      const canvas = {
+        clientWidth: 800,
+        clientHeight: 600,
+        width: 0,
+        height: 0,
+        getContext: () => ctx,
+      } as unknown as HTMLCanvasElement;
+      const getState = () =>
+        ({
+          tickSim: vi.fn(),
+          simRunning: false,
+          simSpeed: 1,
+          graph: {
+            nodes: [nodeA, nodeB],
+            edges: [edgeAB],
+            annotations: [],
+            modulators: [],
+          },
+          sim: {
+            signals: [
+              {
+                id: "s1",
+                edgeId: edgeAB.id,
+                progress: 0.5,
+                strength: 1,
+                hopsRemaining: 8,
+                sign,
+              },
+            ],
+            pending: [],
+            nodeValues: new Map(),
+            displayPrevNodeValues: new Map(),
+            tick: 0,
+          },
+          focusedNodeId: null,
+          mode: "select",
+        }) as unknown as RendererStore;
+      const renderer = new LoopyRenderer(canvas, getState);
+      renderer.start();
+      vi.advanceTimersByTime(1000 / 60);
+      renderer.stop();
+      return rotates;
+    }
+
+    const positiveAngles = rotateAnglesForSign(1);
+    const negativeAngles = rotateAnglesForSign(-1);
+    // Both should have exactly one rotate call (the signal chevron)
+    expect(positiveAngles.length).toBe(1);
+    expect(negativeAngles.length).toBe(1);
+    // The angle should differ by π (chevron flips)
+    const diff = Math.abs(negativeAngles[0]! - positiveAngles[0]!);
+    expect(diff).toBeCloseTo(Math.PI, 5);
   });
 
   it("stroke path ends at arrowhead base, not tip, so thick lines don't square off the arrowhead", () => {

@@ -18,6 +18,7 @@ import {
 import { nodeValueFill } from "./nodeValueFill.ts";
 import {
   bezierPoint,
+  bezierTangent,
   controlPoint,
   edgeEndpoints,
   BOW,
@@ -443,10 +444,20 @@ export class LoopyRenderer {
         y2,
         signal.progress,
       );
-      ctx.beginPath();
-      ctx.arc(px, py, 5, 0, Math.PI * 2);
+      const { dx, dy } = bezierTangent(x1, y1, cx, cy, x2, y2, signal.progress);
+      // Chevron flips with sign: sign=1 points forward, sign=-1 points backward
+      const angle = Math.atan2(dy, dx) + (signal.sign === -1 ? Math.PI : 0);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(angle);
       ctx.fillStyle = signal.sign === 1 ? "#7dd3fc" : "#fca5a5";
+      ctx.beginPath();
+      ctx.moveTo(6, 0);
+      ctx.lineTo(-4, -4);
+      ctx.lineTo(-4, 4);
+      ctx.closePath();
       ctx.fill();
+      ctx.restore();
     }
   }
 
