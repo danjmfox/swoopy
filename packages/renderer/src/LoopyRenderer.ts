@@ -95,7 +95,8 @@ export function signalChevronVisuals(
         ? 1
         : (progress - ANIM_START) / (ANIM_END - ANIM_START);
   const angle =
-    angleForSign(startSign) + (angleForSign(sign) - angleForSign(startSign)) * frac;
+    angleForSign(startSign) +
+    (angleForSign(sign) - angleForSign(startSign)) * frac;
   const sc = colorForSign(startSign);
   const ec = colorForSign(sign);
   const r = Math.round(sc.r + (ec.r - sc.r) * frac);
