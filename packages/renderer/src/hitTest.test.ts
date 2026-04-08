@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { hitTest } from "./hitTest.ts";
-import { makeNodeId, makeAnnotationId, makeEdgeId } from "@swoopy/engine";
+import {
+  makeNodeId,
+  makeAnnotationId,
+  makeEdgeId,
+  makeModulatorId,
+} from "@swoopy/engine";
 import type { Graph } from "@swoopy/engine";
 
 const id = makeNodeId("pop");
@@ -133,5 +138,80 @@ describe("hitTest — constraint edges", () => {
 
   it("returns null when clicking far from the constraint edge midpoint", () => {
     expect(hitTest(constraintGraph, 200, 200)).toBeNull();
+  });
+});
+
+// feat/modulator-polarity-toggle: modulator arc midpoint hit target
+describe("hitTest — modulators", () => {
+  // nodeA(100,100,r=30) → nodeB(300,100,r=30): single causal edge, bow=28
+  // terminus (T_POLARITY on target edge): (200, 86)
+  // nodeC(200,250,r=30): modulator source
+  // modulator arc midpoint: ((200+200)/2, (250+86)/2) = (200, 168)
+  const nodeAId = makeNodeId("ma");
+  const nodeBId = makeNodeId("mb");
+  const nodeCId = makeNodeId("mc");
+  const edgeId = makeEdgeId("me1");
+  const modId = makeModulatorId("mod1");
+  const modulatorGraph: Graph = {
+    nodes: [
+      {
+        id: nodeAId,
+        label: "A",
+        x: 100,
+        y: 100,
+        radius: 30,
+        sizeTier: "m",
+        colourTier: "blue",
+        min: 0,
+        max: 10,
+        initial: 5,
+      },
+      {
+        id: nodeBId,
+        label: "B",
+        x: 300,
+        y: 100,
+        radius: 30,
+        sizeTier: "m",
+        colourTier: "blue",
+        min: 0,
+        max: 10,
+        initial: 5,
+      },
+      {
+        id: nodeCId,
+        label: "C",
+        x: 200,
+        y: 250,
+        radius: 30,
+        sizeTier: "m",
+        colourTier: "blue",
+        min: 0,
+        max: 10,
+        initial: 5,
+      },
+    ],
+    edges: [
+      {
+        kind: "causal",
+        id: edgeId,
+        from: nodeAId,
+        to: nodeBId,
+        polarity: 1,
+        delay: 0,
+        weight: 1,
+        isQuickFix: false,
+      },
+    ],
+    annotations: [],
+    modulators: [{ id: modId, from: nodeCId, target: edgeId, polarity: 1 }],
+  };
+
+  it("returns modulator hit when clicking at the midpoint of the modulator arc", () => {
+    // arc midpoint: (200, 168) — clear of terminus/edge-polarity badge at (200, 86)
+    expect(hitTest(modulatorGraph, 200, 168)).toEqual({
+      kind: "modulator",
+      id: modId,
+    });
   });
 });

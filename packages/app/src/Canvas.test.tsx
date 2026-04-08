@@ -3,7 +3,11 @@ import { render, fireEvent, act } from "@testing-library/react";
 import { useStore } from "./store.ts";
 import { seedGraph } from "./seed.ts";
 import { Canvas } from "./Canvas.tsx";
-import { makeInitialSim, INJECT_STRENGTH } from "@swoopy/engine";
+import {
+  makeInitialSim,
+  INJECT_STRENGTH,
+  makeModulatorId,
+} from "@swoopy/engine";
 
 // Mock hitTest so tests don't depend on jsdom pointer coordinate plumbing.
 // jsdom does not expose PointerEvent as a global, so clientX/Y would be 0.
@@ -400,6 +404,32 @@ describe("GE-26 delete mode — pointerdown on edge hit region removes it", () =
       clientY: 0,
     });
     expect(deleteEdge).toHaveBeenCalledWith(targetEdge.id);
+  });
+});
+
+describe("delete mode — pointerdown on modulator arc midpoint removes it", () => {
+  let deleteModulator: ReturnType<typeof vi.fn>;
+  const modId = makeModulatorId("test-mod");
+
+  beforeEach(() => {
+    deleteModulator = vi.fn();
+    mockHitTest.mockReset();
+    useStore.setState({
+      graph: seedGraph,
+      deleteModulator,
+      mode: "delete",
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("pointerdown on modulator hit calls deleteModulator", async () => {
+    mockHitTest.mockReturnValue({ kind: "modulator", id: modId });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(deleteModulator).toHaveBeenCalledWith(modId);
   });
 });
 
@@ -812,6 +842,31 @@ describe("GE-08 dblclick — toggle polarity on edge-polarity hit region", () =>
       clientY: 0,
     });
     expect(togglePolarity).toHaveBeenCalledWith(edge.id);
+  });
+});
+
+describe("dblclick — toggle polarity on modulator arc midpoint", () => {
+  let toggleModulatorPolarity: ReturnType<typeof vi.fn>;
+  const modId = makeModulatorId("test-mod");
+
+  beforeEach(() => {
+    toggleModulatorPolarity = vi.fn();
+    mockHitTest.mockReset();
+    useStore.setState({
+      graph: seedGraph,
+      toggleModulatorPolarity,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("dblclick on modulator hit calls toggleModulatorPolarity", async () => {
+    mockHitTest.mockReturnValue({ kind: "modulator", id: modId });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.dblClick(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(toggleModulatorPolarity).toHaveBeenCalledWith(modId);
   });
 });
 
@@ -1353,6 +1408,29 @@ describe("modulator creation — drag from node to edge in add-edge mode", () =>
     fireEvent.pointerUp(canvas, { clientX: 0, clientY: 0 });
 
     expect(confirmModulator).toHaveBeenCalledWith(nodeA.id, 1);
+  });
+
+  it("pointer-up on a node with Alt held calls confirmModulator with polarity -1", async () => {
+    const confirmModulator = vi.fn();
+    useStore.setState({
+      pendingModulatorTarget: causalEdge.id,
+      confirmModulator,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+
+    mockHitTest
+      .mockReturnValueOnce({ kind: "node", id: nodeA.id })
+      .mockReturnValueOnce({ kind: "node", id: nodeA.id });
+
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+
+    fireEvent.keyDown(document, { key: "Alt" });
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+    fireEvent.pointerUp(canvas, { clientX: 0, clientY: 0 });
+    fireEvent.keyUp(document, { key: "Alt" });
+
+    expect(confirmModulator).toHaveBeenCalledWith(nodeA.id, -1);
   });
 
   it("Escape while pendingModulatorTarget is set calls cancelModulator instead of changing mode", async () => {
