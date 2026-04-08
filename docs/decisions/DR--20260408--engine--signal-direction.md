@@ -2,7 +2,7 @@
 id: DR--20260408--engine--signal-direction
 dateCreated: '2026-04-08'
 version: 1.0.0
-status: draft
+status: proposed
 changeType: creation
 domain: engine
 slug: signal-direction
@@ -11,6 +11,8 @@ changelog:
     note: Initial creation
   - date: '2026-04-08'
     note: Marked as draft
+  - date: '2026-04-08'
+    note: Marked as proposed
 lastEdited: '2026-04-08'
 ---
 # Signal Direction as First-Class Engine Property
@@ -131,6 +133,26 @@ display arrows that contradict the system's actual behaviour.
 Medium. The model change is logically sound and the formula is simple. Confidence is limited by
 not yet having run characterisation — existing tests may reveal unexpected interaction effects
 with MAX_HOPS and the signal cap. Advance to Proposed after characterisation results are in hand.
+
+## 📊 Characterisation Results
+
+Run: `node --experimental-strip-types packages/engine/src/characterise-relay.ts`
+Formula: new (sign-carrying relay, Option C)
+
+| Scenario | hops=3 | hops=5 | hops=8 | hops=13 |
+|---|---|---|---|---|
+| Reinforcing A→B→A (+/+) | PARTIAL | PARTIAL | SATURATE ✓ | SATURATE ✓ |
+| Balancing A→B→A (+/-) | CORRECT ✓ | CORRECT ✓ | CORRECT ✓ | CORRECT ✓ |
+| Diamond A→B→D(+)/A→C→D(-) | BOTH-PATHS ✓ | BOTH-PATHS ✓ | BOTH-PATHS ✓ | BOTH-PATHS ✓ |
+| Polarity chain A→B(−1)→C(+1) | CHAIN-OK ✓ | CHAIN-OK ✓ | CHAIN-OK ✓ | CHAIN-OK ✓ |
+
+**Findings:**
+- All existing scenarios produce identical results to the prior characterisation (DR--20260401) — new formula is backward-compatible for single-polarity and symmetric chains.
+- Polarity chain scenario: B=4.00 (decreased from 5 via sign −1), C=4.00 (decreased from 5 via sign −1 × +1 = −1). Formula is semantically correct.
+- MAX_HOPS=8 remains the recommendation (reinforcing loop requires 8 hops to saturate; lower values produce PARTIAL).
+- Peak signal count: 1 across all chain scenarios; 2 in diamond (fan-out) — no signal explosion.
+
+**Confidence raised to High.** The formula change is safe to implement. Existing tests covering single-hop and reinforcing/balancing patterns will need sign field added to Signal type; multi-hop polarity tests should be added before implementation per TDD rhythm.
 
 ## 🧾 Changelog
 
