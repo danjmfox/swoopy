@@ -3,6 +3,8 @@ import {
   LoopyRenderer,
   arrowheadDimensions,
   signalChevronVisuals,
+  ANIM_START,
+  ANIM_END,
 } from "./LoopyRenderer.ts";
 import type { RendererStore } from "./LoopyRenderer.ts";
 import { makeNodeId, makeEdgeId, makeModulatorId } from "@swoopy/engine";
@@ -2214,5 +2216,28 @@ describe("signalChevronVisuals", () => {
     const v = signalChevronVisuals(0.7, 1, -1);
     expect(v.angle).toBeCloseTo(-Math.PI / 2, 5); // up
     expect(v.color).toBe("rgb(125,211,252)"); // blue
+  });
+});
+
+describe("signalChevronVisuals easing — smoothstep not linear", () => {
+  // At t=0.475, linear frac=0.25; smoothstep frac=0.15625 (3t²−2t³)
+  // sign=-1 on -ve edge: startSign=+1 → angleForSign(+1)=−π/2 (up), end=+π/2 (down)
+  // smoothstep → angle = −π/2 + π * 0.15625 ≈ −1.0799 rad (stays closer to start)
+  // linear    → angle = −π/2 + π * 0.25    ≈ −0.7854 rad
+  it("-ve edge sign=-1 at t=0.475: angle follows smoothstep not linear frac", () => {
+    const v = signalChevronVisuals(0.475, -1, -1);
+    const smoothstepFrac = 0.15625;
+    const expected = -Math.PI / 2 + Math.PI * smoothstepFrac;
+    expect(v.angle).toBeCloseTo(expected, 3);
+  });
+});
+
+describe("ANIM_START / ANIM_END exported constants", () => {
+  it("ANIM_START is 0.45", () => {
+    expect(ANIM_START).toBe(0.45);
+  });
+
+  it("ANIM_END is 0.55", () => {
+    expect(ANIM_END).toBe(0.55);
   });
 });

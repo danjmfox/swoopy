@@ -57,8 +57,8 @@ export interface RendererStore {
 // Signal chevron visual logic — pure function, exported for testing
 // ---------------------------------------------------------------------------
 
-const ANIM_START = 0.45;
-const ANIM_END = 0.55;
+export const ANIM_START = 0.45;
+export const ANIM_END = 0.55;
 const BLUE = { r: 125, g: 211, b: 252 } as const; // #7dd3fc
 const RED = { r: 252, g: 165, b: 165 } as const; // #fca5a5
 
@@ -88,12 +88,13 @@ export function signalChevronVisuals(
   }
   // -ve edge: visual transitions from parent sign to signal sign
   const startSign = (sign * -1) as 1 | -1;
-  const frac =
+  const t =
     progress < ANIM_START
       ? 0
       : progress > ANIM_END
         ? 1
         : (progress - ANIM_START) / (ANIM_END - ANIM_START);
+  const frac = t * t * (3 - 2 * t);
   const angle =
     angleForSign(startSign) +
     (angleForSign(sign) - angleForSign(startSign)) * frac;
