@@ -640,3 +640,237 @@ describe("GE-42 — multi-edge propagation", () => {
     expect(bValue).toBeGreaterThan(6);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Zero-net concurrent arrivals — suppress relay when Σ(strength × sign) = 0
+// ---------------------------------------------------------------------------
+
+describe("zero-net concurrent arrivals — relay suppression", () => {
+  it("two opposite-sign equal-strength signals arriving at B in the same tick emit no relay on B→C", () => {
+    // Arrange: A→B→C chain; place +1 and -1 signals on A→B both at progress=0.99
+    // so both arrive in the same step() call. Net at B = 1×(+1) + 1×(-1) = 0.
+    // Guard: relay on B→C should be suppressed entirely.
+    const nodeZA = makeNodeId("ZN-A");
+    const nodeZB = makeNodeId("ZN-B");
+    const nodeZC = makeNodeId("ZN-C");
+    const edgeZAB = makeEdgeId("ZN-AB");
+    const edgeZBC = makeEdgeId("ZN-BC");
+    const chainGraph: Graph = {
+      nodes: [
+        node(nodeZA, "A"),
+        node(nodeZB, "B", 100),
+        node(nodeZC, "C", 200),
+      ],
+      edges: [
+        {
+          id: edgeZAB,
+          kind: "causal",
+          from: nodeZA,
+          to: nodeZB,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+        {
+          id: edgeZBC,
+          kind: "causal",
+          from: nodeZB,
+          to: nodeZC,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+      ],
+      annotations: [],
+      modulators: [],
+    };
+
+    const sim0 = makeInitialSim(chainGraph);
+    const simWithSignals = {
+      ...sim0,
+      signals: [
+        {
+          id: "z-pos",
+          edgeId: edgeZAB,
+          progress: 0.99,
+          strength: 1,
+          hopsRemaining: 3,
+          sign: 1 as const,
+        },
+        {
+          id: "z-neg",
+          edgeId: edgeZAB,
+          progress: 0.99,
+          strength: 1,
+          hopsRemaining: 3,
+          sign: -1 as const,
+        },
+      ],
+    };
+
+    // Act: one step — both signals arrive at B in the same tick
+    const sim1 = step(chainGraph, simWithSignals, 1 / 60);
+
+    // Assert: no signals on B→C (relay suppressed due to zero net)
+    const relaySignals = sim1.signals.filter((s) => s.edgeId === edgeZBC);
+    expect(relaySignals).toHaveLength(0);
+  });
+
+  it("single-sign arrivals at B still relay to C (no regression)", () => {
+    // A single sign=+1 signal arriving at B should relay normally — guard must not
+    // suppress non-cancelling cases.
+    const nodeRA = makeNodeId("RG-A");
+    const nodeRB = makeNodeId("RG-B");
+    const nodeRC = makeNodeId("RG-C");
+    const edgeRAB = makeEdgeId("RG-AB");
+    const edgeRBC = makeEdgeId("RG-BC");
+    const chainGraph: Graph = {
+      nodes: [
+        node(nodeRA, "A"),
+        node(nodeRB, "B", 100),
+        node(nodeRC, "C", 200),
+      ],
+      edges: [
+        {
+          id: edgeRAB,
+          kind: "causal",
+          from: nodeRA,
+          to: nodeRB,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+        {
+          id: edgeRBC,
+          kind: "causal",
+          from: nodeRB,
+          to: nodeRC,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+      ],
+      annotations: [],
+      modulators: [],
+    };
+
+    const sim0 = makeInitialSim(chainGraph);
+    const simWithSignal = {
+      ...sim0,
+      signals: [
+        {
+          id: "rg-pos",
+          edgeId: edgeRAB,
+          progress: 0.99,
+          strength: 1,
+          hopsRemaining: 3,
+          sign: 1 as const,
+        },
+      ],
+    };
+
+    const sim1 = step(chainGraph, simWithSignal, 1 / 60);
+
+    // Relay must have fired: at least one signal on B→C
+    const relaySignals = sim1.signals.filter((s) => s.edgeId === edgeRBC);
+    expect(relaySignals.length).toBeGreaterThan(0);
+  });
+
+  it("opposite-sign signals arriving in different ticks relay independently", () => {
+    // Guard is tick-scoped. A sign=+1 signal arriving in tick N and a sign=-1 arriving
+    // in tick N+1 must each relay — they are not concurrent.
+    const nodeDTA = makeNodeId("DT-A");
+    const nodeDTB = makeNodeId("DT-B");
+    const nodeDTC = makeNodeId("DT-C");
+    const edgeDTAB = makeEdgeId("DT-AB");
+    const edgeDTBC = makeEdgeId("DT-BC");
+    const chainGraph: Graph = {
+      nodes: [
+        node(nodeDTA, "A"),
+        node(nodeDTB, "B", 100),
+        node(nodeDTC, "C", 200),
+      ],
+      edges: [
+        {
+          id: edgeDTAB,
+          kind: "causal",
+          from: nodeDTA,
+          to: nodeDTB,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+        {
+          id: edgeDTBC,
+          kind: "causal",
+          from: nodeDTB,
+          to: nodeDTC,
+          polarity: 1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
+      ],
+      annotations: [],
+      modulators: [],
+    };
+
+    const sim0 = makeInitialSim(chainGraph);
+
+    // Tick 1: only the +1 signal arrives (progress=0.99)
+    const simTick1 = step(
+      chainGraph,
+      {
+        ...sim0,
+        signals: [
+          {
+            id: "dt-pos",
+            edgeId: edgeDTAB,
+            progress: 0.99,
+            strength: 1,
+            hopsRemaining: 3,
+            sign: 1 as const,
+          },
+        ],
+      },
+      1 / 60,
+    );
+
+    // Relay from tick 1 must be present on B→C
+    const relayAfterTick1 = simTick1.signals.filter(
+      (s) => s.edgeId === edgeDTBC,
+    );
+    expect(relayAfterTick1.length).toBeGreaterThan(0);
+
+    // Tick 2: only the -1 signal arrives; relay from tick 1 still travelling
+    const simTick2 = step(
+      chainGraph,
+      {
+        ...simTick1,
+        signals: [
+          ...simTick1.signals,
+          {
+            id: "dt-neg",
+            edgeId: edgeDTAB,
+            progress: 0.99,
+            strength: 1,
+            hopsRemaining: 3,
+            sign: -1 as const,
+          },
+        ],
+      },
+      1 / 60,
+    );
+
+    // Relay from tick 2's -1 arrival must also have fired on B→C
+    const relayAfterTick2 = simTick2.signals.filter(
+      (s) => s.edgeId === edgeDTBC,
+    );
+    expect(relayAfterTick2.length).toBeGreaterThan(0);
+  });
+});

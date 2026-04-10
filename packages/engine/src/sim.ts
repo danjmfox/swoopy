@@ -137,30 +137,53 @@ export function step(graph: Graph, sim: SimState, dt: number): SimState {
   // Relay model (DR--20260401): on arrival, apply value change then fan-out on all
   // outgoing causal edges if hopsRemaining > 0. Weight=N emits N fragments of
   // signal.strength (amplitude model). hopsRemaining decremented per edge traversal.
+  //
+  // Zero-net guard: arrivals are bucketed by target node. If Σ(strength × sign) = 0
+  // for a node in this tick, value changes are applied (and cancel) but relay is
+  // suppressed — no misleading in-flight chevrons for zero net effect.
   const stillTravelling: Signal[] = [];
   const newSignals: Signal[] = [];
   const newPending: PendingSignal[] = [];
+
+  // Pass 1: advance signals; bucket arrivals by target node id.
+  const arrivalsByTarget = new Map<NodeId, Signal[]>();
   for (const s of sim.signals) {
     const advanced = { ...s, progress: s.progress + SIGNAL_SPEED * safeDt };
     if (advanced.progress >= 1) {
       const edge = edgeById.get(s.edgeId);
       if (edge?.kind === "causal") {
-        const prev = nodeValues.get(edge.to) ?? 0;
-        nodeValues.set(edge.to, prev + s.strength * s.sign);
-        if (s.hopsRemaining > 0) {
-          const relay = emitRelayFragments(
-            causalEdgesFrom.get(edge.to) ?? [],
-            s.strength,
-            s.hopsRemaining - 1,
-            effectiveWeights,
-            s.sign,
-          );
-          newSignals.push(...relay.signals);
-          newPending.push(...relay.pending);
-        }
+        const bucket = arrivalsByTarget.get(edge.to) ?? [];
+        bucket.push(s);
+        arrivalsByTarget.set(edge.to, bucket);
       }
     } else {
       stillTravelling.push(advanced);
+    }
+  }
+
+  // Pass 2: per target node — apply value deltas, guard relay on zero net.
+  for (const [targetNodeId, arrivals] of arrivalsByTarget) {
+    // Apply all value changes (they may cancel; that is correct).
+    for (const s of arrivals) {
+      const prev = nodeValues.get(targetNodeId) ?? 0;
+      nodeValues.set(targetNodeId, prev + s.strength * s.sign);
+    }
+    // Guard: suppress relay entirely if net strength × sign sums to zero.
+    const net = arrivals.reduce((sum, s) => sum + s.strength * s.sign, 0);
+    if (net === 0) continue;
+    // Non-zero net: relay each arrived signal independently (unchanged behaviour).
+    for (const s of arrivals) {
+      if (s.hopsRemaining > 0) {
+        const relay = emitRelayFragments(
+          causalEdgesFrom.get(targetNodeId) ?? [],
+          s.strength,
+          s.hopsRemaining - 1,
+          effectiveWeights,
+          s.sign,
+        );
+        newSignals.push(...relay.signals);
+        newPending.push(...relay.pending);
+      }
     }
   }
 
