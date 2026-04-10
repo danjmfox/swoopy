@@ -39,21 +39,23 @@ Key exports:
 `inject(sim, graph, nodeId, strength)`:
 
 1. Change node value by `strength` (unclamped — clamped at next step())
-2. Emit relay fragments on all outgoing causal edges with `hopsRemaining = MAX_HOPS` and `sign = edge.polarity` (signal direction)
+2. Call `computeEffectiveWeights(graph, sim.nodeValues)` to apply Modulator scaling to each edge weight
+3. Emit relay fragments on all outgoing causal edges with `hopsRemaining = MAX_HOPS` and `sign = edge.polarity` (signal direction); use effective weight from step 2
 
 `step()` runs in this order each tick:
 
 1. Resolve constraint edges → compute `effective_min` / `effective_max` per node; pre-clamp values
 2. Snapshot `nodeValues` as `displayPrevNodeValues` (for renderer trend arrows)
-3. Advance all travelling signal progress by `SIGNAL_SPEED × dt`
-4. For each arrived signal (progress ≥ 1):
+3. Call `computeEffectiveWeights(graph, sim.nodeValues)` → per-edge effective weight map (Modulator formula: range-normalise source node value, scale base weight by `2t` or `2(1−t)` depending on Modulator polarity, clamp 0–5)
+4. Advance all travelling signal progress by `SIGNAL_SPEED × dt`
+5. For each arrived signal (progress ≥ 1):
    - Aggregate concurrent arrivals at each node; suppresing relay if net strength is zero (zero-net guard)
    - Apply to destination: `node.value += signal.strength × signal.sign` (sign encodes accumulated polarity)
    - If `signal.hopsRemaining > 0`: emit relay fragments on all outgoing causal edges of
-     the destination node with `hopsRemaining = signal.hopsRemaining - 1` and `sign = arrival.sign × outgoing_edge.polarity`
-5. Re-clamp to effective bounds (arrivals may have pushed values out of range)
-6. Decrement pending queue counters; release zero-count entries into the travelling queue
-7. Cap travelling signal count at `MAX_SIGNALS` (132), preferring highest-progress signals
+     the destination node with `hopsRemaining = signal.hopsRemaining - 1` and `sign = arrival.sign × outgoing_edge.polarity`; use effective weights from step 3
+6. Re-clamp to effective bounds (arrivals may have pushed values out of range)
+7. Decrement pending queue counters; release zero-count entries into the travelling queue
+8. Cap travelling signal count at `MAX_SIGNALS` (132), preferring highest-progress signals
 
 **Relay fragment emission** (shared by inject and step relay):
 
@@ -135,11 +137,21 @@ The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and write
 | Component                    | Responsibility                                                                                                                                                  |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Canvas.tsx`                 | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode; manages pending-modulator state (GE-45) |
-| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher                                                                                                               |
-| `NodePopover.tsx`            | Inline label/min/max/initial editor triggered by double-click                                                                                                   |
+| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher (Select/Add Node/Add Edge/Simulate/Add Annotation/Delete)                                                     |
+| `NodePopover.tsx`            | Inline label/min/max/initial/sizeTier/colourTier/annotation editor triggered by double-click                                                                    |
+| `AnnotationPopover.tsx`      | Inline text editor for free-floating canvas annotation boxes (GE-37)                                                                                            |
 | `EdgeWeightPopover.tsx`      | Inline weight editor triggered by double-click on edge weight region; includes Quick-Fix toggle (GE-41)                                                         |
 | `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor                                                                                  |
 | `ModulatorPolarityBadge`     | Renders polarity badge at Modulator arc midpoint; togglable (emerged from use 2026-04-05)                                                                       |
+| `HistoryOverlay.tsx`         | Toggle via `H` key or toolbar button; two views: table of recent mutations (tick + delta) and SVG line chart of node value trajectories; CSV export button      |
+| `WelcomeOverlay.tsx`         | First-visit overlay; dismissed via "Start building" CTA; sets `swoopy_welcomed` in localStorage                                                                 |
+| `HelpModal.tsx`              | `?` button overlay showing mode descriptions and keyboard shortcut reference; toggleable, Escape-dismissible                                                    |
+
+### History logging
+
+`HistoryLogger` (in `app/src/HistoryLogger.ts`) records per-node value samples into fixed-capacity `Float32Array` ring buffers. `createHistorySubscriber` subscribes to the Zustand store and calls `logger.record()` at `HISTORY_SAMPLE_INTERVAL_TICKS` (60 ticks) while the sim is running. On graph reset or graph change, the logger clears. `exportCSV(graph)` serialises the ring buffers to comma-separated rows — one column per node, one row per sample.
+
+The subscriber is wired in `App.tsx` via `useStore.subscribe`. The `HistoryLogger` instance is stable across renders — React does not own it.
 
 ### Persistence
 
