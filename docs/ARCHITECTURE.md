@@ -19,27 +19,27 @@ The simulation core. Every function is pure: same inputs, same outputs, no side 
 
 Key exports:
 
-| Export                                          | Purpose                                                                                                                     | Details                |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge` | Domain types                                                                                                                |                        |
-| `NodeId`, `EdgeId`                              | Branded primitive types — prevent accidental string substitution                                                            |                        |
-| `SimState`                                      | Snapshot of simulation state: node values, displayPrevNodeValues (renderer trend arrows), travelling signals, pending queue |                        |
-| `makeInitialSim(graph)`                         | Create a clean `SimState` from a graph                                                                                      |                        |
-| `step(graph, sim, dt)`                          | Advance simulation by `dt` seconds; returns new `SimState`                                                                  |                        |
-| `inject(sim, graph, nodeId, strength)`          | Return new `SimState` with node value changed and relay signals emitted on outgoing edges                                   |                        |
-| `serialize(graph)`                              | `Graph` → versioned JSON-compatible value                                                                                   |                        |
-| `deserialize(raw)`                              | Versioned value → `Graph`; throws on unknown version                                                                        |                        |
-| `hitTest(graph, x, y)`                          | Return `HitTarget` or `null`                                                                                                | For canvas coordinates |
-| `bezierPoint`, `controlPoint`                   | Geometry helpers for curve rendering and hit testing                                                                        |                        |
+| Export                                             | Purpose                                                                                                                     | Details                |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `Graph`, `Node`, `CausalEdge`, `ConstraintEdge`, `Modulator` | Domain types                                                                                                                |                        |
+| `NodeId`, `EdgeId`                                 | Branded primitive types — prevent accidental string substitution                                                            |                        |
+| `SimState`                                         | Snapshot of simulation state: node values, displayPrevNodeValues (renderer trend arrows), travelling signals, pending queue |                        |
+| `makeInitialSim(graph)`                            | Create a clean `SimState` from a graph                                                                                      |                        |
+| `step(graph, sim, dt)`                             | Advance simulation by `dt` seconds; returns new `SimState`                                                                  |                        |
+| `inject(sim, graph, nodeId, strength)`             | Return new `SimState` with node value changed and relay signals emitted on outgoing edges                                   |                        |
+| `serialize(graph)`                                 | `Graph` → versioned JSON-compatible value                                                                                   |                        |
+| `deserialize(raw)`                                 | Versioned value → `Graph`; throws on unknown version                                                                        |                        |
+| `hitTest(graph, x, y)`                             | Return `HitTarget` or `null`                                                                                                | For canvas coordinates |
+| `bezierPoint`, `controlPoint`, `bezierTangent`     | Geometry helpers for curve rendering, hit testing, and signal direction visualisation                                       |                        |
 
 ### Simulation step
 
-**Relay propagation model** (DR--20260401). `inject()` starts the signal chain; `step()` advances it.
+**Relay propagation model** (DR--20260401, signal direction DR--20260408). `inject()` starts the signal chain; `step()` advances it.
 
 `inject(sim, graph, nodeId, strength)`:
 
 1. Change node value by `strength` (unclamped — clamped at next step())
-2. Emit relay fragments on all outgoing causal edges with `hopsRemaining = MAX_HOPS`
+2. Emit relay fragments on all outgoing causal edges with `hopsRemaining = MAX_HOPS` and `sign = edge.polarity` (signal direction)
 
 `step()` runs in this order each tick:
 
@@ -47,9 +47,10 @@ Key exports:
 2. Snapshot `nodeValues` as `displayPrevNodeValues` (for renderer trend arrows)
 3. Advance all travelling signal progress by `SIGNAL_SPEED × dt`
 4. For each arrived signal (progress ≥ 1):
-   - Apply to destination: `node.value += signal.strength × edge.polarity`
+   - Aggregate concurrent arrivals at each node; suppresing relay if net strength is zero (zero-net guard)
+   - Apply to destination: `node.value += signal.strength × signal.sign` (sign encodes accumulated polarity)
    - If `signal.hopsRemaining > 0`: emit relay fragments on all outgoing causal edges of
-     the destination node with `hopsRemaining = signal.hopsRemaining - 1`
+     the destination node with `hopsRemaining = signal.hopsRemaining - 1` and `sign = arrival.sign × outgoing_edge.polarity`
 5. Re-clamp to effective bounds (arrivals may have pushed values out of range)
 6. Decrement pending queue counters; release zero-count entries into the travelling queue
 7. Cap travelling signal count at `MAX_SIGNALS` (132), preferring highest-progress signals
@@ -112,28 +113,33 @@ The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and write
 | Action                          | Behaviour                                                                              |
 | ------------------------------- | -------------------------------------------------------------------------------------- |
 | `addNode`                       | Push new node; record in undo stack                                                    |
-| `addEdge`                       | Push new causal edge; deduplicate; record in undo stack                                |
-| `addConstraintEdge`             | Push new constraint edge; deduplicate by kind+pair; record in undo stack               |
-| `deleteNode`                    | Remove node and all connected edges; record in undo stack                              |
-| `moveNode`                      | Update node position; record in undo stack                                             |
-| `nudgeNode`                     | Offset node by dx/dy; record in undo stack                                             |
-| `undo` / `redo`                 | Walk linear history stack                                                              |
-| `tickSim(dt)`                   | Advance sim via `step()`; does not record in undo stack                                |
-| `inject(nodeId, strength)`      | Nudge node value; does not record in undo stack                                        |
-| `focusNextNode`                 | Cycle keyboard focus through nodes                                                     |
-| `setPendingConstraintEdge`      | Open constraint choice dialog                                                          |
-| `confirmConstraintEdge(kind)`   | Commit pending constraint edge as ceiling or floor                                     |
-| `setDragPosition(nodeId, x, y)` | Record cursor position while dragging a node; cleared by `moveNode`; not in undo stack |
+| `addEdge`                       | Push new causal edge; deduplicate by (from, to, isQuickFix); record in undo stack (GE-42: multi-edge per pair when one is QF) |
+| `addConstraintEdge`             | Push new constraint edge; deduplicate by kind+pair; record in undo stack                                                    |
+| `deleteNode`                    | Remove node and all connected edges; record in undo stack                                                                   |
+| `moveNode`                      | Update node position; record in undo stack                                                                                  |
+| `nudgeNode`                     | Offset node by dx/dy; record in undo stack                                                                                 |
+| `undo` / `redo`                 | Walk linear history stack                                                                                                  |
+| `tickSim(dt)`                   | Advance sim via `step()`; does not record in undo stack                                                                    |
+| `inject(nodeId, strength)`      | Nudge node value; does not record in undo stack                                                                            |
+| `focusNextNode`                 | Cycle keyboard focus through nodes                                                                                        |
+| `setPendingConstraintEdge`      | Open constraint choice dialog                                                                                              |
+| `confirmConstraintEdge(kind)`   | Commit pending constraint edge as ceiling or floor                                                                         |
+| `setPendingModulator`           | Enter pending-modulator state (GE-45); user clicks source node to create modulator                                         |
+| `addModulator`                  | Create modulator edge from source to target causal edge; record in undo stack (GE-44, GE-45)                              |
+| `toggleQuickFix(edgeId)`        | Toggle isQuickFix flag; prevented if QF edge already exists for the pair (GE-41)                                          |
+| `toggleModulatorPolarity(id)`   | Toggle Modulator between +1 and -1 (emerged from use 2026-04-05)                                                          |
+| `setDragPosition(nodeId, x, y)` | Record cursor position while dragging a node; cleared by `moveNode`; not in undo stack                                     |
 
 ### UI components
 
 | Component                    | Responsibility                                                                                                         |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `Canvas.tsx`                 | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode |
-| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher                                                                      |
-| `NodePopover.tsx`            | Inline label/min/max/initial editor triggered by double-click                                                          |
-| `EdgeWeightPopover.tsx`      | Inline weight editor triggered by double-click on edge weight region                                                   |
-| `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor                                         |
+| `Canvas.tsx`                 | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode; manages pending-modulator state (GE-45) |
+| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher                                                                              |
+| `NodePopover.tsx`            | Inline label/min/max/initial editor triggered by double-click                                                                  |
+| `EdgeWeightPopover.tsx`      | Inline weight editor triggered by double-click on edge weight region; includes Quick-Fix toggle (GE-41)                        |
+| `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor                                                 |
+| `ModulatorPolarityBadge`     | Renders polarity badge at Modulator arc midpoint; togglable (emerged from use 2026-04-05)                                      |
 
 ### Persistence
 

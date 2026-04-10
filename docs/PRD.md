@@ -32,7 +32,9 @@ The tool is specifically designed to surface the system dynamics that defeat com
 - **Balancing loops** — self-correcting behaviour; the system resists change
 - **Delay** — cause and effect are separated in time; consequences appear long after decisions
 - **Saturation** — stocks have limits; what happens at the boundary matters
+- **Polarity propagation** — a signal's direction accumulates through the causal chain; the arrow flips at balancing edges and stays with the cause downstream
 - **Interaction between loops** — reinforcing and balancing loops in the same system produce non-obvious stable and unstable states
+- **Quick-fix traps** — rapid-response interventions (quick-fix edges) produce fast positive change followed by slow negative unintended consequences (tracked on separate parallel edges)
 
 These are the dynamics behind Senge's eleven laws, Weinberg-Brooks' Law, and the "faster is slower" pattern described in the LeSS systems thinking principle.
 
@@ -73,13 +75,11 @@ These elements are communicative rather than computational — they label intent
 
 **Goals.** In LeSS diagrams, goals appear as callout annotations — "higher feature velocity" labelling a pressure arrow. They are non-dynamic: they don't receive signals or change value. In this tool they would be a labelled callout shape attached to a node or edge, rendered on canvas but invisible to `step()`.
 
-**Quick-fix markers.** A 'QF' label on a causal link indicating a reaction chosen for speed over systemic effect. Static annotation.
-
 **Assumption / mental model notes.** The LeSS First Law of Diagramming — "model to have a conversation" — specifically calls for surfacing assumptions on the diagram. A free-text note attached to any element is the minimum viable implementation.
 
 **Delay human-scale labels.** The || marks already communicate delay visually; a small text label showing "days / weeks / months" next to the marks would make the human-scale mapping explicit without requiring the modeller to explain it verbally.
 
-These four annotation types are **v2 candidates** — they share a common implementation pattern (positioned text + canvas hit target) and can be designed as a single annotation layer without touching the engine.
+These three annotation types are **v2 candidates** — they share a common implementation pattern (positioned text + canvas hit target) and can be designed as a single annotation layer without touching the engine.
 
 #### Measurement dysfunction
 
@@ -125,9 +125,9 @@ Tertiary users are developers building on or extending the tool.
 - Export to image or data formats
 - Mobile touch optimisation (canvas interactions are pointer-based)
 - Trend overlay (value-over-time chart per node)
-- Annotation layer: goals, assumptions, quick-fix markers, delay labels _(v2 candidate)_
+- Annotation layer: goals, assumptions, delay labels _(v2 candidate)_
 - Flow / rate-of-change constraints _(v2 candidate)_
-- Interaction effects / edge modulation _(v2/v3 candidate)_
+- Transfer functions (non-linear relationships) _(v2/v3 candidate)_
 - Threshold reactions and goal modelling _(v2/v3 candidate)_
 - Measurement dysfunction modelling _(v3 candidate)_
 
@@ -206,6 +206,8 @@ Tertiary users are developers building on or extending the tool.
 | SI-17 | A global simulation speed multiplier is always visible in the toolbar, allowing the modeller to compress or expand perceived time without changing delay constants                                                                                              |
 | SI-18 | Each node displays a persistent trend indicator (▲/▼/blank) in a fixed position below the node label; the label position does not shift between stable and active trend states — emerged from use 2026-03-31                                                    |
 | SI-19 | Delay queue state is visualised as an arc on the left side of the node, mirroring the stock arc on the right; the arc encodes pending signal mass and replaces the timebomb dot — emerged from use 2026-03-31                                                   |
+| SI-20 | Signal direction is visualised as a directional chevron on signal particles; chevron points up (positive, +1) or down (negative, −1) and animates the polarity flip when a signal crosses a balancing edge (DR--20260408--engine--signal-direction)            |
+| SI-21 | When multiple signals arrive at a node in the same step and their net strength is zero, relay propagation is suppressed for that arrival; only the balancing effect is applied without downstream fan-out (zero-net guard)                                    |
 
 ### 4.3 Serialisation
 
@@ -358,10 +360,12 @@ interface Node {
 2. Snapshot `nodeValues` as `displayPrevNodeValues` (renderer trend arrows read this)
 3. Advance all signal progress values by `SIGNAL_SPEED × dt`
 4. For each arrived signal (progress ≥ 1):
-   - Apply to destination: `node.value += signal.strength × edge.polarity`
+   - Aggregate concurrent arrivals; if net strength sums to zero, suppress relay propagation (zero-net guard, SI-21)
+   - Apply to destination: `node.value += signal.strength × signal.sign` (sign already encodes accumulated polarity chain)
    - If `signal.hopsRemaining > 0`: emit relay fragments on all outgoing causal edges of the
-     destination with `hopsRemaining = signal.hopsRemaining − 1` (relay propagation model —
-     DR--20260401--engine--relay-propagation-model)
+     destination with `hopsRemaining = signal.hopsRemaining − 1` and `sign = arrival.sign × outgoing_edge.polarity` (relay propagation model —
+     DR--20260401--engine--relay-propagation-model; signal direction —
+     DR--20260408--engine--signal-direction)
 5. Clamp all node values to their effective max and min as recomputed from current constraint source values
    - _(Re-clamping here is necessary: arrivals in step 4 may have pushed values outside the constrained range)_
 6. Decrement pending queue counters by 1; release signals whose counter reaches 0 into the travelling queue
@@ -395,7 +399,7 @@ Tick constants are named and committed alongside a comment explaining the intend
 
 ### 7.4 inject(sim, graph, nodeId, strength) → SimState
 
-Returns a new SimState with the node's value incremented by strength and relay fragments emitted on all outgoing causal edges with `hopsRemaining = MAX_HOPS`. Clamping to [min, max] is applied at the end of the next `step()` call.
+Returns a new SimState with the node's value incremented by strength and relay fragments emitted on all outgoing causal edges with `hopsRemaining = MAX_HOPS` and `sign = edge.polarity` (at injection, sign mirrors the immediate edge's polarity direction). Clamping to [min, max] is applied at the end of the next `step()` call.
 
 ### 7.5 Transfer functions (future extension point)
 
@@ -416,6 +420,7 @@ interface CausalEdge {
   readonly polarity: 1 | -1;
   readonly weight: number; // 0–5; see DR--20260328--engine--weight-range-expansion
   readonly delay: DelayLevel; // default 'none'
+  readonly isQuickFix?: boolean; // GE-41, GE-42: QF edges render dashed; at most one QF per node pair
   readonly transferFn: "linear"; // v1 only; extended in future
 }
 
@@ -430,6 +435,17 @@ interface ConstraintEdge {
 
 type Edge = CausalEdge | ConstraintEdge;
 
+interface Modulator {
+  readonly id: EdgeId;
+  readonly sourceNodeId: NodeId;
+  readonly targetEdgeId: EdgeId; // the edge being modulated
+  readonly polarity: 1 | -1; // +1: source increasing amplifies edge; −1: source increasing suppresses edge
+  // Effective weight formula (range-normalised per DR--20260405--engine--modulator-effective-weight-formula):
+  // t = (nodeValue − node.min) / (node.max − node.min)
+  // polarity +1: effectiveWeight = clamp(baseWeight × 2t, 0, 5)
+  // polarity −1: effectiveWeight = clamp(baseWeight × 2(1 − t), 0, 5)
+}
+
 interface PendingSignal {
   readonly signal: Signal;
   readonly ticksRemaining: number;
@@ -440,6 +456,7 @@ interface Signal {
   readonly edgeId: EdgeId;
   readonly progress: number;
   readonly strength: number;
+  readonly sign: 1 | -1; // direction: accumulated polarity chain from injection point (DR--20260408--engine--signal-direction)
   readonly hopsRemaining: number; // decremented per edge traversal; relay stops at 0
 }
 
