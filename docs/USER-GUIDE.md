@@ -21,13 +21,14 @@ A model has two elements:
 
 The toolbar at the bottom of the screen controls what your mouse does. The active mode is shown in the toolbar.
 
-| Mode         | What clicking / dragging does                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| **Select**   | Click a node or edge to select it. Drag a node to reposition it. Double-click to configure.                         |
-| **Add Node** | Click empty canvas to create a node. Double-click an existing node to rename or configure it.                       |
-| **Add Edge** | Drag from one node to another to draw a causal edge. Hold **Alt** while dragging to draw a constraint edge instead. |
-| **Simulate** | Click a node to inject a positive signal. Shift-click to inject a negative one.                                     |
-| **Delete**   | Click a node or edge to remove it. Deleting a node removes all its connected edges.                                 |
+| Mode               | Key | What clicking / dragging does                                                                                       |
+| ------------------ | --- | ------------------------------------------------------------------------------------------------------------------- |
+| **Select**         | `S` | Click a node or edge to select it. Drag a node to reposition it. Double-click to configure.                         |
+| **Add Node**       | `N` | Click empty canvas to create a node. Double-click an existing node to rename or configure it.                       |
+| **Add Edge**       | `E` | Drag from one node to another to draw a causal edge. Hold **Alt** while dragging to draw a constraint edge instead. |
+| **Simulate**       | `R` | Click a node to inject a positive signal. Shift-click to inject a negative one.                                     |
+| **Add Annotation** | `A` | Click empty canvas to place a free-floating text box. Drag to reposition in Select mode.                            |
+| **Delete**         | `D` | Click a node or edge to remove it. Deleting a node removes all its connected edges.                                 |
 
 ---
 
@@ -41,12 +42,15 @@ Switch to **Add Node** mode, then click the canvas. A node appears with a defaul
 
 Double-click any node (in any mode) to open its popover:
 
-| Field   | Meaning                                                      |
-| ------- | ------------------------------------------------------------ |
-| Label   | What this variable is called                                 |
-| Min     | The lowest value this variable can reach                     |
-| Max     | The highest value it can reach                               |
-| Initial | Where it starts; also the value restored by the Reset button |
+| Field      | Meaning                                                                                         |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| Label      | What this variable is called                                                                    |
+| Min        | The lowest value this variable can reach                                                        |
+| Max        | The highest value it can reach                                                                  |
+| Initial    | Where it starts; also the value restored by the Reset button                                    |
+| Size       | Display radius: XS / S / M (default) / L / XL                                                  |
+| Colour     | Identity colour: blue (default) / green / red / orange / yellow / teal / purple / grey          |
+| Annotation | Short label (max ~24 chars) shown below the node circle — useful for units, context, or caveats |
 
 ### Draw a causal edge
 
@@ -116,6 +120,21 @@ The chevron direction shows the accumulated effect through the causal chain. Whe
 
 ---
 
+## History overlay
+
+Press `H` (or click the history button in the toolbar) to open the simulation history overlay. It has two views:
+
+| View        | Content                                                                                       |
+| ----------- | --------------------------------------------------------------------------------------------- |
+| **Table**   | Recent mutations with the simulation tick and the value delta per event                       |
+| **Graph**   | SVG line chart showing each node's value over time, sampled while the simulation was running  |
+
+The **Export CSV** button downloads a spreadsheet of node value samples — one column per node, one row per sample tick.
+
+The history clears whenever the simulation is reset or the graph structure changes.
+
+---
+
 ## Reading the visuals
 
 ### Node colour
@@ -165,15 +184,7 @@ A `⌈` label on a dashed line means ceiling constraint. A `⌊` means floor con
 
 ### Mode shortcuts
 
-These work anywhere — no canvas focus required.
-
-| Key | Mode           |
-| --- | -------------- |
-| `S` | Select         |
-| `N` | Add Node       |
-| `E` | Add Edge       |
-| `R` | Simulate (Run) |
-| `D` | Delete         |
+Mode keys work anywhere — no canvas focus required. See the [Modes table](#modes) above for the full list (`S` / `N` / `E` / `R` / `A` / `D`).
 
 ### Canvas shortcuts
 

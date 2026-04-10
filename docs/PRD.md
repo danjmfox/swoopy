@@ -174,7 +174,7 @@ Tertiary users are developers building on or extending the tool.
 | GE-35 | User can assign one of eight named colour tiers (blue/green/red/orange/yellow/teal/purple/grey) to a node in the node editor popover; the tier is the node's identity colour; node fill interpolates from a faint tint (value=min) to a saturated shade (value=max) in the chosen colour, replacing the hardcoded blue→red activation gradient; picker renders filled circle swatches adjacent to size picker; default tier is blue; serialisation v3 migration: `colourTier ?? 'blue'` — emerged from use 2026-04-02 (DR--20260402--app--node-visual-property-tiers) |
 | GE-36 | Each node has an optional annotation string (max 24 chars displayed, truncated with ellipsis); editable via the node editor popover; rendered below the node circle in a muted style — emerged from use 2026-04-02                                                                                                                                                                                                                                                                                                                                                    |
 | GE-37 | User can place free-floating text annotation boxes on the canvas in Add Annotation mode (A key); boxes can be moved by dragging in Select mode, edited via double-click popover, and deleted in Delete mode; stored as `Graph.annotations`; serialisation v3 migration adds `annotations: []` — emerged from use 2026-04-02                                                                                                                                                                                                                                           |
-| GE-38 | An H key and a toolbar button toggle a history overlay showing recent model mutations; the overlay is closeable via the same controls or Escape — emerged from use 2026-04-03                                                                                                                                                                                                                                                                                                                                                                                         |
+| GE-38 | An H key and a toolbar button toggle a simulation history overlay; the overlay is closeable via the same controls or Escape; it includes a CSV export action that downloads node value samples as a spreadsheet — emerged from use 2026-04-03                                                                                                                                                                                                                                                                                                                                                                                         |
 | GE-39 | The history overlay has two views toggled by [Table] / [Graph] buttons: a table listing recent mutations with tick and delta, and an SVG line chart showing node value trajectories over time — emerged from use 2026-04-03                                                                                                                                                                                                                                                                                                                                           |
 | GE-40 | A `historySeq` counter increments on every mutation that should appear in the history overlay; subscribers use it to detect when to refresh; the counter is distinct from the undo stack — emerged from use 2026-04-03                                                                                                                                                                                                                                                                                                                                                |
 | GE-41 | Causal edges can be flagged as Quick Fix (QF); QF edges are rendered with a dashed line, a `QF` label, and participate in parallel-edge offset logic; the QF flag is togglable; toggling to QF is prevented if a QF edge already exists between the same pair — emerged from use 2026-04-04                                                                                                                                                                                                                                                                           |
@@ -226,15 +226,16 @@ Tertiary users are developers building on or extending the tool.
 
 ### 4.4 Modes
 
-The editor operates in one of five mutually exclusive modes. Mode is always visible in the toolbar.
+The editor operates in one of six mutually exclusive modes. Mode is always visible in the toolbar.
 
-| Mode     | Behaviour                                                                                                                                                                                |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Select   | Click to select a node or edge. Drag a node to reposition it. Double-click a node to open its config popover. Double-click an edge badge/region to configure polarity, delay, or weight. |
-| Add Node | Click empty canvas to create a node. Double-click an existing node to open its config popover.                                                                                           |
-| Add Edge | Drag from node to node to create an edge. Double-click edge regions to configure.                                                                                                        |
-| Simulate | Click node to inject positive signal. Shift-click to inject negative. Double-click has no effect.                                                                                        |
-| Delete   | Click a node to remove it and its edges. Click an edge to remove it.                                                                                                                     |
+| Mode           | Key | Behaviour                                                                                                                                                                                |
+| -------------- | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Select         | `S` | Click to select a node or edge. Drag a node to reposition it. Double-click a node to open its config popover. Double-click an edge badge/region to configure polarity, delay, or weight. |
+| Add Node       | `N` | Click empty canvas to create a node. Double-click an existing node to open its config popover.                                                                                           |
+| Add Edge       | `E` | Drag from node to node to create an edge. Double-click edge regions to configure.                                                                                                        |
+| Simulate       | `R` | Click node to inject positive signal. Shift-click to inject negative. Double-click has no effect.                                                                                        |
+| Add Annotation | `A` | Click empty canvas to place a free-floating text annotation box (GE-37). Moveable in Select mode; deletable in Delete mode.                                                              |
+| Delete         | `D` | Click a node to remove it and its edges. Click an edge to remove it.                                                                                                                     |
 
 #### GE-32 — Transient / spring-loaded mode switching (emerged from use)
 
@@ -344,6 +345,9 @@ interface Node {
   readonly min: number; // default 0
   readonly max: number; // default 10
   readonly initial: number; // reset value (used by makeInitialSim and Reset button); default 0
+  readonly sizeTier: SizeTier; // 'xs'|'s'|'m'|'l'|'xl' — controls display radius; default 'm' (GE-34)
+  readonly colourTier: ColourTier; // 'blue'|'green'|'red'|'orange'|'yellow'|'teal'|'purple'|'grey'; default 'blue' (GE-35)
+  readonly annotation?: string; // optional short label below node circle; max ~24 chars displayed (GE-36)
 }
 ```
 

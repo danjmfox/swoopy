@@ -55,11 +55,12 @@ pnpm typecheck
 
 Swoopy implements a signal-propagation simulation over a directed graph:
 
-- **Nodes** — variables with a label and a `[min, max]` value range
-- **Causal edges** — directed links with reinforcing `+` or balancing `−` polarity, adjustable weight, and delay; can be flagged as Quick-Fix for fast-acting short-term interventions
+- **Nodes** — variables with a label, a `[min, max]` value range, a size tier (XS–XL), a colour tier, and an optional short annotation
+- **Causal edges** — directed links with reinforcing `+` or balancing `−` polarity, adjustable weight (0–5), and delay level; can be flagged as Quick-Fix for fast-acting short-term interventions that run on a parallel path
 - **Constraint edges** — dynamic bounds: a ceiling caps a target's effective maximum; a floor raises its effective minimum
-- **Modulators** — interaction effects where a source node scales the strength of a causal edge, with polarity controlling amplification or suppression
-- **Signals** — packets of activation that travel along edges, carrying positive or negative strength and directional information; direction accumulates through the causal chain (chevron animates polarity flip at balancing edges)
+- **Modulators** — interaction effects where a source node scales the strength of a causal edge using a range-normalised formula; polarity controls amplification or suppression
+- **Signals** — packets of activation that travel along edges, carrying positive or negative strength (`sign = ±1`); sign accumulates through the causal chain (chevron animates the polarity flip at balancing edges)
+- **Annotations** — free-floating text labels placed anywhere on the canvas for context, assumptions, or goals
 
 The simulation is deliberately imprecise. Node values are qualitative proxies, not measurements. This keeps the tool accessible and prevents false confidence in quantitative outputs.
 
@@ -68,30 +69,14 @@ The simulation is deliberately imprecise. Node values are qualitative proxies, n
 ## Known limitations
 
 - **Non-linear relationships:** Relationships are currently linear (strength × weight × sign). Modulators are the first step toward richer transfer functions (sigmoid, threshold, exponential) that could model tipping points and saturating relationships. Full transfer functions are deferred to v2.
-- Can't "Name" a model. Name should be reflected in the page title and on the Canvas
-- Delay indicators are lost in 5x edges. Need to scale or be otherwise distinct.
-- Run mode prevents model edits:
-  - Delete should not work in Run mode
-  - Change edge polarity should not work in Run mode.
-  - note the sim stays running in other modes which do allow edits. this is good. Live edits on a running sim is good for discovery, especially with undo feature.
-  - Stock changes are allowed in run mode
-- No mobile touch optimisation
-- No export to image or data formats
-- No flow / rate-of-change constraints — v2 candidate
-- No multiplayer or shared sessions
-- Notion of levers: some things you can't directly influence, but some you can, so mark levers explicitly, and prevent signal injection in non-levers.
-- Goal and belief annotations
-- A welcome model with annotations describing how to use it
-- example models for each behaviour
-- zoom in/out of canvas
-- import from Loopy
-- batch entry for node names
-- image export
-- mermaid export?
-- Activity/Debug logs?
-- o ("opposing" syntax)
-- inclusion of running models in html pages, e.g. the MODELS page, sitting alongs supporting text discussion.
-- A Config screen, allowing edits for all current "constants"
+- **Run mode edits:** Delete and polarity-toggle are not prevented in Simulate mode — this is intentional (live edits on a running sim aid discovery), but undocumented and may surprise users.
+- **Delay indicators** can be hard to read on high-weight (5×) edges where the line is thick.
+- **No mobile touch optimisation** — canvas interactions are pointer-based only.
+- **No export to image** — data export as CSV is available via the History overlay.
+- **No flow / rate-of-change constraints** — ceiling/floor cap values, not rates; flow constraints are a v2 candidate.
+- **No multiplayer or shared sessions.**
+- **No model naming** — the page title and canvas do not reflect a user-assigned model name.
+- **No zoom** — canvas is fixed-viewport; large models require scrolling or small nodes.
 
 ---
 
