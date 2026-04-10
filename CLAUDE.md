@@ -1,3 +1,5 @@
+# CLAUDE.md for Swoopy
+
 ## graphify
 
 This project has a graphify knowledge graph at graphify-out/.

@@ -206,8 +206,8 @@ Tertiary users are developers building on or extending the tool.
 | SI-17 | A global simulation speed multiplier is always visible in the toolbar, allowing the modeller to compress or expand perceived time without changing delay constants                                                                                              |
 | SI-18 | Each node displays a persistent trend indicator (▲/▼/blank) in a fixed position below the node label; the label position does not shift between stable and active trend states — emerged from use 2026-03-31                                                    |
 | SI-19 | Delay queue state is visualised as an arc on the left side of the node, mirroring the stock arc on the right; the arc encodes pending signal mass and replaces the timebomb dot — emerged from use 2026-03-31                                                   |
-| SI-20 | Signal direction is visualised as a directional chevron on signal particles; chevron points up (positive, +1) or down (negative, −1) and animates the polarity flip when a signal crosses a balancing edge (DR--20260408--engine--signal-direction)            |
-| SI-21 | When multiple signals arrive at a node in the same step and their net strength is zero, relay propagation is suppressed for that arrival; only the balancing effect is applied without downstream fan-out (zero-net guard)                                    |
+| SI-20 | Signal direction is visualised as a directional chevron on signal particles; chevron points up (positive, +1) or down (negative, −1) and animates the polarity flip when a signal crosses a balancing edge (DR--20260408--engine--signal-direction)             |
+| SI-21 | When multiple signals arrive at a node in the same step and their net strength is zero, relay propagation is suppressed for that arrival; only the balancing effect is applied without downstream fan-out (zero-net guard)                                      |
 
 ### 4.3 Serialisation
 

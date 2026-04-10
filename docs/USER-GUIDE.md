@@ -54,11 +54,11 @@ Switch to **Add Edge** mode, then drag from one node to another. The arrow direc
 
 A new edge is reinforcing (`+`) by default. To configure it:
 
-| Region on the edge                         | Double-click action                                                                                      |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| Polarity badge (`+` / `−`) at the midpoint | Toggle reinforcing / balancing                                                                           |
-| Delay marks (if any) — left of centre      | Cycle delay: none → `‖` (days) → `‖‖` (weeks) → `‖‖‖` (months) → none                                    |
-| Weight region — right of centre            | Open weight popover (0–5); default 1.0; higher weight = stronger signal                                  |
+| Region on the edge                         | Double-click action                                                     |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| Polarity badge (`+` / `−`) at the midpoint | Toggle reinforcing / balancing                                          |
+| Delay marks (if any) — left of centre      | Cycle delay: none → `‖` (days) → `‖‖` (weeks) → `‖‖‖` (months) → none   |
+| Weight region — right of centre            | Open weight popover (0–5); default 1.0; higher weight = stronger signal |
 
 **Quick-Fix edges:** an edge with a dashed line and a `QF` label marks a fast-acting but potentially problematic intervention. Quick-Fix edges are rendered offset from the normal edge if a node pair has both. To mark an edge as quick-fix, toggle the `QF` flag in the weight popover.
 
@@ -137,9 +137,9 @@ A small arrow inside the node label area shows the recent direction of change:
 
 An arc on the **left** side of the node ring shows signals that are currently queued at delayed outgoing edges. These are signals that have been emitted but are waiting for their delay period (days, weeks, or months) to expire.
 
-| Colour | Meaning                                                              |
-| ------ | -------------------------------------------------------------------- |
-| Amber  | Signals are queued and waiting to be released                        |
+| Colour | Meaning                                                             |
+| ------ | ------------------------------------------------------------------- |
+| Amber  | Signals are queued and waiting to be released                       |
 | Red    | The queued signal mass exceeds the node's maximum value (a backlog) |
 
 ### Edge dimming
