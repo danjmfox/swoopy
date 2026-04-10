@@ -1,23 +1,24 @@
 ---
 id: DR--20260408--engine--signal-direction
-dateCreated: '2026-04-08'
+dateCreated: "2026-04-08"
 version: 1.0.0
 status: accepted
 changeType: creation
 domain: engine
 slug: signal-direction
 changelog:
-  - date: '2026-04-08'
+  - date: "2026-04-08"
     note: Initial creation
-  - date: '2026-04-08'
+  - date: "2026-04-08"
     note: Marked as draft
-  - date: '2026-04-08'
+  - date: "2026-04-08"
     note: Marked as proposed
-  - date: '2026-04-08'
+  - date: "2026-04-08"
     note: Marked as accepted
-lastEdited: '2026-04-08'
-dateAccepted: '2026-04-08'
+lastEdited: "2026-04-08"
+dateAccepted: "2026-04-08"
 ---
+
 # Signal Direction as First-Class Engine Property
 
 ## 🧭 Context
@@ -41,6 +42,7 @@ via +1 edges, when correct semantics require it to _decrease_ them (B went down;
 from B→C, C should also go down).
 
 Concrete example: A→B (−1) → B→C (+1). Inject A.
+
 - Hop 1: B decreases ✓ (strength × −1)
 - Hop 2 (current): C increases ✗ (strength × +1 — relay ignores that B decreased)
 - Hop 2 (correct): C decreases ✓ (B decreased, +1 edge means C tracks B)
@@ -50,11 +52,11 @@ the trust that is the tool's entire value.
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-| ------ | ----------- | -------- | --------- |
-| A | Keep Signal as-is; infer direction at render time by walking polarity chain | Rejected | Renderer must understand relay semantics (coupling violation); expensive per-frame; does not fix semantic gap |
-| B | Add `sign: 1 \| -1` to Signal for visual purposes only; math unchanged | Rejected | Visual arrows may contradict actual multi-hop effects — worse than no arrows for a teaching tool |
-| C | Add `sign: 1 \| -1` to Signal; incorporate into relay math | **Accepted** | Correct semantics and correct visual; single source of truth |
+| Option | Description                                                                 | Outcome      | Rationale                                                                                                     |
+| ------ | --------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
+| A      | Keep Signal as-is; infer direction at render time by walking polarity chain | Rejected     | Renderer must understand relay semantics (coupling violation); expensive per-frame; does not fix semantic gap |
+| B      | Add `sign: 1 \| -1` to Signal for visual purposes only; math unchanged      | Rejected     | Visual arrows may contradict actual multi-hop effects — worse than no arrows for a teaching tool              |
+| C      | Add `sign: 1 \| -1` to Signal; incorporate into relay math                  | **Accepted** | Correct semantics and correct visual; single source of truth                                                  |
 
 ## 🧠 Decision
 
@@ -62,23 +64,29 @@ Add `sign: 1 | -1` to `Signal`. Incorporate sign into relay propagation so that 
 accumulates through the relay chain:
 
 **At injection** — for each outgoing signal on edge E (polarity P):
-```
+
+```text
 signal.sign = P
 ```
+
 (An increase at the source node produces an increase at the destination for +1 edges, a decrease
 for −1 edges.)
 
 **At relay** — when a signal with sign S arrives at node B via incoming edge, and a new relay
 signal is emitted on outgoing edge E (polarity Q):
-```
+
+```text
 relay.sign = S × Q
 ```
+
 (The accumulated direction of the chain determines the direction of the next hop.)
 
 **Arrival effect** — replace `nodeValues += strength × edge.polarity` with:
-```
+
+```text
 nodeValues += strength × sign
 ```
+
 (Sign already encodes the accumulated polarity chain; no additional multiplication needed.)
 
 This preserves existing single-hop correctness (injection sign = edge.polarity → same math as
@@ -142,14 +150,15 @@ with MAX_HOPS and the signal cap. Advance to Proposed after characterisation res
 Run: `node --experimental-strip-types packages/engine/src/characterise-relay.ts`
 Formula: new (sign-carrying relay, Option C)
 
-| Scenario | hops=3 | hops=5 | hops=8 | hops=13 |
-|---|---|---|---|---|
-| Reinforcing A→B→A (+/+) | PARTIAL | PARTIAL | SATURATE ✓ | SATURATE ✓ |
-| Balancing A→B→A (+/-) | CORRECT ✓ | CORRECT ✓ | CORRECT ✓ | CORRECT ✓ |
-| Diamond A→B→D(+)/A→C→D(-) | BOTH-PATHS ✓ | BOTH-PATHS ✓ | BOTH-PATHS ✓ | BOTH-PATHS ✓ |
-| Polarity chain A→B(−1)→C(+1) | CHAIN-OK ✓ | CHAIN-OK ✓ | CHAIN-OK ✓ | CHAIN-OK ✓ |
+| Scenario                     | hops=3       | hops=5       | hops=8       | hops=13      |
+| ---------------------------- | ------------ | ------------ | ------------ | ------------ |
+| Reinforcing A→B→A (+/+)      | PARTIAL      | PARTIAL      | SATURATE ✓   | SATURATE ✓   |
+| Balancing A→B→A (+/-)        | CORRECT ✓    | CORRECT ✓    | CORRECT ✓    | CORRECT ✓    |
+| Diamond A→B→D(+)/A→C→D(-)    | BOTH-PATHS ✓ | BOTH-PATHS ✓ | BOTH-PATHS ✓ | BOTH-PATHS ✓ |
+| Polarity chain A→B(−1)→C(+1) | CHAIN-OK ✓   | CHAIN-OK ✓   | CHAIN-OK ✓   | CHAIN-OK ✓   |
 
 **Findings:**
+
 - All existing scenarios produce identical results to the prior characterisation (DR--20260401) — new formula is backward-compatible for single-polarity and symmetric chains.
 - Polarity chain scenario: B=4.00 (decreased from 5 via sign −1), C=4.00 (decreased from 5 via sign −1 × +1 = −1). Formula is semantically correct.
 - MAX_HOPS=8 remains the recommendation (reinforcing loop requires 8 hops to saturate; lower values produce PARTIAL).

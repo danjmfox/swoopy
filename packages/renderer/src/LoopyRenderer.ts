@@ -20,7 +20,6 @@ import {
   bezierPoint,
   controlPoint,
   edgeEndpoints,
-  BOW,
   edgeBow,
   T_DELAY,
   T_POLARITY,

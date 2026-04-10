@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, act } from "@testing-library/react";
 import { useStore } from "./store.ts";
 import { seedGraph } from "./seed.ts";
-import { makeInitialSim, inject, makeEdgeId, makeNodeId } from "@swoopy/engine";
+import { makeInitialSim, inject, makeEdgeId } from "@swoopy/engine";
 
 import { ConstraintChoiceDialog } from "./ConstraintChoiceDialog.tsx";
 

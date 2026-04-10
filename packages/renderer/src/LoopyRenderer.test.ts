@@ -784,9 +784,8 @@ describe("LoopyRenderer", () => {
     renderer.start();
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
-    // nodeB is at x=300,y=100,r=30; edge goes left→right so x2=270,y2=100
-    const x2 = 270,
-      y2 = 100;
+    // nodeB is at x=300,y=100,r=30; edge goes left→right so x2=270
+    const x2 = 270;
     const strokeCurve = quadCurves[0]!;
     expect(strokeCurve.ex).not.toBeCloseTo(x2, 0);
     expect(strokeCurve).toBeDefined();

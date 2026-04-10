@@ -35,8 +35,6 @@ describe("AnnotationPopover", () => {
     const textarea = screen.getByRole("textbox");
     fireEvent.change(textarea, { target: { value: "my note" } });
     fireEvent.click(screen.getByRole("button", { name: /save/i }));
-    const { graph, editingAnnotationId } = useStore.getState();
-    const ann = graph.annotations.find((a) => a.id === editingAnnotationId);
     // editingAnnotationId should be cleared after save
     expect(useStore.getState().editingAnnotationId).toBeNull();
   });
