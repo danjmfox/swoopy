@@ -4,5 +4,6 @@
     { "path": "packages/engine" },
     { "path": "packages/renderer" },
     { "path": "packages/app" }
-  ]
+  ],
+  "exclude": ["node_modules", "graphify-out"]
 }

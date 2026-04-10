@@ -9,6 +9,7 @@ export default tseslint.config(
       "**/*.js",
       "packages/engine/src/characterise.ts",
       "packages/engine/src/characterise-relay.ts",
+      "graphify-out"
     ],
   },
   tseslint.configs.recommended,

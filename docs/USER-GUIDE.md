@@ -120,17 +120,11 @@ The chevron direction shows the accumulated effect through the causal chain. Whe
 
 ### Node colour
 
-Nodes shift from blue (low value) through to warm red (high value), relative to their `[min, max]` range.
+Nodes use a specific identity colour (e.g., blue, green, teal, purple) set in the configuration popover. The node fill interpolates from a faint tint at minimum value to a saturated shade at maximum value.
 
 ### Stock arc
 
-A thin arc around the inside of each node ring shows the node's current value as a proportion of its range:
-
-| Colour | Meaning                                                 |
-| ------ | ------------------------------------------------------- |
-| Green  | Value is in the lower quarter of its range              |
-| Yellow | Value is in the middle of its range                     |
-| Orange | Value is in the upper quarter — approaching its maximum |
+A thin arc on the **right** side of each node ring shows the current value as a proportion of its `[min, max]` range.
 
 ### Trend arrow
 
@@ -139,9 +133,14 @@ A small arrow inside the node label area shows the recent direction of change:
 - `▲` — value is rising
 - `▼` — value is falling
 
-### Timebomb dot
+### Delay arc
 
-An orange dot in the upper-right of a node means signals are queued at a delayed outgoing edge — they have been emitted but not yet released. The brighter the dot, the more signal is banked up. Expect a delayed effect.
+An arc on the **left** side of the node ring shows signals that are currently queued at delayed outgoing edges. These are signals that have been emitted but are waiting for their delay period (days, weeks, or months) to expire.
+
+| Colour | Meaning                                                              |
+| ------ | -------------------------------------------------------------------- |
+| Amber  | Signals are queued and waiting to be released                        |
+| Red    | The queued signal mass exceeds the node's maximum value (a backlog) |
 
 ### Edge dimming
 
