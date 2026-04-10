@@ -48,7 +48,7 @@ Double-click any node (in any mode) to open its popover:
 | Min        | The lowest value this variable can reach                                                        |
 | Max        | The highest value it can reach                                                                  |
 | Initial    | Where it starts; also the value restored by the Reset button                                    |
-| Size       | Display radius: XS / S / M (default) / L / XL                                                  |
+| Size       | Display radius: XS / S / M (default) / L / XL                                                   |
 | Colour     | Identity colour: blue (default) / green / red / orange / yellow / teal / purple / grey          |
 | Annotation | Short label (max ~24 chars) shown below the node circle — useful for units, context, or caveats |
 
@@ -124,10 +124,10 @@ The chevron direction shows the accumulated effect through the causal chain. Whe
 
 Press `H` (or click the history button in the toolbar) to open the simulation history overlay. It has two views:
 
-| View        | Content                                                                                       |
-| ----------- | --------------------------------------------------------------------------------------------- |
-| **Table**   | Recent mutations with the simulation tick and the value delta per event                       |
-| **Graph**   | SVG line chart showing each node's value over time, sampled while the simulation was running  |
+| View      | Content                                                                                      |
+| --------- | -------------------------------------------------------------------------------------------- |
+| **Table** | Recent mutations with the simulation tick and the value delta per event                      |
+| **Graph** | SVG line chart showing each node's value over time, sampled while the simulation was running |
 
 The **Export CSV** button downloads a spreadsheet of node value samples — one column per node, one row per sample tick.
 
