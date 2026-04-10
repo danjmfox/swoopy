@@ -54,11 +54,30 @@ Switch to **Add Edge** mode, then drag from one node to another. The arrow direc
 
 A new edge is reinforcing (`+`) by default. To configure it:
 
-| Region on the edge                         | Double-click action                                                     |
-| ------------------------------------------ | ----------------------------------------------------------------------- |
-| Polarity badge (`+` / `−`) at the midpoint | Toggle reinforcing / balancing                                          |
-| Delay marks (if any) — left of centre      | Cycle delay: none → `‖` (days) → `‖‖` (weeks) → `‖‖‖` (months) → none   |
-| Weight region — right of centre            | Open weight popover (0–5); default 1.0; higher weight = stronger signal |
+| Region on the edge                         | Double-click action                                                                                      |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Polarity badge (`+` / `−`) at the midpoint | Toggle reinforcing / balancing                                                                           |
+| Delay marks (if any) — left of centre      | Cycle delay: none → `‖` (days) → `‖‖` (weeks) → `‖‖‖` (months) → none                                    |
+| Weight region — right of centre            | Open weight popover (0–5); default 1.0; higher weight = stronger signal                                  |
+
+**Quick-Fix edges:** an edge with a dashed line and a `QF` label marks a fast-acting but potentially problematic intervention. Quick-Fix edges are rendered offset from the normal edge if a node pair has both. To mark an edge as quick-fix, toggle the `QF` flag in the weight popover.
+
+### Create a Modulator
+
+A Modulator is an interaction effect — a variable that scales the strength of a causal edge. To create one:
+
+1. Switch to **Add Edge** mode
+2. Double-click any region of an existing causal edge
+3. A banner appears at the top: _"Modulating edge: A→B"_
+4. Click a source node to create the modulator from that node
+5. The modulator renders as a curved arc with a small circle at its terminus
+
+The modulator's **polarity** (shown as a coloured badge at the arc midpoint) controls how the source node affects the edge:
+
+- **Blue (Positive, +1):** as the source node's value increases, the edge weight increases
+- **Red (Negative, −1):** as the source node's value increases, the edge weight decreases
+
+Modulators affect the effective strength of causal signals without changing the graph structure. This is distinct from drawing a new edge directly to the target node.
 
 ### Draw a constraint edge
 
@@ -78,12 +97,12 @@ Switch to **Simulate** mode.
 - **Click** a node to inject a positive signal (things are going well)
 - **Shift-click** a node to inject a negative signal (things are going badly)
 
-Watch signals travel along edges as small coloured dots:
+Watch signals travel along edges as small coloured dots with directional chevrons:
 
-- Blue dot — positive signal
-- Red dot — negative signal
+- **Blue dot with ▲ chevron** — positive signal (value increasing)
+- **Red dot with ▼ chevron** — negative signal (value decreasing)
 
-A signal crossing a balancing (`−`) edge **reverses its polarity**. This is how self-correcting loops work: a positive push eventually comes back as a negative one.
+The chevron direction shows the accumulated effect through the causal chain. When a signal crosses a balancing (`−`) edge, the chevron flips: an up-arrow becomes a down-arrow. This is how self-correcting loops work: a positive push eventually reverses direction through the feedback path and comes back as a negative corrective effect.
 
 > **Stocks stay where signals leave them.** There is no automatic decay. A node injected with a positive signal stays elevated until a negative signal brings it back down. If your model has only reinforcing loops, stocks will climb to their maximum and stay there — that is the correct behaviour, showing you that no corrective mechanism exists in your model.
 
@@ -127,6 +146,15 @@ An orange dot in the upper-right of a node means signals are queued at a delayed
 ### Edge dimming
 
 When many signals are travelling on the same edge simultaneously, the edge dims. This indicates the edge is near its signal capacity; further injections on this path will have diminishing visual effect.
+
+### Signal chevron direction
+
+Signal particles display a small directional chevron (▲ or ▼) that indicates the accumulated direction through the causal chain:
+
+- **▲ (up-pointing)** — positive signal (node value change will be positive)
+- **▼ (down-pointing)** — negative signal (node value change will be negative)
+
+When a signal crosses a balancing (`−`) edge, the chevron animates flipping direction, showing the sign reversal at that edge.
 
 ### Constraint edge labels
 
@@ -194,8 +222,8 @@ Swoopy is a thinking tool, not a predictive model. Node values are qualitative p
 Things it does not currently model:
 
 - Rate constraints ("only N hires per month regardless of budget") — the ceiling/floor constraints cap values, not rates
-- Interaction effects — a variable that changes the _strength_ of a relationship between two others
+- Transfer functions (non-linear relationships like sigmoid, threshold, exponential — these extend the modulator concept)
 - Goals and threshold reactions
-- Annotation (assumptions, quick-fix markers, goals on the diagram)
+- Annotation (assumptions, goals on the diagram)
 
 These are [documented limitations](PRD.md#out-of-scope-v1), not bugs.

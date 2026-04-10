@@ -56,9 +56,10 @@ pnpm typecheck
 Swoopy implements a signal-propagation simulation over a directed graph:
 
 - **Nodes** — variables with a label and a `[min, max]` value range
-- **Causal edges** — directed links with polarity (reinforcing `+` / balancing `−`), weight, and delay
+- **Causal edges** — directed links with reinforcing `+` or balancing `−` polarity, adjustable weight, and delay; can be flagged as Quick-Fix for fast-acting short-term interventions
 - **Constraint edges** — dynamic bounds: a ceiling caps a target's effective maximum; a floor raises its effective minimum
-- **Signals** — packets of activation that travel along edges, carrying positive or negative strength; polarity is applied when a signal crosses a balancing edge
+- **Modulators** — interaction effects where a source node scales the strength of a causal edge, with polarity controlling amplification or suppression
+- **Signals** — packets of activation that travel along edges, carrying positive or negative strength and directional information; direction accumulates through the causal chain (chevron animates polarity flip at balancing edges)
 
 The simulation is deliberately imprecise. Node values are qualitative proxies, not measurements. This keeps the tool accessible and prevents false confidence in quantitative outputs.
 
@@ -66,35 +67,28 @@ The simulation is deliberately imprecise. Node values are qualitative proxies, n
 
 ## Known limitations
 
-Non-Linear Transfer Functions: Currently, relationships are linear (strength × weight). Implementing sigmoid or threshold-based transfer functions (as noted in PRD §7.5) would allow for modeling "tipping points" where a relationship only activates or saturates after a specific threshold is met.
-Trend Visualization: While nodes currently show a simple trend arrow (▲/▼), adding a "sparkline" or value-over-time overlay would help users visualize oscillations in balancing loops that might be moving too fast to track by eye.
-Interaction Effects (Edge Modulation): In complex systems, one variable often changes the strength of a relationship between two others (e.g., "Psychological Safety" moderating the link between "Mistakes" and "Learning"). Supporting edges that point to other edges would significantly increase the tool's modeling power.
-
+- **Non-linear relationships:** Relationships are currently linear (strength × weight × sign). Modulators are the first step toward richer transfer functions (sigmoid, threshold, exponential) that could model tipping points and saturating relationships. Full transfer functions are deferred to v2.
 - Can't "Name" a model. Name should be reflected in the page title and on the Canvas
 - Delay indicators are lost in 5x edges. Need to scale or be otherwise distinct.
 - Run mode prevents model edits:
-- Delete should not work in Run mode
-- Change edge polarity should not work in Run mode.
-- note the sim stays running in other modes which do allow edits. this is good. Live edits on a running sim is good for discovery, especially with undo feature.
-- stock changes are allowed in run mode
+  - Delete should not work in Run mode
+  - Change edge polarity should not work in Run mode.
+  - note the sim stays running in other modes which do allow edits. this is good. Live edits on a running sim is good for discovery, especially with undo feature.
+  - Stock changes are allowed in run mode
 - No mobile touch optimisation
 - No export to image or data formats
 - No flow / rate-of-change constraints — v2 candidate
 - No multiplayer or shared sessions
-- Currently a fixed node colour range indicating "temperature (value/range)". Instead, offer multiple colours in node settings, so a user can show aspects visually e.g. green for "good things", red for "bad things". Keep the dynamic temperature aspect (brighter/darker or similar)
-- notion of levers: some things you can't directly influence, but some you can, so mark levers explicitly, and prevent signal injection in non-levers.
-- All the annotations etc.
+- Notion of levers: some things you can't directly influence, but some you can, so mark levers explicitly, and prevent signal injection in non-levers.
+- Goal and belief annotations
 - A welcome model with annotations describing how to use it
 - example models for each behaviour
 - zoom in/out of canvas
-- node sized to relative range max, ie. a max 5 node is smaller than a max 10 node
 - import from Loopy
 - batch entry for node names
-- auto-switch modes based on key-presses?
 - image export
 - mermaid export?
 - Activity/Debug logs?
-- Trend Charts
 - o ("opposing" syntax)
 - inclusion of running models in html pages, e.g. the MODELS page, sitting alongs supporting text discussion.
 - A Config screen, allowing edits for all current "constants"
