@@ -47,9 +47,14 @@ export const SIGNAL_SPEED = 0.65;
 export const EDGE_TRANSIT_TICKS = Math.round(1 / (SIGNAL_SPEED * (1 / 60))); // ≈ 92
 
 // Maximum edge traversals a signal may make before being consumed without relay.
-// Empirically chosen at 8: saturates a simple 2-node reinforcing loop from 5→10 in one injection.
-// See packages/engine/src/characterise-relay.ts for evidence. (DR--20260401)
-export const MAX_HOPS = 26; //updated to 26 to accommodate more complex loops
+// Binding constraint: a 5-node reinforcing loop (A→B→C→D→E→A) requires 5 hops per
+// round-trip. Starting at 5 (range 0–10), full saturation needs 5 round-trips = 25 hops
+// minimum. hops=26 is the lowest candidate where all characterisation scenarios pass,
+// including the 5-node long-chain scenario added to evidence the increase from 8.
+// hops=8 saturates only 2-node loops; a facilitator building a 5-node model sees
+// only peak=7, not saturation — insufficient to demonstrate stable-state behaviour.
+// Evidence: packages/engine/src/characterise-relay.ts (run via node --experimental-strip-types)
+export const MAX_HOPS = 26;
 
 // Strength of a single user injection (positive or negative). One click = 1 unit
 // = 10% of the default 0–10 range. (PRD §7.6)

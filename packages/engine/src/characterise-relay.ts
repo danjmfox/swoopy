@@ -233,6 +233,41 @@ function scenarioPolarityChain(MAX_HOPS: number): ScenarioResult {
   return runScenario(state, edges, MAX_HOPS, ["A", "B", "C"]);
 }
 
+function scenarioLongChain(MAX_HOPS: number): ScenarioResult {
+  // 5-node reinforcing loop: A→B→C→D→E→A (all polarity +1, weight 1)
+  // Inject A with strength 1.0.
+  //
+  // Each round-trip = 5 hops (one per edge). A signal must complete N full
+  // rounds to carry the +1 delta back to each node N times. Starting at 5
+  // with max=10, full saturation requires 5 round-trips = 25 hops minimum.
+  //
+  // hops=8 : 8/5 = 1.6 rounds — only 1 arrival per node, values reach ~6. PARTIAL.
+  // hops=13: 13/5 = 2.6 rounds — 2 arrivals per node, values reach ~7. PARTIAL.
+  // hops=20: 20/5 = 4.0 rounds — 4 arrivals per node, values reach ~9. PARTIAL.
+  // hops=26: 26/5 = 5.2 rounds — 5 arrivals per node, values saturate at 10. SATURATE.
+  //
+  // This is the scenario that motivated raising MAX_HOPS from 8 to 26: a
+  // facilitator building a 5-node model needs to see the reinforcing loop
+  // saturate from a single injection to understand the system's full behaviour.
+  const nodes: RNode[] = [
+    { id: "A", value: 5, min: 0, max: 10 },
+    { id: "B", value: 5, min: 0, max: 10 },
+    { id: "C", value: 5, min: 0, max: 10 },
+    { id: "D", value: 5, min: 0, max: 10 },
+    { id: "E", value: 5, min: 0, max: 10 },
+  ];
+  const edges: REdge[] = [
+    { id: "AB", from: "A", to: "B", polarity: 1, weight: 1 },
+    { id: "BC", from: "B", to: "C", polarity: 1, weight: 1 },
+    { id: "CD", from: "C", to: "D", polarity: 1, weight: 1 },
+    { id: "DE", from: "D", to: "E", polarity: 1, weight: 1 },
+    { id: "EA", from: "E", to: "A", polarity: 1, weight: 1 },
+  ];
+  const state = makeState(nodes);
+  relayInject(state, edges, "A", 1, MAX_HOPS);
+  return runScenario(state, edges, MAX_HOPS, ["A", "B", "C", "D", "E"]);
+}
+
 // ---------------------------------------------------------------------------
 // Run helpers
 // ---------------------------------------------------------------------------
@@ -319,6 +354,14 @@ function verdict(
       ? `CHAIN-OK ✓ (B=${final.B?.toFixed(2)} C=${final.C?.toFixed(2)})`
       : `CHAIN-FAIL ✗ (B=${final.B?.toFixed(2)} C=${final.C?.toFixed(2)}) — C should decrease`;
   }
+  if (name === "long-chain") {
+    // 5-node loop: all nodes must saturate at max for full reinforcing behaviour
+    const saturated = nodeIds.every((id) => (final[id] ?? 0) >= 9.9);
+    const highest = Math.max(...nodeIds.map((id) => final[id] ?? 0));
+    return saturated
+      ? "SATURATE ✓"
+      : `PARTIAL  (peak=${highest.toFixed(2)} — needs more hops for full saturation)`;
+  }
   return "?";
 }
 
@@ -326,7 +369,7 @@ function verdict(
 // Main
 // ---------------------------------------------------------------------------
 
-const MAX_HOPS_CANDIDATES = [3, 5, 8, 13];
+const MAX_HOPS_CANDIDATES = [3, 5, 8, 13, 20, 26];
 
 const scenarios: Array<{
   name: string;
@@ -336,27 +379,33 @@ const scenarios: Array<{
 }> = [
   {
     name: "reinforcing",
-    label: "Reinforcing loop  A→B→A (+/+)",
+    label: "Reinforcing loop  A→B→A (+/+)              — 2-node",
     fn: scenarioReinforcing,
     nodes: ["A", "B"],
   },
   {
     name: "balancing",
-    label: "Balancing loop    A→B→A (+/-)",
+    label: "Balancing loop    A→B→A (+/-)              — 2-node",
     fn: scenarioBalancing,
     nodes: ["A", "B"],
   },
   {
     name: "diamond",
-    label: "Diamond           A→B→D(+)/A→C→D(-)",
+    label: "Diamond           A→B→D(+)/A→C→D(-)       — 4-node",
     fn: scenarioDiamond,
     nodes: ["A", "B", "C", "D"],
   },
   {
     name: "polarity-chain",
-    label: "Polarity chain    A→B(−1)→C(+1)      — new formula only",
+    label: "Polarity chain    A→B(−1)→C(+1)           — 3-node chain",
     fn: scenarioPolarityChain,
     nodes: ["A", "B", "C"],
+  },
+  {
+    name: "long-chain",
+    label: "Long reinforcing  A→B→C→D→E→A (+/+/+/+/+) — 5-node loop",
+    fn: scenarioLongChain,
+    nodes: ["A", "B", "C", "D", "E"],
   },
 ];
 
@@ -385,8 +434,8 @@ for (const scenario of scenarios) {
 }
 
 console.log(
-  "Recommendation: choose lowest MAX_HOPS where all four verdicts pass.",
+  "Recommendation: choose lowest MAX_HOPS where ALL five verdicts pass.",
 );
 console.log(
-  "Record results in DR--20260408--engine--signal-direction and advance to Proposed.",
+  "The long-chain scenario (5-node loop) is the binding constraint: requires 26 hops.",
 );
