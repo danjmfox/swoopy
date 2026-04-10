@@ -135,7 +135,6 @@ export function Canvas() {
         addNode,
         deleteNode,
         enterSpringMode,
-        exitSpringMode,
       } = useStore.getState();
       const hit = hitTest(graph, x, y);
 
@@ -276,7 +275,6 @@ export function Canvas() {
         confirmModulator,
         pendingModulatorTarget,
         moveNode,
-        setDragPosition,
         exitSpringMode,
       } = useStore.getState();
       const releaseHit = hitTest(graph, x, y);

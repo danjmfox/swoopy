@@ -32,7 +32,6 @@ import {
   serialize,
   deserialize,
   NODE_SIZE_RADII,
-  NODE_COLOURS,
 } from "@swoopy/engine";
 
 const DELAY_CYCLE: DelayLevel[] = ["none", "short", "medium", "long"];

@@ -5,7 +5,6 @@ import {
   beforeEach,
   afterEach,
   vi,
-  type Mock,
 } from "vitest";
 import { render, act, screen } from "@testing-library/react";
 import { useStore } from "./store.ts";
