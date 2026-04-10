@@ -1,0 +1,8 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "/^python3 -c \"from pathlib import Path; import subprocess; subprocess\\.run\\(\\['python3', '-m', 'graphify', str\\(Path\\('\\.'\\)\\), '--update'\\], capture_output=False\\)\" 2>&1 \\| tail -50$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}
