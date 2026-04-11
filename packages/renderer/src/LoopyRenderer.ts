@@ -8,7 +8,7 @@ import type {
   Node,
   EdgeId,
 } from "@swoopy/engine";
-import { MAX_SIGNALS } from "@swoopy/engine";
+import { MAX_SIGNALS, computeEffectiveWeights } from "@swoopy/engine";
 import {
   stockIndicator,
   delayQueueIndicator,
@@ -122,6 +122,7 @@ function drawCurvedArrow(
   edge: CausalEdge,
   bow: number,
   alpha = 1,
+  weight = edge.weight,
 ) {
   const base = edge.polarity === 1 ? "#38bdf8" : "#f87171";
   const colour =
@@ -132,7 +133,7 @@ function drawCurvedArrow(
 
   // Arrowhead geometry computed first so stroke can end at base, not tip.
   // This prevents the thick line cap from squaring off the arrowhead point.
-  const { len: headLen, half: headHalf } = arrowheadDimensions(edge.weight);
+  const { len: headLen, half: headHalf } = arrowheadDimensions(weight);
   const tlen = Math.hypot(x2 - cx, y2 - cy);
   const ux = (x2 - cx) / tlen;
   const uy = (y2 - cy) / tlen;
@@ -143,7 +144,7 @@ function drawCurvedArrow(
   ctx.moveTo(x1, y1);
   ctx.quadraticCurveTo(cx, cy, ax, ay);
   ctx.strokeStyle = colour;
-  ctx.lineWidth = 1 + edge.weight * 1.5;
+  ctx.lineWidth = 1 + weight * 1.5;
   if (edge.isQuickFix) ctx.setLineDash([6, 4]);
   ctx.stroke();
   if (edge.isQuickFix) ctx.setLineDash([]);
@@ -271,12 +272,14 @@ export class LoopyRenderer {
     );
 
     this.drawConstraintEdges(ctx, constraintEdges, nodeById);
+    const effectiveWeights = computeEffectiveWeights(graph, sim.nodeValues);
     this.drawCausalEdges(
       ctx,
       causalEdges,
       nodeById,
       sim,
       pendingModulatorTarget ?? null,
+      effectiveWeights,
     );
     this.drawModulators(ctx, graph, nodeById);
     if (pendingModulatorTarget) {
@@ -329,6 +332,7 @@ export class LoopyRenderer {
     nodeById: Map<string, { x: number; y: number; radius: number }>,
     sim: SimState,
     pendingModulatorTarget: EdgeId | null,
+    effectiveWeights: Map<EdgeId, number>,
   ): void {
     for (const edge of edges) {
       const from = nodeById.get(edge.from);
@@ -340,7 +344,15 @@ export class LoopyRenderer {
         (s) => s.edgeId === edge.id,
       ).length;
       const alpha = saturationAlpha(edgeSignalCount, MAX_SIGNALS);
-      drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha);
+      const effectiveWeight = effectiveWeights.get(edge.id) ?? edge.weight;
+      if (effectiveWeight !== edge.weight) {
+        // Ghost pass: base weight at 50% opacity (shows relationship potential)
+        drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha * 0.5, edge.weight);
+        // Fill pass: effective weight at full opacity (shows current activation)
+        drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha, effectiveWeight);
+      } else {
+        drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha);
+      }
 
       if (pendingModulatorTarget === edge.id) {
         const bow = edgeBow(edge, edges);

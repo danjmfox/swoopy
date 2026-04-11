@@ -2218,6 +2218,88 @@ describe("signalChevronVisuals", () => {
   });
 });
 
+// ─── Ghost-outline rendering — modulated edge ────────────────────────────────
+
+describe("ghost-outline rendering — modulated edge", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("draws ghost at base-weight lineWidth and fill at effective-weight lineWidth when edge is partially throttled", () => {
+    const strokeWidths: number[] = [];
+    const ctx = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn().mockImplementation(function (this: typeof ctx) {
+        strokeWidths.push(ctx.lineWidth as number);
+      }),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      fillText: vi.fn(),
+      setLineDash: vi.fn(),
+      scale: vi.fn(),
+      fillStyle: "" as string,
+      strokeStyle: "" as string,
+      lineWidth: 1 as number,
+      font: "" as string,
+      textAlign: "" as string,
+      textBaseline: "" as string,
+    };
+    const canvas = {
+      clientWidth: 800,
+      clientHeight: 600,
+      width: 0,
+      height: 0,
+      getContext: () => ctx,
+    } as unknown as HTMLCanvasElement;
+
+    // base weight=2; nodeA at midpoint (value=5, min=0, max=10) → t=0.5 → effective=1.0
+    const edge: CausalEdge = { ...edgeAB, weight: 2 };
+    const getState = () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: {
+          nodes: [nodeA, nodeB],
+          edges: [edge],
+          annotations: [],
+          modulators: [
+            {
+              id: makeModulatorId("m1"),
+              from: nodeA.id,
+              target: edge.id,
+              polarity: 1 as const,
+            },
+          ],
+        },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map([[nodeA.id, 5]]),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+        mode: "simulate",
+      }) as unknown as RendererStore;
+
+    const renderer = new LoopyRenderer(canvas, getState);
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+
+    // Ghost pass: base weight=2 → lineWidth = 1 + 2 × 1.5 = 4
+    // Fill pass:  effective weight=1.0 → lineWidth = 1 + 1.0 × 1.5 = 2.5
+    expect(strokeWidths).toContain(4);   // ghost curve at base weight
+    expect(strokeWidths).toContain(2.5); // fill curve at effective weight
+  });
+});
+
 describe("signalChevronVisuals easing — smoothstep not linear", () => {
   // At t=0.475, linear frac=0.25; smoothstep frac=0.15625 (3t²−2t³)
   // sign=-1 on -ve edge: startSign=+1 → angleForSign(+1)=−π/2 (up), end=+π/2 (down)
