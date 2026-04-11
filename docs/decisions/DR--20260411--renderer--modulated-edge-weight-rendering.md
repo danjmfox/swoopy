@@ -2,7 +2,7 @@
 id: DR--20260411--renderer--modulated-edge-weight-rendering
 dateCreated: '2026-04-11'
 version: 1.0.0
-status: draft
+status: proposed
 changeType: creation
 domain: renderer
 slug: modulated-edge-weight-rendering
@@ -11,6 +11,8 @@ changelog:
     note: Initial creation
   - date: '2026-04-11'
     note: Marked as draft
+  - date: '2026-04-11'
+    note: Marked as proposed
 lastEdited: '2026-04-11'
 ---
 # Modulated Edge Weight Rendering
