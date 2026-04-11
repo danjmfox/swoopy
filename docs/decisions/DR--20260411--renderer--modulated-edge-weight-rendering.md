@@ -1,20 +1,21 @@
 ---
 id: DR--20260411--renderer--modulated-edge-weight-rendering
-dateCreated: '2026-04-11'
+dateCreated: "2026-04-11"
 version: 1.0.0
 status: proposed
 changeType: creation
 domain: renderer
 slug: modulated-edge-weight-rendering
 changelog:
-  - date: '2026-04-11'
+  - date: "2026-04-11"
     note: Initial creation
-  - date: '2026-04-11'
+  - date: "2026-04-11"
     note: Marked as draft
-  - date: '2026-04-11'
+  - date: "2026-04-11"
     note: Marked as proposed
-lastEdited: '2026-04-11'
+lastEdited: "2026-04-11"
 ---
+
 # Modulated Edge Weight Rendering
 
 ## 🧭 Context
@@ -29,17 +30,17 @@ base weight). A learner watching the simulation has no visual signal that a rela
 throttled. They may observe fewer/weaker signals on a modulated edge, but cannot read the throttle
 depth or confirm the relationship still exists at full potential.
 
-The base weight and effective weight must both be readable simultaneously: *how strong could this
-relationship be* and *how strong is it right now*.
+The base weight and effective weight must both be readable simultaneously: _how strong could this
+relationship be_ and _how strong is it right now_.
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-| ------ | ----------- | ------- | --------- |
-| A | Ghost outline + fill | Accepted | Shows both potential and current state; unmodulated edges visually unchanged |
-| B | Opacity only | Rejected | Throttled edge fades but base weight is unreadable; full vs partial suppression ambiguous |
-| C | Thickness only (no ghost) | Rejected | No reference point — a thin edge looks like a low-weight edge, not a throttled one |
-| D | No render change | Rejected | Modulation invisible to learner; defeats the teaching purpose of the feature |
+| Option | Description               | Outcome  | Rationale                                                                                 |
+| ------ | ------------------------- | -------- | ----------------------------------------------------------------------------------------- |
+| A      | Ghost outline + fill      | Accepted | Shows both potential and current state; unmodulated edges visually unchanged              |
+| B      | Opacity only              | Rejected | Throttled edge fades but base weight is unreadable; full vs partial suppression ambiguous |
+| C      | Thickness only (no ghost) | Rejected | No reference point — a thin edge looks like a low-weight edge, not a throttled one        |
+| D      | No render change          | Rejected | Modulation invisible to learner; defeats the teaching purpose of the feature              |
 
 ## 🧠 Decision
 
@@ -57,7 +58,7 @@ The edge looks identical to an unmodulated edge. No visual change for the learne
 is actually acting.
 
 When `effectiveWeight < edge.weight`: the ghost bleeds around the thinner fill, making the throttle
-depth legible. The 50% opacity ensures the partial state reads as *reduced*, not *full*.
+depth legible. The 50% opacity ensures the partial state reads as _reduced_, not _full_.
 
 Unmodulated edges: single draw pass, unchanged.
 
@@ -77,8 +78,8 @@ DR--20260405--engine--modulator-effective-weight-formula.
 
 ## 🧩 Reasoning
 
-The ghost-behind-fill approach encodes a meaningful distinction: the outline is the *structural claim*
-(this relationship exists at this strength), the fill is the *current activation* (this is how much
+The ghost-behind-fill approach encodes a meaningful distinction: the outline is the _structural claim_
+(this relationship exists at this strength), the fill is the _current activation_ (this is how much
 is operating now). This maps directly to the systems thinking concept of latent vs active
 relationships — a learner can see that a fully suppressed edge still exists in the model.
 
