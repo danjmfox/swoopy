@@ -34,8 +34,9 @@ export const NODE_COLOURS: Record<
   grey: { swatch: "#64748b", low: "#334155", high: "#64748b" }, // 700→500
 };
 
-// Midpoint of the 0–10 node value range. Used as the neutral point in modulator
-// formula: clamp(baseWeight × nodeValue / NODE_MID, 0, 5).
+// Midpoint of the default 0–10 node value range. Retained as a named constant
+// for UI affordances (e.g. default initial value). Not used in the modulator formula,
+// which normalises by per-node [min, max] range (DR--20260405).
 export const NODE_MID = 5;
 
 // Signal travel speed — fraction of edge traversed per second.

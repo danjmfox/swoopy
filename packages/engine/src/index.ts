@@ -39,6 +39,6 @@ export {
 } from "./constants.ts";
 export type { SizeTier, ColourTier } from "./constants.ts";
 
-export { makeInitialSim, step, inject } from "./sim.ts";
+export { makeInitialSim, step, inject, computeEffectiveWeights } from "./sim.ts";
 export { serialize, deserialize } from "./serialisation.ts";
 export type { SerializedGraph } from "./serialisation.ts";
