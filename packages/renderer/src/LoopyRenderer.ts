@@ -347,9 +347,29 @@ export class LoopyRenderer {
       const effectiveWeight = effectiveWeights.get(edge.id) ?? edge.weight;
       if (effectiveWeight !== edge.weight) {
         // Ghost pass: base weight at 50% opacity (shows relationship potential)
-        drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha * 0.5, edge.weight);
+        drawCurvedArrow(
+          ctx,
+          x1,
+          y1,
+          x2,
+          y2,
+          edge,
+          edgeBow(edge, edges),
+          alpha * 0.5,
+          edge.weight,
+        );
         // Fill pass: effective weight at full opacity (shows current activation)
-        drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha, effectiveWeight);
+        drawCurvedArrow(
+          ctx,
+          x1,
+          y1,
+          x2,
+          y2,
+          edge,
+          edgeBow(edge, edges),
+          alpha,
+          effectiveWeight,
+        );
       } else {
         drawCurvedArrow(ctx, x1, y1, x2, y2, edge, edgeBow(edge, edges), alpha);
       }

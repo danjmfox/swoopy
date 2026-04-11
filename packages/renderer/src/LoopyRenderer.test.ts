@@ -2295,7 +2295,7 @@ describe("ghost-outline rendering — modulated edge", () => {
 
     // Ghost pass: base weight=2 → lineWidth = 1 + 2 × 1.5 = 4
     // Fill pass:  effective weight=1.0 → lineWidth = 1 + 1.0 × 1.5 = 2.5
-    expect(strokeWidths).toContain(4);   // ghost curve at base weight
+    expect(strokeWidths).toContain(4); // ghost curve at base weight
     expect(strokeWidths).toContain(2.5); // fill curve at effective weight
   });
 });

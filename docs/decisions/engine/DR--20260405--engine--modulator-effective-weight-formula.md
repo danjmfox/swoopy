@@ -29,7 +29,7 @@ the relationship, but does not amplify it beyond its configured base weight.
 
 The original design assumed a symmetric 0→2 factor range (suppress at one extreme, double at the
 other), treating the midpoint as neutral. This was revised after a systems thinking literature
-review: most real-world modulators model *enabling conditions* (gates and throttles), not scaling
+review: most real-world modulators model _enabling conditions_ (gates and throttles), not scaling
 multipliers. Amplification beyond base weight conflates the modulator with a second reinforcing
 path — a different and stronger causal claim requiring explicit modelling.
 
@@ -40,12 +40,12 @@ in production at time of revision.)
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-| ------ | ----------- | ------- | --------- |
-| A | Fixed-range: `clamp(w × nodeValue / 5, 0, 5)` | Rejected | Breaks silently for any node with range ≠ [0, 10] |
-| B | Symmetric 2×: `clamp(w × 2t, 0, 5)` — suppress at min, double at max | Rejected (v1.0.0) | Amplification conflates modulator with reinforcing path; pedagogically misleading |
-| C | Throttle: `clamp(w × t, 0, 5)` — suppress at min, full strength at max | Accepted (v1.1.0) | Correct for any range; throttle-only semantics match enabling condition concept |
-| D | Per-modulator coefficient `strength: number` on `Modulator` type | Deferred | No current use case; cognitive load tax; revisit when demanded |
+| Option | Description                                                            | Outcome           | Rationale                                                                         |
+| ------ | ---------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------- |
+| A      | Fixed-range: `clamp(w × nodeValue / 5, 0, 5)`                          | Rejected          | Breaks silently for any node with range ≠ [0, 10]                                 |
+| B      | Symmetric 2×: `clamp(w × 2t, 0, 5)` — suppress at min, double at max   | Rejected (v1.0.0) | Amplification conflates modulator with reinforcing path; pedagogically misleading |
+| C      | Throttle: `clamp(w × t, 0, 5)` — suppress at min, full strength at max | Accepted (v1.1.0) | Correct for any range; throttle-only semantics match enabling condition concept   |
+| D      | Per-modulator coefficient `strength: number` on `Modulator` type       | Deferred          | No current use case; cognitive load tax; revisit when demanded                    |
 
 ## 🧠 Decision
 
