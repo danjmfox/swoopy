@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LoopyRenderer, hitTest } from "@swoopy/renderer";
 import { inject, INJECT_STRENGTH } from "@swoopy/engine";
 import { ANNOTATION_WIDTH, ANNOTATION_MIN_HEIGHT } from "@swoopy/renderer";
@@ -6,6 +6,7 @@ import { useStore } from "./store.ts";
 
 export function Canvas() {
   const ref = useRef<HTMLCanvasElement>(null);
+  const [outcomeWarning, setOutcomeWarning] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -164,6 +165,12 @@ export function Canvas() {
       } else if (mode === "simulate") {
         if (hit?.kind === "node") {
           const nodeId = hit.id;
+          const { graph } = useStore.getState();
+          const node = graph.nodes.find((n) => n.id === nodeId);
+          if (node?.role === "outcome") {
+            setOutcomeWarning(node.label);
+            setTimeout(() => setOutcomeWarning(null), 4000);
+          }
           const doInject = () => {
             const strength = shiftHeld ? -INJECT_STRENGTH : INJECT_STRENGTH;
             useStore.setState((s) => ({
@@ -396,16 +403,39 @@ export function Canvas() {
   }, []);
 
   return (
-    <canvas
-      ref={ref}
-      tabIndex={0}
-      style={{
-        display: "block",
-        width: "100%",
-        height: "100%",
-        cursor: "crosshair",
-        outline: "none",
-      }}
-    />
+    <>
+      <canvas
+        ref={ref}
+        tabIndex={0}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "100%",
+          cursor: "crosshair",
+          outline: "none",
+        }}
+      />
+      {outcomeWarning && (
+        <div
+          data-testid="outcome-warning"
+          style={{
+            position: "fixed",
+            bottom: 80,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#1e293b",
+            border: "1px solid #f59e0b",
+            borderRadius: 8,
+            padding: "10px 18px",
+            color: "#fbbf24",
+            fontSize: 13,
+            zIndex: 200,
+            pointerEvents: "none",
+          }}
+        >
+          {outcomeWarning} is a system outcome. To change it, act on its causes.
+        </div>
+      )}
+    </>
   );
 }
