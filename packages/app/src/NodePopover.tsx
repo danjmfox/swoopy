@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "./store.ts";
 import { NODE_COLOURS } from "@swoopy/engine";
-import type { SizeTier, ColourTier } from "@swoopy/engine";
+import type { SizeTier, ColourTier, NodeRole } from "@swoopy/engine";
 
 const SIZE_TIERS: SizeTier[] = ["xs", "s", "m", "l", "xl"];
 const SWATCH_BASE = 10; // px diameter for XS swatch
@@ -32,6 +32,7 @@ export function NodePopover() {
   const [min, setMin] = useState(0);
   const [max, setMax] = useState(10);
   const [initial, setInitial] = useState(0);
+  const [role, setRole] = useState<NodeRole | undefined>(undefined);
   const labelRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function NodePopover() {
     setMin(node.min);
     setMax(node.max);
     setInitial(node.initial);
+    setRole(node.role);
     setTimeout(() => labelRef.current?.select(), 0);
   }, [node?.id]);
 
@@ -181,6 +183,30 @@ export function NodePopover() {
             );
           })}
         </div>
+      </div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <label style={labelStyle}>Role</label>
+        {([undefined, "lever", "outcome"] as const).map((r) => {
+          const active = role === r;
+          return (
+            <button
+              key={r ?? "none"}
+              aria-label={r === "lever" ? "Lever" : r === "outcome" ? "Outcome" : "None"}
+              onClick={() => {
+                if (!editingNodeId) return;
+                setRole(r);
+                updateNode(editingNodeId, { role: r });
+              }}
+              style={{
+                ...btnStyle,
+                background: active ? "#334155" : "transparent",
+                border: active ? "1px solid #60a5fa" : "1px solid #334155",
+              }}
+            >
+              {r === "lever" ? "Lever" : r === "outcome" ? "Outcome" : "None"}
+            </button>
+          );
+        })}
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
         <button onClick={closeNodeEditor} style={btnStyle}>

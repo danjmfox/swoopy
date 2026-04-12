@@ -61,6 +61,48 @@ describe("NodePopover annotation input", () => {
   });
 });
 
+// DR--20260412--app--node-role-indicators
+describe("NodePopover role selector", () => {
+  beforeEach(setup);
+
+  it("renders three role buttons: None, Lever, Outcome", () => {
+    render(<NodePopover />);
+    expect(screen.getByRole("button", { name: /^none$/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^lever$/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^outcome$/i })).toBeDefined();
+  });
+
+  it("clicking Lever calls updateNode with role: 'lever'", () => {
+    const spy = vi.spyOn(useStore.getState(), "updateNode");
+    render(<NodePopover />);
+    fireEvent.click(screen.getByRole("button", { name: /^lever$/i }));
+    expect(spy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ role: "lever" }),
+    );
+  });
+
+  it("clicking Outcome calls updateNode with role: 'outcome'", () => {
+    const spy = vi.spyOn(useStore.getState(), "updateNode");
+    render(<NodePopover />);
+    fireEvent.click(screen.getByRole("button", { name: /^outcome$/i }));
+    expect(spy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ role: "outcome" }),
+    );
+  });
+
+  it("clicking None calls updateNode with role: undefined", () => {
+    const spy = vi.spyOn(useStore.getState(), "updateNode");
+    render(<NodePopover />);
+    fireEvent.click(screen.getByRole("button", { name: /^none$/i }));
+    expect(spy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ role: undefined }),
+    );
+  });
+});
+
 // GE-34: size picker in NodePopover
 describe("NodePopover size picker", () => {
   beforeEach(setup);
