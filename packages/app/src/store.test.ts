@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { useStore } from "./store.ts";
 
 beforeEach(() => {
@@ -55,6 +55,37 @@ describe("deleteNode", () => {
     const nodeId = useStore.getState().graph.nodes[0]!.id;
     useStore.getState().deleteNode(nodeId);
     expect(useStore.getState().graph.annotations).toHaveLength(1);
+  });
+});
+
+// modelTitle
+describe("modelTitle / setModelTitle", () => {
+  afterEach(() => {
+    localStorage.clear();
+    history.replaceState(null, "", "?");
+  });
+
+  it("modelTitle defaults to empty string", () => {
+    useStore.setState({ modelTitle: "" });
+    expect(useStore.getState().modelTitle).toBe("");
+  });
+
+  it("setModelTitle updates modelTitle in state", () => {
+    useStore.setState({ modelTitle: "" });
+    useStore.getState().setModelTitle("My Model");
+    expect(useStore.getState().modelTitle).toBe("My Model");
+  });
+
+  it("setModelTitle persists to localStorage key swoopy_title_<modelId>", () => {
+    const { modelId } = useStore.getState();
+    useStore.getState().setModelTitle("Causal Loop");
+    expect(localStorage.getItem(`swoopy_title_${modelId}`)).toBe("Causal Loop");
+  });
+
+  it("setModelTitle pushes &title= into URL", () => {
+    useStore.getState().setModelTitle("Hello World");
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get("title")).toBe("Hello World");
   });
 });
 

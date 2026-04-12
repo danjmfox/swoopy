@@ -30,10 +30,16 @@ export function Toolbar() {
   const mode = useStore((s) => s.mode);
   const previousMode = useStore((s) => s.previousMode);
   const showHistory = useStore((s) => s.showHistory);
+  const modelTitle = useStore((s) => s.modelTitle);
   const { pauseSim, resumeSim, resetSim, setSimSpeed, setMode } =
     useStore.getState();
   const [helpOpen, setHelpOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(modelTitle);
+
+  useEffect(() => {
+    setTitleDraft(modelTitle);
+  }, [modelTitle]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -50,7 +56,16 @@ export function Toolbar() {
   }, []);
 
   async function handleShare() {
-    await useStore.getState().shareGraph();
+    const {
+      modelTitle: currentTitle,
+      setModelTitle,
+      shareGraph,
+    } = useStore.getState();
+    if (!currentTitle) {
+      const name = window.prompt("Name this model before sharing (optional):");
+      if (name) setModelTitle(name);
+    }
+    await shareGraph();
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -72,6 +87,16 @@ export function Toolbar() {
           boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
         }}
       >
+        <input
+          placeholder="Untitled model"
+          value={titleDraft}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          onBlur={() => useStore.getState().setModelTitle(titleDraft)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          style={titleInput}
+        />
         <button
           title="New Model"
           onClick={() => useStore.getState().newModel()}
@@ -227,4 +252,15 @@ const btn: React.CSSProperties = {
   fontSize: 15,
   padding: "4px 8px",
   borderRadius: 6,
+};
+
+const titleInput: React.CSSProperties = {
+  background: "transparent",
+  border: "none",
+  borderBottom: "1px solid #475569",
+  color: "#f1f5f9",
+  fontSize: 14,
+  padding: "2px 4px",
+  width: 160,
+  outline: "none",
 };

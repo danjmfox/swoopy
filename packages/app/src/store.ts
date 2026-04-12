@@ -50,6 +50,7 @@ interface StoreState {
   // graphSlice — React components subscribe to this
   graph: Graph;
   modelId: string;
+  modelTitle: string;
   transient: boolean;
   past: Graph[];
   future: Graph[];
@@ -57,6 +58,7 @@ interface StoreState {
   simSpeed: number;
   mode: AppMode;
   previousMode: AppMode | null;
+  setModelTitle: (title: string) => void;
   setMode: (mode: AppMode) => void;
   enterSpringMode: (mode: AppMode) => void;
   exitSpringMode: () => void;
@@ -202,6 +204,7 @@ function forkIfTransient(get: Get, set: Set): string {
 export const useStore = create<StoreState>((set, get) => ({
   graph: seedGraph,
   modelId: crypto.randomUUID(),
+  modelTitle: "",
   transient: false,
   past: [],
   future: [],
@@ -218,6 +221,22 @@ export const useStore = create<StoreState>((set, get) => ({
     const { previousMode } = get();
     if (previousMode === null) return;
     set({ mode: previousMode, previousMode: null });
+  },
+  setModelTitle: (title: string) => {
+    const { modelId } = get();
+    set({ modelTitle: title });
+    if (title) {
+      localStorage.setItem(`swoopy_title_${modelId}`, title);
+    } else {
+      localStorage.removeItem(`swoopy_title_${modelId}`);
+    }
+    const url = new URL(window.location.href);
+    if (title) {
+      url.searchParams.set("title", title);
+    } else {
+      url.searchParams.delete("title");
+    }
+    history.replaceState(null, "", url.toString());
   },
   dragPosition: null as { nodeId: NodeId; x: number; y: number } | null,
   setDragPosition: (nodeId: NodeId, x: number, y: number) =>
@@ -566,23 +585,31 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   setSimSpeed: (speed: number) => set({ simSpeed: speed }),
   shareGraph: async () => {
-    const { graph } = get();
+    const { graph, modelTitle } = get();
     const json = JSON.stringify(serialize(graph));
     const bytes = new TextEncoder().encode(json);
     const encoded = btoa(String.fromCharCode(...bytes));
     const url = new URL(window.location.href);
     url.searchParams.set("g", encoded);
+    url.searchParams.delete("m");
+    if (modelTitle) {
+      url.searchParams.set("title", modelTitle);
+    } else {
+      url.searchParams.delete("title");
+    }
     await navigator.clipboard.writeText(url.toString());
   },
   loadFromUrl: (search: string) => {
-    const encoded = new URLSearchParams(search).get("g");
+    const params = new URLSearchParams(search);
+    const encoded = params.get("g");
     if (!encoded) return;
+    const title = params.get("title") ?? "";
     try {
       const binary = atob(encoded);
       const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
       const json = new TextDecoder().decode(bytes);
       const graph = deserialize(JSON.parse(json));
-      set({ graph, past: [], future: [], transient: true });
+      set({ graph, past: [], future: [], transient: true, modelTitle: title });
     } catch {
       // malformed param — leave current graph intact
     }
@@ -599,11 +626,13 @@ export const useStore = create<StoreState>((set, get) => ({
     localStorage.setItem("swoopy_current_model", newId);
     const url = new URL(window.location.href);
     url.searchParams.delete("g");
+    url.searchParams.delete("title");
     url.searchParams.set("m", newId);
     history.replaceState(null, "", url.toString());
     set({
       graph: emptyGraph,
       modelId: newId,
+      modelTitle: "",
       transient: false,
       past: [],
       future: [],
@@ -630,6 +659,8 @@ export const useStore = create<StoreState>((set, get) => ({
     const { modelId } = get();
     localStorage.setItem("swoopy_current_model", modelId);
     const raw = localStorage.getItem(`${LS_KEY_PREFIX}${modelId}`);
+    const savedTitle = localStorage.getItem(`swoopy_title_${modelId}`) ?? "";
+    set({ modelTitle: savedTitle });
     if (!raw) return;
     try {
       const graph = deserialize(JSON.parse(raw));
