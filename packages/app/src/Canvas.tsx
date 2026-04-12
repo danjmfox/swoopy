@@ -39,6 +39,21 @@ export function Canvas() {
     function onDocKeyDown(e: KeyboardEvent) {
       if (e.key === "Alt") constraintModifierHeld = true;
       if (e.key === "Shift") shiftHeld = true;
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.altKey) {
+        const active = document.activeElement;
+        const isTextEditing =
+          active instanceof HTMLTextAreaElement ||
+          (active instanceof HTMLInputElement &&
+            ["text", "number", "search", "email", "password", "url"].includes(
+              active.type,
+            ));
+        if (!isTextEditing) {
+          e.preventDefault();
+          if (e.shiftKey) useStore.getState().redo();
+          else useStore.getState().undo();
+        }
+        return;
+      }
       if (e.ctrlKey || e.metaKey) return;
       const active = document.activeElement;
       if (
@@ -349,15 +364,7 @@ export function Canvas() {
         focusNextNode,
         nudgeNode,
         deleteNode,
-        undo,
-        redo,
       } = useStore.getState();
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-        e.preventDefault();
-        if (e.shiftKey) redo();
-        else undo();
-        return;
-      }
       if (e.key === "Tab") {
         e.preventDefault();
         focusNextNode();
