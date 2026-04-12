@@ -51,6 +51,7 @@ Double-click any node (in any mode) to open its popover:
 | Size       | Display radius: XS / S / M (default) / L / XL                                                   |
 | Colour     | Identity colour: blue (default) / green / red / orange / yellow / teal / purple / grey          |
 | Annotation | Short label (max ~24 chars) shown below the node circle — useful for units, context, or caveats |
+| Role       | Optional: **Lever** (a direct action point — displayed with an amber ring), **Outcome** (an emergent result that should only change via its causes), or **None** (no designation) |
 
 ### Draw a causal edge
 
@@ -100,6 +101,8 @@ Switch to **Simulate** mode.
 
 - **Click** a node to inject a positive signal (things are going well)
 - **Shift-click** a node to inject a negative signal (things are going badly)
+
+> **Outcome nodes:** if a node is marked as an Outcome by the model author, clicking it shows a brief advisory: _"[Label] is a system outcome. To change it, act on its causes."_ The injection still proceeds — this is a reminder, not a block. To see where to act instead, look for nodes marked as **Levers** (amber ring).
 
 Watch signals travel along edges as small coloured dots with directional chevrons:
 
@@ -222,6 +225,34 @@ Click **Share** to encode the current graph into the URL and copy it to the clip
 Each model you work on is saved separately in your browser under its own URL (`?m=...`). Bookmarking that URL will return you to that specific model.
 
 > **Auto-save:** every change is saved automatically. There is no Save button — your work is never at risk.
+
+---
+
+## How to build useful models
+
+A good Swoopy model doesn't just run — it teaches. The pattern below describes how to construct a model that lets someone discover why a system resists easy fixes.
+
+### The scenario pattern
+
+**Step 1 — establish a baseline.** Build a model where the goal variable (e.g. Feature Velocity) starts healthy. Let it run briefly so readers can see what "working" looks like before anything goes wrong.
+
+**Step 2 — inject the problem.** Use Simulate mode to inject a negative signal into a node that represents the originating pressure (e.g. reduce Feature Velocity directly, or raise Delivery Pressure). Then pause and let people observe the cascade. The model should show the full collapse — not just the symptom, but the downstream effects rippling through quality, mentoring capacity, and back into pressure again.
+
+**Step 3 — offer an obvious fix.** Add one or two nodes representing common interventions (e.g. `CI Investment`, `Cash Injection`). Connect them with edges that genuinely help — but give them a short-term cost too (investment in CI means engineers aren't shipping features right now). Let someone try the fix. The system will absorb it and continue deteriorating, or briefly improve before snapping back. This is the moment of useful frustration.
+
+**Step 4 — show why it resists.** The resistance is structural. Use the History overlay to show that the quick fix created a side-effect loop that neutralised the improvement. The trend graph is the evidence. The point isn't that the fix was wrong — it's that it was applied too weakly and too late to overcome the reinforcing loop already running.
+
+**Step 5 — find the leverage point.** A leverage point is a node or edge whose small change propagates into permanent system change. It is usually not a flow (hire rate, spend rate) but a **structural rule** — something that limits how far the system can degrade before it self-corrects. Examples: a hiring standards policy that prevents Great Mentor Devs from reaching zero; a minimum Code Quality threshold below which work stops. Add this node, connect it with a modulator on the edge that drives the collapse, and observe that even a small sustained signal now has a lasting effect.
+
+### What makes a model pedagogically useful
+
+- The goal variable has an obvious, legible starting state (healthy) and a clear collapse state (failing)
+- The quick fix nodes are genuinely tempting — they do help, just not enough
+- At least one reinforcing loop runs faster than any balancing loop; this is what makes the system feel immune
+- The leverage node is **not visible** until someone asks "why is this loop unstoppable?" — then it becomes obvious
+- Delays are set deliberately: quick-fix paths use `short` delay; structural recovery paths use `medium` or `long` delay. The contrast between them is what creates the illusion that the fix is working
+
+> The simulation does not tell you what the leverage point is. That is the point. The model is a thinking tool, not an answer machine.
 
 ---
 
