@@ -97,7 +97,7 @@ condition.
 `drawCausalEdges`, with the result passed to `drawCurvedArrow` alongside the base weight.
 No store changes required.
 
-```
+```text
 drawCausalEdges(edges, sim, graph, ...)
   effectiveWeights = computeEffectiveWeights(graph, sim.nodeValues)  // O(edges + modulators)
   for each edge:
