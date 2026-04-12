@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { serialize, deserialize, makeEdgeId, makeNodeId } from "./index.ts";
 import { seedGraph } from "./population.test.ts";
-import type { Annotation, AnnotationId, CausalEdge } from "./types.ts";
+import type { Annotation, AnnotationId, CausalEdge, Node } from "./types.ts";
 
 // SE-01, SE-04
 describe("serialize", () => {
@@ -177,5 +177,33 @@ describe("deserialize v4 migration", () => {
     };
     const restored = deserialize(v4Blob);
     expect(restored.modulators).toEqual([]);
+  });
+});
+
+// DR--20260412--app--node-role-indicators
+describe("role field serialisation", () => {
+  it("round-trips role: 'lever' on a node", () => {
+    const leverNode: Node = { ...seedGraph.nodes[0]!, role: "lever" };
+    const graph = {
+      ...seedGraph,
+      nodes: [leverNode, ...seedGraph.nodes.slice(1)],
+    };
+    const restored = deserialize(serialize(graph));
+    expect(restored.nodes[0]!.role).toBe("lever");
+  });
+
+  it("round-trips role: 'outcome' on a node", () => {
+    const outcomeNode: Node = { ...seedGraph.nodes[0]!, role: "outcome" };
+    const graph = {
+      ...seedGraph,
+      nodes: [outcomeNode, ...seedGraph.nodes.slice(1)],
+    };
+    const restored = deserialize(serialize(graph));
+    expect(restored.nodes[0]!.role).toBe("outcome");
+  });
+
+  it("round-trips a node without role (role is undefined)", () => {
+    const restored = deserialize(serialize(seedGraph));
+    expect(restored.nodes[0]!.role).toBeUndefined();
   });
 });

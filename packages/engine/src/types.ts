@@ -12,6 +12,8 @@ export interface Annotation {
   readonly text: string;
 }
 
+export type NodeRole = "lever" | "outcome";
+
 export type DelayLevel = "none" | "short" | "medium" | "long";
 export type EdgeKind = "causal" | "constraint";
 export type ConstraintKind = "ceiling" | "floor";
@@ -28,6 +30,7 @@ export interface Node {
   readonly min: number;
   readonly max: number;
   readonly initial: number;
+  readonly role?: NodeRole;
 }
 
 export interface CausalEdge {

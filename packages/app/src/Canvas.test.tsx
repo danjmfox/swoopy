@@ -1448,3 +1448,70 @@ describe("modulator creation — drag from node to edge in add-edge mode", () =>
     expect(useStore.getState().mode).toBe("add-edge");
   });
 });
+
+// DR--20260412--app--node-role-indicators
+describe("outcome node warning in simulate mode", () => {
+  const outcomeNode = { ...seedGraph.nodes[0]!, role: "outcome" as const };
+  const graphWithOutcome = {
+    ...seedGraph,
+    nodes: [outcomeNode, ...seedGraph.nodes.slice(1)],
+  };
+
+  beforeEach(() => {
+    mockHitTest.mockReset();
+    useStore.setState({
+      graph: graphWithOutcome,
+      sim: makeInitialSim(graphWithOutcome),
+      mode: "simulate",
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("shows outcome warning element when clicking an outcome node", async () => {
+    mockHitTest.mockReturnValue({ kind: "node", id: outcomeNode.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+    expect(
+      container.querySelector("[data-testid='outcome-warning']"),
+    ).not.toBeNull();
+  });
+
+  it("outcome warning contains the node label", async () => {
+    mockHitTest.mockReturnValue({ kind: "node", id: outcomeNode.id });
+    const { container, getByText } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(getByText(/is a system outcome/i)).toBeDefined();
+  });
+
+  it("injection still proceeds for outcome nodes", async () => {
+    mockHitTest.mockReturnValue({ kind: "node", id: outcomeNode.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    const before = useStore.getState().sim.nodeValues.get(outcomeNode.id)!;
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    const after = useStore.getState().sim.nodeValues.get(outcomeNode.id)!;
+    expect(after).toBeGreaterThan(before);
+  });
+
+  it("does not show warning for a node with no role", async () => {
+    const plainNode = seedGraph.nodes[1]!;
+    mockHitTest.mockReturnValue({ kind: "node", id: plainNode.id });
+    const { container } = render(<Canvas />);
+    await act(async () => {});
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(
+      container.querySelector("[data-testid='outcome-warning']"),
+    ).toBeNull();
+  });
+});
