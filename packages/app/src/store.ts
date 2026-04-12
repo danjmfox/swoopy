@@ -191,6 +191,7 @@ interface StoreState {
   loadFromUrl: (search: string) => void;
   newModel: () => void;
   loadModel: (id: string) => void;
+  deleteModel: (id: string) => void;
 }
 
 type Get = () => StoreState;
@@ -694,6 +695,13 @@ export const useStore = create<StoreState>((set, get) => ({
       transient: false,
       sim: makeInitialSim(loadedGraph),
     });
+  },
+  deleteModel: (id: string) => {
+    localStorage.removeItem(`${LS_KEY_PREFIX}${id}`);
+    localStorage.removeItem(`swoopy_title_${id}`);
+    if (id === get().modelId) {
+      get().newModel();
+    }
   },
   loadPersistedGraph: () => {
     // Legacy migration: single-slot key → scoped key
