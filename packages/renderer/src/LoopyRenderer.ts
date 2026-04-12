@@ -109,7 +109,7 @@ export function arrowheadDimensions(weight: number): {
   len: number;
   half: number;
 } {
-  const lw = 1 + weight * 1.5;
+  const lw = 3 + weight * 2;
   return { len: Math.max(10, lw * 2.5), half: Math.max(5, lw * 1.2) };
 }
 
@@ -144,7 +144,7 @@ function drawCurvedArrow(
   ctx.moveTo(x1, y1);
   ctx.quadraticCurveTo(cx, cy, ax, ay);
   ctx.strokeStyle = colour;
-  ctx.lineWidth = 1 + weight * 1.5;
+  ctx.lineWidth = 3 + weight * 2;
   if (edge.isQuickFix) ctx.setLineDash([6, 4]);
   ctx.stroke();
   if (edge.isQuickFix) ctx.setLineDash([]);
