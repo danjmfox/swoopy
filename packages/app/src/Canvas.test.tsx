@@ -1515,3 +1515,39 @@ describe("outcome node warning in simulate mode", () => {
     ).toBeNull();
   });
 });
+
+describe("model title overlay", () => {
+  beforeEach(() => {
+    useStore.setState({
+      graph: seedGraph,
+      sim: makeInitialSim(seedGraph),
+      modelTitle: "",
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("renders the title overlay element", () => {
+    const { container } = render(<Canvas />);
+    expect(
+      container.querySelector("[data-testid='model-title-overlay']"),
+    ).toBeTruthy();
+  });
+
+  it("shows modelTitle text when set", () => {
+    useStore.setState({ modelTitle: "My Loop" } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
+    const { container } = render(<Canvas />);
+    expect(
+      container.querySelector("[data-testid='model-title-overlay']")
+        ?.textContent,
+    ).toBe("My Loop");
+  });
+
+  it("shows nothing in the overlay when modelTitle is empty", () => {
+    const { container } = render(<Canvas />);
+    expect(
+      container.querySelector("[data-testid='model-title-overlay']")
+        ?.textContent,
+    ).toBe("");
+  });
+});

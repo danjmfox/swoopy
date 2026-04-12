@@ -246,3 +246,97 @@ describe("GE-38: history toolbar button", () => {
     expect(toggleHistory).toHaveBeenCalledOnce();
   });
 });
+
+describe("model title input", () => {
+  let setModelTitle: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    setModelTitle = vi.fn();
+    useStore.setState({
+      graph: seedGraph,
+      modelTitle: "",
+      setModelTitle,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  it("renders a title input with placeholder 'Untitled model'", () => {
+    const { getByPlaceholderText } = render(<Toolbar />);
+    expect(getByPlaceholderText("Untitled model")).toBeTruthy();
+  });
+
+  it("title input shows the current modelTitle value", () => {
+    useStore.setState({ modelTitle: "My Loop" } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
+    const { getByDisplayValue } = render(<Toolbar />);
+    expect(getByDisplayValue("My Loop")).toBeTruthy();
+  });
+
+  it("blurring the title input calls setModelTitle with the new value", () => {
+    const { getByPlaceholderText } = render(<Toolbar />);
+    const input = getByPlaceholderText("Untitled model");
+    fireEvent.change(input, { target: { value: "New Name" } });
+    fireEvent.blur(input);
+    expect(setModelTitle).toHaveBeenCalledWith("New Name");
+  });
+});
+
+describe("share with naming prompt", () => {
+  let shareGraph: ReturnType<typeof vi.fn>;
+  let setModelTitle: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    shareGraph = vi.fn().mockResolvedValue(undefined);
+    setModelTitle = vi.fn();
+    useStore.setState({
+      graph: seedGraph,
+      shareGraph,
+      setModelTitle,
+      newModel: vi.fn(),
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("shares immediately when modelTitle is already set", async () => {
+    vi.spyOn(window, "prompt");
+    useStore.setState({ modelTitle: "Named" } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
+    const { getByTitle } = render(<Toolbar />);
+    await act(async () => {
+      fireEvent.click(getByTitle("Share"));
+    });
+    expect(window.prompt).not.toHaveBeenCalled();
+    expect(shareGraph).toHaveBeenCalledOnce();
+  });
+
+  it("prompts for a name when modelTitle is empty, then calls setModelTitle and shareGraph", async () => {
+    vi.spyOn(window, "prompt").mockReturnValue("Prompted Name");
+    useStore.setState({ modelTitle: "" } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
+    const { getByTitle } = render(<Toolbar />);
+    await act(async () => {
+      fireEvent.click(getByTitle("Share"));
+    });
+    expect(window.prompt).toHaveBeenCalled();
+    expect(setModelTitle).toHaveBeenCalledWith("Prompted Name");
+    expect(shareGraph).toHaveBeenCalledOnce();
+  });
+
+  it("skips setModelTitle and still shares if user dismisses the prompt (returns null)", async () => {
+    vi.spyOn(window, "prompt").mockReturnValue(null);
+    useStore.setState({ modelTitle: "" } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
+    const { getByTitle } = render(<Toolbar />);
+    await act(async () => {
+      fireEvent.click(getByTitle("Share"));
+    });
+    expect(setModelTitle).not.toHaveBeenCalled();
+    expect(shareGraph).toHaveBeenCalledOnce();
+  });
+});

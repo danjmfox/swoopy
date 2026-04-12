@@ -86,6 +86,85 @@ describe("SE-07: startup restore", () => {
   });
 });
 
+describe("document.title sync", () => {
+  let loadFromUrl: ReturnType<typeof vi.fn>;
+  let loadPersistedGraph: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    loadFromUrl = vi.fn();
+    loadPersistedGraph = vi.fn();
+    useStore.setState({
+      loadFromUrl,
+      loadPersistedGraph,
+      modelTitle: "",
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+    vi.stubGlobal("location", { search: "" });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    document.title = "Swoopy";
+  });
+
+  it("sets document.title to 'Swoopy' when modelTitle is empty", async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    expect(document.title).toBe("Swoopy");
+  });
+
+  it("sets document.title to '<title> — Swoopy' when modelTitle is set", async () => {
+    useStore.setState({ modelTitle: "My Loop" } as unknown as Parameters<
+      typeof useStore.setState
+    >[0]);
+    await act(async () => {
+      render(<App />);
+    });
+    expect(document.title).toBe("My Loop — Swoopy");
+  });
+
+  it("updates document.title reactively when modelTitle changes", async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    act(() => {
+      useStore.setState({ modelTitle: "Updated" } as unknown as Parameters<
+        typeof useStore.setState
+      >[0]);
+    });
+    expect(document.title).toBe("Updated — Swoopy");
+  });
+});
+
+describe("SE-07 title: startup reads ?title= param for ?m= routes", () => {
+  let loadFromUrl: ReturnType<typeof vi.fn>;
+  let loadPersistedGraph: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    loadFromUrl = vi.fn();
+    loadPersistedGraph = vi.fn();
+    useStore.setState({
+      loadFromUrl,
+      loadPersistedGraph,
+      modelTitle: "",
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it("sets modelTitle from ?title= when ?m= route loads", async () => {
+    const testId = "33333333-3333-3333-3333-333333333333";
+    vi.stubGlobal("location", { search: `?m=${testId}&title=Shared+Name` });
+    await act(async () => {
+      render(<App />);
+    });
+    expect(useStore.getState().modelTitle).toBe("Shared Name");
+  });
+});
+
 describe("SE-10: welcome overlay", () => {
   let loadFromUrl: ReturnType<typeof vi.fn>;
   let loadPersistedGraph: ReturnType<typeof vi.fn>;

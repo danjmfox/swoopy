@@ -88,6 +88,12 @@ describe("SE-09: newModel", () => {
     useStore.getState().newModel();
     expect(window.location.search).not.toContain("g=");
   });
+
+  it("clears modelTitle", () => {
+    useStore.setState({ modelTitle: "Old Title" });
+    useStore.getState().newModel();
+    expect(useStore.getState().modelTitle).toBe("");
+  });
 });
 
 // GE-30 hover feedback
@@ -549,6 +555,20 @@ describe("SE-07: localStorage auto-save", () => {
     useStore.getState().loadPersistedGraph();
     expect(localStorage.getItem("swoopy_current_model")).toBe(modelId);
   });
+
+  it("loadPersistedGraph restores modelTitle from localStorage key swoopy_title_<modelId>", () => {
+    const { modelId } = useStore.getState();
+    localStorage.setItem(`swoopy_title_${modelId}`, "Restored Title");
+    useStore.setState({ modelTitle: "" });
+    useStore.getState().loadPersistedGraph();
+    expect(useStore.getState().modelTitle).toBe("Restored Title");
+  });
+
+  it("loadPersistedGraph leaves modelTitle empty when no title stored", () => {
+    useStore.setState({ modelTitle: "" });
+    useStore.getState().loadPersistedGraph();
+    expect(useStore.getState().modelTitle).toBe("");
+  });
 });
 
 describe("SE-02 / SE-06: shareGraph", () => {
@@ -580,6 +600,28 @@ describe("SE-02 / SE-06: shareGraph", () => {
     expect(decoded.graph.nodes).toHaveLength(1);
     expect(decoded.graph.nodes[0].x).toBe(10);
   });
+
+  it("includes &title= in the share URL when modelTitle is set", async () => {
+    useStore.setState({ modelTitle: "My Loop" });
+    await useStore.getState().shareGraph();
+    const url = new URL(
+      (
+        navigator.clipboard.writeText as ReturnType<typeof vi.fn>
+      ).mock.calls[0][0],
+    );
+    expect(url.searchParams.get("title")).toBe("My Loop");
+  });
+
+  it("omits title param from share URL when modelTitle is empty", async () => {
+    useStore.setState({ modelTitle: "" });
+    await useStore.getState().shareGraph();
+    const url = new URL(
+      (
+        navigator.clipboard.writeText as ReturnType<typeof vi.fn>
+      ).mock.calls[0][0],
+    );
+    expect(url.searchParams.has("title")).toBe(false);
+  });
 });
 
 describe("SE-03: loadFromUrl", () => {
@@ -605,6 +647,32 @@ describe("SE-03: loadFromUrl", () => {
     expect(restored.nodes).toHaveLength(1);
     expect(restored.nodes[0].x).toBe(77);
     expect(restored.nodes[0].y).toBe(88);
+  });
+
+  it("sets modelTitle from ?title= param when present alongside ?g=", () => {
+    const graph = { nodes: [], edges: [], annotations: [], modulators: [] };
+    const encoded = btoa(
+      JSON.stringify({
+        version: 5,
+        graph: { ...graph, annotations: [], modulators: [] },
+      }),
+    );
+    useStore.setState({ modelTitle: "" });
+    useStore.getState().loadFromUrl(`?g=${encoded}&title=Shared+Title`);
+    expect(useStore.getState().modelTitle).toBe("Shared Title");
+  });
+
+  it("leaves modelTitle empty when no ?title= param present", () => {
+    const graph = { nodes: [], edges: [], annotations: [], modulators: [] };
+    const encoded = btoa(
+      JSON.stringify({
+        version: 5,
+        graph: { ...graph, annotations: [], modulators: [] },
+      }),
+    );
+    useStore.setState({ modelTitle: "previous" });
+    useStore.getState().loadFromUrl(`?g=${encoded}`);
+    expect(useStore.getState().modelTitle).toBe("");
   });
 });
 
