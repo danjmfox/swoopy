@@ -26,8 +26,13 @@ export const historyLogger = new HistoryLogger(300);
 export function App() {
   const loadFromUrl = useStore((s) => s.loadFromUrl);
   const loadPersistedGraph = useStore((s) => s.loadPersistedGraph);
+  const modelTitle = useStore((s) => s.modelTitle);
   const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
   const loggerRef = useRef(historyLogger);
+
+  useEffect(() => {
+    document.title = modelTitle ? `${modelTitle} — Swoopy` : "Swoopy";
+  }, [modelTitle]);
 
   useEffect(() => {
     const subscriber = createHistorySubscriber(loggerRef.current, () =>
@@ -45,8 +50,10 @@ export function App() {
       loadFromUrl(window.location.search);
     } else {
       const m = params.get("m");
+      const titleParam = params.get("title") ?? "";
       if (m) {
         useStore.setState({ modelId: m });
+        if (titleParam) useStore.setState({ modelTitle: titleParam });
       } else {
         const saved = localStorage.getItem("swoopy_current_model");
         if (saved) useStore.setState({ modelId: saved });

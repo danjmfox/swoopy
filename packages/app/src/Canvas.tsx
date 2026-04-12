@@ -7,6 +7,7 @@ import { useStore } from "./store.ts";
 export function Canvas() {
   const ref = useRef<HTMLCanvasElement>(null);
   const [outcomeWarning, setOutcomeWarning] = useState<string | null>(null);
+  const modelTitle = useStore((s) => s.modelTitle);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -415,6 +416,21 @@ export function Canvas() {
           outline: "none",
         }}
       />
+      <div
+        data-testid="model-title-overlay"
+        style={{
+          position: "fixed",
+          bottom: 24,
+          left: 24,
+          color: "#475569",
+          fontSize: 13,
+          fontStyle: "italic",
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+      >
+        {modelTitle}
+      </div>
       {outcomeWarning && (
         <div
           data-testid="outcome-warning"
