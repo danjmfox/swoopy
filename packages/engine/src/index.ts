@@ -3,6 +3,7 @@ export type {
   EdgeId,
   AnnotationId,
   ModulatorId,
+  NodeRole,
   DelayLevel,
   EdgeKind,
   ConstraintKind,
