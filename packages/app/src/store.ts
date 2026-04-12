@@ -87,6 +87,7 @@ interface StoreState {
         | "sizeTier"
         | "colourTier"
         | "annotation"
+        | "role"
       >
     >,
   ) => void;
