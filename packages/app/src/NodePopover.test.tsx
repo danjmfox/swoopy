@@ -92,14 +92,11 @@ describe("NodePopover role selector", () => {
     );
   });
 
-  it("clicking None calls updateNode with role: undefined", () => {
+  it("clicking None calls updateNode with no role property (exactOptionalPropertyTypes)", () => {
     const spy = vi.spyOn(useStore.getState(), "updateNode");
     render(<NodePopover />);
     fireEvent.click(screen.getByRole("button", { name: /^none$/i }));
-    expect(spy).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ role: undefined }),
-    );
+    expect(spy).toHaveBeenCalledWith(expect.any(String), {});
   });
 });
 

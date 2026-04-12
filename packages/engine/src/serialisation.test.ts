@@ -184,14 +184,20 @@ describe("deserialize v4 migration", () => {
 describe("role field serialisation", () => {
   it("round-trips role: 'lever' on a node", () => {
     const leverNode: Node = { ...seedGraph.nodes[0]!, role: "lever" };
-    const graph = { ...seedGraph, nodes: [leverNode, ...seedGraph.nodes.slice(1)] };
+    const graph = {
+      ...seedGraph,
+      nodes: [leverNode, ...seedGraph.nodes.slice(1)],
+    };
     const restored = deserialize(serialize(graph));
     expect(restored.nodes[0]!.role).toBe("lever");
   });
 
   it("round-trips role: 'outcome' on a node", () => {
     const outcomeNode: Node = { ...seedGraph.nodes[0]!, role: "outcome" };
-    const graph = { ...seedGraph, nodes: [outcomeNode, ...seedGraph.nodes.slice(1)] };
+    const graph = {
+      ...seedGraph,
+      nodes: [outcomeNode, ...seedGraph.nodes.slice(1)],
+    };
     const restored = deserialize(serialize(graph));
     expect(restored.nodes[0]!.role).toBe("outcome");
   });
