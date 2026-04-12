@@ -1,15 +1,16 @@
 ---
 id: DR--20260412--app--node-role-indicators
-dateCreated: '2026-04-12'
+dateCreated: "2026-04-12"
 version: 1.0.0
 status: new
 changeType: creation
 domain: app
 slug: node-role-indicators
 changelog:
-  - date: '2026-04-12'
+  - date: "2026-04-12"
     note: Initial creation — emerged from use; DMs injecting outcome nodes directly breaks model pedagogy
 ---
+
 # DR--20260412--app--node-role-indicators
 
 ## 🧭 Context
@@ -22,24 +23,24 @@ The problem is a category error, not malice. The fix should explain, not prevent
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-| ------ | ----------- | -------- | --------- |
-| A | Block injection on outcome nodes | Rejected | Coercive; violates "thinking tool, not answer machine" philosophy |
-| B | Add `isLever: boolean` flag only | Rejected | Doesn't name the opposite concept; DMs still don't know outcome nodes are off-limits |
-| C | Add `role: 'lever' \| 'outcome'` optional field; warn on outcome injection | Accepted | Names both concepts; warns without blocking; author-controlled |
+| Option | Description                                                                | Outcome  | Rationale                                                                            |
+| ------ | -------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| A      | Block injection on outcome nodes                                           | Rejected | Coercive; violates "thinking tool, not answer machine" philosophy                    |
+| B      | Add `isLever: boolean` flag only                                           | Rejected | Doesn't name the opposite concept; DMs still don't know outcome nodes are off-limits |
+| C      | Add `role: 'lever' \| 'outcome'` optional field; warn on outcome injection | Accepted | Names both concepts; warns without blocking; author-controlled                       |
 
 ## 🧠 Decision
 
 Add an optional `role` field to the node schema:
 
 ```ts
-type NodeRole = 'lever' | 'outcome'
+type NodeRole = "lever" | "outcome";
 // unset = author has no opinion
 ```
 
 **Lever nodes** (`role: 'lever'`): display a visual indicator (distinct ring treatment or icon). Signal to the player: "you can act here directly."
 
-**Outcome nodes** (`role: 'outcome'`): in Simulate mode, clicking shows a non-blocking warning — *"[Label] is a system outcome. To change it, act on its causes."* — before allowing the injection to proceed. No visual indicator at rest.
+**Outcome nodes** (`role: 'outcome'`): in Simulate mode, clicking shows a non-blocking warning — _"[Label] is a system outcome. To change it, act on its causes."_ — before allowing the injection to proceed. No visual indicator at rest.
 
 The warning is advisory. The injection still happens if the player proceeds.
 

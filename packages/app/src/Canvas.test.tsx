@@ -1472,14 +1472,19 @@ describe("outcome node warning in simulate mode", () => {
     await act(async () => {});
     const canvas = container.querySelector("canvas")!;
     fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
-    expect(container.querySelector("[data-testid='outcome-warning']")).not.toBeNull();
+    expect(
+      container.querySelector("[data-testid='outcome-warning']"),
+    ).not.toBeNull();
   });
 
   it("outcome warning contains the node label", async () => {
     mockHitTest.mockReturnValue({ kind: "node", id: outcomeNode.id });
     const { container, getByText } = render(<Canvas />);
     await act(async () => {});
-    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 0, clientY: 0 });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
     expect(getByText(/is a system outcome/i)).toBeDefined();
   });
 
@@ -1488,7 +1493,10 @@ describe("outcome node warning in simulate mode", () => {
     const { container } = render(<Canvas />);
     await act(async () => {});
     const before = useStore.getState().sim.nodeValues.get(outcomeNode.id)!;
-    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 0, clientY: 0 });
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
     const after = useStore.getState().sim.nodeValues.get(outcomeNode.id)!;
     expect(after).toBeGreaterThan(before);
   });
@@ -1498,7 +1506,12 @@ describe("outcome node warning in simulate mode", () => {
     mockHitTest.mockReturnValue({ kind: "node", id: plainNode.id });
     const { container } = render(<Canvas />);
     await act(async () => {});
-    fireEvent.pointerDown(container.querySelector("canvas")!, { clientX: 0, clientY: 0 });
-    expect(container.querySelector("[data-testid='outcome-warning']")).toBeNull();
+    fireEvent.pointerDown(container.querySelector("canvas")!, {
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(
+      container.querySelector("[data-testid='outcome-warning']"),
+    ).toBeNull();
   });
 });

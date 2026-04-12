@@ -42,15 +42,15 @@ Switch to **Add Node** mode, then click the canvas. A node appears with a defaul
 
 Double-click any node (in any mode) to open its popover:
 
-| Field      | Meaning                                                                                         |
-| ---------- | ----------------------------------------------------------------------------------------------- |
-| Label      | What this variable is called                                                                    |
-| Min        | The lowest value this variable can reach                                                        |
-| Max        | The highest value it can reach                                                                  |
-| Initial    | Where it starts; also the value restored by the Reset button                                    |
-| Size       | Display radius: XS / S / M (default) / L / XL                                                   |
-| Colour     | Identity colour: blue (default) / green / red / orange / yellow / teal / purple / grey          |
-| Annotation | Short label (max ~24 chars) shown below the node circle — useful for units, context, or caveats |
+| Field      | Meaning                                                                                                                                                                           |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Label      | What this variable is called                                                                                                                                                      |
+| Min        | The lowest value this variable can reach                                                                                                                                          |
+| Max        | The highest value it can reach                                                                                                                                                    |
+| Initial    | Where it starts; also the value restored by the Reset button                                                                                                                      |
+| Size       | Display radius: XS / S / M (default) / L / XL                                                                                                                                     |
+| Colour     | Identity colour: blue (default) / green / red / orange / yellow / teal / purple / grey                                                                                            |
+| Annotation | Short label (max ~24 chars) shown below the node circle — useful for units, context, or caveats                                                                                   |
 | Role       | Optional: **Lever** (a direct action point — displayed with an amber ring), **Outcome** (an emergent result that should only change via its causes), or **None** (no designation) |
 
 ### Draw a causal edge

@@ -191,11 +191,13 @@ export function NodePopover() {
           return (
             <button
               key={r ?? "none"}
-              aria-label={r === "lever" ? "Lever" : r === "outcome" ? "Outcome" : "None"}
+              aria-label={
+                r === "lever" ? "Lever" : r === "outcome" ? "Outcome" : "None"
+              }
               onClick={() => {
                 if (!editingNodeId) return;
                 setRole(r);
-                updateNode(editingNodeId, { role: r });
+                updateNode(editingNodeId, r !== undefined ? { role: r } : {});
               }}
               style={{
                 ...btnStyle,
