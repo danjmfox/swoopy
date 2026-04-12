@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useStore } from "./store.ts";
+import { useStore, listLocalModels } from "./store.ts";
 import type { AppMode } from "./store.ts";
 import { HelpModal } from "./HelpModal.tsx";
 
@@ -31,11 +31,13 @@ export function Toolbar() {
   const previousMode = useStore((s) => s.previousMode);
   const showHistory = useStore((s) => s.showHistory);
   const modelTitle = useStore((s) => s.modelTitle);
+  const modelId = useStore((s) => s.modelId);
   const { pauseSim, resumeSim, resetSim, setSimSpeed, setMode } =
     useStore.getState();
   const [helpOpen, setHelpOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [titleDraft, setTitleDraft] = useState(modelTitle);
+  const [openMenuOpen, setOpenMenuOpen] = useState(false);
 
   useEffect(() => {
     setTitleDraft(modelTitle);
@@ -104,6 +106,82 @@ export function Toolbar() {
         >
           + New
         </button>
+        <div style={{ position: "relative" }}>
+          <button
+            title="Open local model"
+            onClick={() => setOpenMenuOpen((o) => !o)}
+            style={{
+              ...btn,
+              background: openMenuOpen ? "#334155" : "transparent",
+            }}
+          >
+            Open
+          </button>
+          {openMenuOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 6px)",
+                right: 0,
+                background: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: 8,
+                minWidth: 220,
+                maxHeight: 300,
+                overflowY: "auto",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                zIndex: 100,
+              }}
+            >
+              {listLocalModels(localStorage).length === 0 ? (
+                <div
+                  style={{
+                    color: "#94a3b8",
+                    fontSize: 13,
+                    padding: "10px 14px",
+                  }}
+                >
+                  No saved models
+                </div>
+              ) : (
+                listLocalModels(localStorage).map(({ id, title }) => (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      useStore.getState().loadModel(id);
+                      setOpenMenuOpen(false);
+                    }}
+                    style={{
+                      ...btn,
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "8px 14px",
+                      borderRadius: 0,
+                      background: id === modelId ? "#334155" : "transparent",
+                      fontSize: 13,
+                    }}
+                  >
+                    {title || (
+                      <span style={{ color: "#64748b" }}>Untitled</span>
+                    )}
+                    {id === modelId && (
+                      <span
+                        style={{
+                          color: "#64748b",
+                          fontSize: 11,
+                          marginLeft: 6,
+                        }}
+                      >
+                        (current)
+                      </span>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
         <button title="Share" onClick={handleShare} style={btn}>
           {copied ? "Copied!" : "Share"}
         </button>

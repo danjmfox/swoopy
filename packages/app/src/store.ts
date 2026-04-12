@@ -39,6 +39,24 @@ import { seedGraph } from "./seed.ts";
 
 const LS_KEY_PREFIX = "swoopy_graph_";
 
+export function listLocalModels(
+  storage: Storage,
+): { id: string; title: string }[] {
+  const models: { id: string; title: string }[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (!key?.startsWith(LS_KEY_PREFIX)) continue;
+    const id = key.slice(LS_KEY_PREFIX.length);
+    const title = storage.getItem(`swoopy_title_${id}`) ?? "";
+    models.push({ id, title });
+  }
+  return models.sort((a, b) => {
+    if (a.title && !b.title) return -1;
+    if (!a.title && b.title) return 1;
+    return a.title.localeCompare(b.title);
+  });
+}
+
 function persist(graph: Graph, id: string) {
   localStorage.setItem(
     `${LS_KEY_PREFIX}${id}`,
@@ -172,6 +190,7 @@ interface StoreState {
   shareGraph: () => Promise<void>;
   loadFromUrl: (search: string) => void;
   newModel: () => void;
+  loadModel: (id: string) => void;
 }
 
 type Get = () => StoreState;
@@ -637,6 +656,43 @@ export const useStore = create<StoreState>((set, get) => ({
       past: [],
       future: [],
       sim: makeInitialSim(emptyGraph),
+    });
+  },
+  loadModel: (id: string) => {
+    const raw = localStorage.getItem(`${LS_KEY_PREFIX}${id}`);
+    const title = localStorage.getItem(`swoopy_title_${id}`) ?? "";
+    const url = new URL(window.location.href);
+    url.searchParams.delete("g");
+    url.searchParams.set("m", id);
+    if (title) {
+      url.searchParams.set("title", title);
+    } else {
+      url.searchParams.delete("title");
+    }
+    history.replaceState(null, "", url.toString());
+    localStorage.setItem("swoopy_current_model", id);
+    let graph: Graph | null = null;
+    if (raw) {
+      try {
+        graph = deserialize(JSON.parse(raw));
+      } catch {
+        // corrupted — use empty graph
+      }
+    }
+    const loadedGraph: Graph = graph ?? {
+      nodes: [],
+      edges: [],
+      annotations: [],
+      modulators: [],
+    };
+    set({
+      modelId: id,
+      modelTitle: title,
+      graph: loadedGraph,
+      past: [],
+      future: [],
+      transient: false,
+      sim: makeInitialSim(loadedGraph),
     });
   },
   loadPersistedGraph: () => {
