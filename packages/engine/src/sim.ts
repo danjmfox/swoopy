@@ -67,8 +67,8 @@ export function computeEffectiveWeights(
       range === 0
         ? 1
         : mod.polarity === 1
-          ? (2 * (nodeValue - srcNode.min)) / range
-          : (2 * (srcNode.max - nodeValue)) / range;
+          ? (nodeValue - srcNode.min) / range
+          : (srcNode.max - nodeValue) / range;
     const effective = Math.max(0, Math.min(5, edge.weight * factor));
     result.set(edge.id, effective);
   }

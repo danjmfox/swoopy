@@ -157,7 +157,7 @@ describe("computeEffectiveWeights — no modulator", () => {
 });
 
 describe("computeEffectiveWeights — polarity +1", () => {
-  it("source at midpoint → base weight unchanged (factor = 1)", () => {
+  it("source at midpoint → half base weight (factor = 0.5)", () => {
     const g: Graph = {
       nodes: [modSrcNode, modTgtNode],
       edges: [modCausalEdge],
@@ -167,10 +167,10 @@ describe("computeEffectiveWeights — polarity +1", () => {
       ],
     };
     const weights = computeEffectiveWeights(g, new Map([[mSrc, 5]]));
-    expect(weights.get(mEdge)).toBe(3);
+    expect(weights.get(mEdge)).toBe(1.5); // 3 × 0.5 = 1.5
   });
 
-  it("source at max → 2× base weight, clamped to 5", () => {
+  it("source at max → full base weight (factor = 1)", () => {
     const g: Graph = {
       nodes: [modSrcNode, modTgtNode],
       edges: [modCausalEdge],
@@ -180,7 +180,7 @@ describe("computeEffectiveWeights — polarity +1", () => {
       ],
     };
     const weights = computeEffectiveWeights(g, new Map([[mSrc, 10]]));
-    expect(weights.get(mEdge)).toBe(5); // 3 × 2 = 6 → clamped to 5
+    expect(weights.get(mEdge)).toBe(3); // 3 × 1 = 3
   });
 
   it("source at min → 0 (fully suppressed)", () => {
@@ -198,7 +198,7 @@ describe("computeEffectiveWeights — polarity +1", () => {
 });
 
 describe("computeEffectiveWeights — polarity -1", () => {
-  it("source at midpoint → base weight unchanged (factor = 1)", () => {
+  it("source at midpoint → half base weight (factor = 0.5)", () => {
     const g: Graph = {
       nodes: [modSrcNode, modTgtNode],
       edges: [modCausalEdge],
@@ -208,10 +208,10 @@ describe("computeEffectiveWeights — polarity -1", () => {
       ],
     };
     const weights = computeEffectiveWeights(g, new Map([[mSrc, 5]]));
-    expect(weights.get(mEdge)).toBe(3);
+    expect(weights.get(mEdge)).toBe(1.5); // 3 × 0.5 = 1.5
   });
 
-  it("source at min → 2× base weight, clamped to 5", () => {
+  it("source at min → full base weight (factor = 1)", () => {
     const g: Graph = {
       nodes: [modSrcNode, modTgtNode],
       edges: [modCausalEdge],
@@ -221,7 +221,7 @@ describe("computeEffectiveWeights — polarity -1", () => {
       ],
     };
     const weights = computeEffectiveWeights(g, new Map([[mSrc, 0]]));
-    expect(weights.get(mEdge)).toBe(5); // 3 × 2 = 6 → clamped to 5
+    expect(weights.get(mEdge)).toBe(3); // 3 × 1 = 3
   });
 
   it("source at max → 0 (fully suppressed)", () => {
@@ -239,7 +239,7 @@ describe("computeEffectiveWeights — polarity -1", () => {
 });
 
 describe("computeEffectiveWeights — edge cases", () => {
-  it("arbitrary node range: neutral at midpoint", () => {
+  it("arbitrary node range: midpoint gives factor = 0.5", () => {
     const wideNode = { ...modSrcNode, min: 2, max: 8 };
     const g: Graph = {
       nodes: [wideNode, modTgtNode],
@@ -249,9 +249,9 @@ describe("computeEffectiveWeights — edge cases", () => {
         { id: makeModulatorId("m1"), from: mSrc, target: mEdge, polarity: 1 },
       ],
     };
-    // midpoint of [2,8] is 5 → factor = 1
+    // midpoint of [2,8] is 5 → t = (5-2)/6 = 0.5 → factor = 0.5
     const weights = computeEffectiveWeights(g, new Map([[mSrc, 5]]));
-    expect(weights.get(mEdge)).toBe(3);
+    expect(weights.get(mEdge)).toBe(1.5); // 3 × 0.5 = 1.5
   });
 
   it("degenerate range (min === max) → factor = 1, base weight unchanged", () => {
