@@ -516,7 +516,7 @@ describe("LoopyRenderer", () => {
     expect(texts()).toContain("Weight");
   });
 
-  it("GE-13 causal edge lineWidth scales with weight (formula: 1 + weight * 1.5)", () => {
+  it("GE-13 causal edge lineWidth scales with weight (formula: 3 + weight * 2)", () => {
     function edgeCurveWidthForWeight(weight: number): number {
       const { canvas, strokes } = makeSpyCanvas();
       const edge: CausalEdge = { ...edgeAB, weight };
@@ -553,6 +553,8 @@ describe("LoopyRenderer", () => {
     const w5 = edgeCurveWidthForWeight(5);
     expect(w0).toBeLessThan(w1);
     expect(w1).toBeLessThan(w5);
+    expect(w1).toBe(5);
+    expect(w5).toBe(13);
   });
 
   it("signal with sign=1 on +ve edge renders blue chevron", () => {
@@ -791,14 +793,14 @@ describe("LoopyRenderer", () => {
     expect(strokeCurve).toBeDefined();
   });
 
-  it("arrowheadDimensions(1) returns the baseline size (len=10, half=5)", () => {
+  it("arrowheadDimensions(1) returns the baseline size (len=12.5, half=6)", () => {
     const { len, half } = arrowheadDimensions(1);
-    expect(len).toBe(10);
-    expect(half).toBe(5);
+    expect(len).toBe(12.5);
+    expect(half).toBe(6);
   });
 
   it("arrowheadDimensions(5) halfWidth exceeds half the lineWidth so arrowhead is visible", () => {
-    const lineWidthAt5 = 1 + 5 * 1.5; // 8.5
+    const lineWidthAt5 = 3 + 5 * 2; // 13
     const { half } = arrowheadDimensions(5);
     expect(half).toBeGreaterThan(lineWidthAt5 / 2);
   });
@@ -2293,10 +2295,10 @@ describe("ghost-outline rendering — modulated edge", () => {
     vi.advanceTimersByTime(1000 / 60);
     renderer.stop();
 
-    // Ghost pass: base weight=2 → lineWidth = 1 + 2 × 1.5 = 4
-    // Fill pass:  effective weight=1.0 → lineWidth = 1 + 1.0 × 1.5 = 2.5
-    expect(strokeWidths).toContain(4); // ghost curve at base weight
-    expect(strokeWidths).toContain(2.5); // fill curve at effective weight
+    // Ghost pass: base weight=2 → lineWidth = 3 + 2 × 2 = 7
+    // Fill pass:  effective weight=1.0 → lineWidth = 3 + 1.0 × 2 = 5
+    expect(strokeWidths).toContain(7); // ghost curve at base weight
+    expect(strokeWidths).toContain(5); // fill curve at effective weight
   });
 });
 
