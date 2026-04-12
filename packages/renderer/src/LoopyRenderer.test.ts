@@ -2322,3 +2322,72 @@ describe("ANIM_START / ANIM_END exported constants", () => {
     expect(ANIM_END).toBe(0.55);
   });
 });
+
+// DR--20260412--app--node-role-indicators
+describe("lever node ring", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const leverNode: Node = {
+    id: "n1" as import("@swoopy/engine").NodeId,
+    label: "Cash",
+    x: 100,
+    y: 100,
+    radius: 30,
+    sizeTier: "m",
+    colourTier: "blue",
+    min: 0,
+    max: 10,
+    initial: 5,
+    role: "lever",
+  };
+
+  const plainNode: Node = {
+    id: "n2" as import("@swoopy/engine").NodeId,
+    label: "Costs",
+    x: 200,
+    y: 200,
+    radius: 30,
+    sizeTier: "m",
+    colourTier: "blue",
+    min: 0,
+    max: 10,
+    initial: 5,
+  };
+
+  function makeStoreWith(node: Node): () => RendererStore {
+    return () =>
+      ({
+        tickSim: vi.fn(),
+        simRunning: false,
+        simSpeed: 1,
+        graph: { nodes: [node], edges: [], annotations: [], modulators: [] },
+        sim: {
+          signals: [],
+          pending: [],
+          nodeValues: new Map(),
+          displayPrevNodeValues: new Map(),
+          tick: 0,
+        },
+        focusedNodeId: null,
+      }) as unknown as RendererStore;
+  }
+
+  it("draws an amber stroke for a lever node", () => {
+    const { canvas, strokes } = makeSpyCanvas();
+    const renderer = new LoopyRenderer(canvas, makeStoreWith(leverNode));
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    expect(strokes().some((s) => s.style === "#fbbf24")).toBe(true);
+  });
+
+  it("does not draw an amber stroke for a node with no role", () => {
+    const { canvas, strokes } = makeSpyCanvas();
+    const renderer = new LoopyRenderer(canvas, makeStoreWith(plainNode));
+    renderer.start();
+    vi.advanceTimersByTime(1000 / 60);
+    renderer.stop();
+    expect(strokes().some((s) => s.style === "#fbbf24")).toBe(false);
+  });
+});
