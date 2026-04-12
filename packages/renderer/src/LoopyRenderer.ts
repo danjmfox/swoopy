@@ -628,6 +628,15 @@ export class LoopyRenderer {
         ctx.stroke();
       }
 
+      // DR--20260412: lever role indicator
+      if (node.role === "lever") {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius + 5, 0, Math.PI * 2);
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
       // SI-12: label + trend arrow
       const arrow = trend === "up" ? "▲" : trend === "down" ? "▼" : "";
       ctx.fillStyle = "#f1f5f9";
