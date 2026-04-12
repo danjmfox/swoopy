@@ -190,6 +190,55 @@ describe("loadModel", () => {
   });
 });
 
+// deleteModel
+describe("deleteModel", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    history.replaceState(null, "", "?");
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("removes swoopy_graph_<id> from localStorage", () => {
+    localStorage.setItem("swoopy_graph_abc", "{}");
+    useStore.setState({ modelId: "other" });
+    useStore.getState().deleteModel("abc");
+    expect(localStorage.getItem("swoopy_graph_abc")).toBeNull();
+  });
+
+  it("removes swoopy_title_<id> from localStorage", () => {
+    localStorage.setItem("swoopy_graph_abc", "{}");
+    localStorage.setItem("swoopy_title_abc", "My Model");
+    useStore.setState({ modelId: "other" });
+    useStore.getState().deleteModel("abc");
+    expect(localStorage.getItem("swoopy_title_abc")).toBeNull();
+  });
+
+  it("does not affect other models in localStorage", () => {
+    localStorage.setItem("swoopy_graph_abc", "{}");
+    localStorage.setItem("swoopy_graph_xyz", "{}");
+    useStore.setState({ modelId: "other" });
+    useStore.getState().deleteModel("abc");
+    expect(localStorage.getItem("swoopy_graph_xyz")).toBe("{}");
+  });
+
+  it("creates a new model when the deleted model is the current one", () => {
+    localStorage.setItem("swoopy_graph_abc", "{}");
+    useStore.setState({ modelId: "abc" });
+    useStore.getState().deleteModel("abc");
+    expect(useStore.getState().modelId).not.toBe("abc");
+  });
+
+  it("does not change modelId when a different model is deleted", () => {
+    localStorage.setItem("swoopy_graph_abc", "{}");
+    useStore.setState({ modelId: "xyz" });
+    useStore.getState().deleteModel("abc");
+    expect(useStore.getState().modelId).toBe("xyz");
+  });
+});
+
 // GE-40: historySeq counter
 describe("historySeq / incrementHistorySeq", () => {
   it("historySeq defaults to 0", () => {

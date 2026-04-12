@@ -32,6 +32,7 @@ export function Toolbar() {
   const showHistory = useStore((s) => s.showHistory);
   const modelTitle = useStore((s) => s.modelTitle);
   const modelId = useStore((s) => s.modelId);
+  const deleteModel = useStore((s) => s.deleteModel);
   const { pauseSim, resumeSim, resetSim, setSimSpeed, setMode } =
     useStore.getState();
   const [helpOpen, setHelpOpen] = useState(false);
@@ -145,38 +146,60 @@ export function Toolbar() {
                 </div>
               ) : (
                 listLocalModels(localStorage).map(({ id, title }) => (
-                  <button
+                  <div
                     key={id}
-                    onClick={() => {
-                      useStore.getState().loadModel(id);
-                      setOpenMenuOpen(false);
-                    }}
                     style={{
-                      ...btn,
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "8px 14px",
-                      borderRadius: 0,
+                      display: "flex",
+                      alignItems: "center",
                       background: id === modelId ? "#334155" : "transparent",
-                      fontSize: 13,
+                      borderRadius: 0,
                     }}
                   >
-                    {title || (
-                      <span style={{ color: "#64748b" }}>Untitled</span>
-                    )}
-                    {id === modelId && (
-                      <span
-                        style={{
-                          color: "#64748b",
-                          fontSize: 11,
-                          marginLeft: 6,
-                        }}
-                      >
-                        (current)
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      onClick={() => {
+                        useStore.getState().loadModel(id);
+                        setOpenMenuOpen(false);
+                      }}
+                      style={{
+                        ...btn,
+                        flex: 1,
+                        textAlign: "left",
+                        padding: "8px 14px",
+                        borderRadius: 0,
+                        background: "transparent",
+                        fontSize: 13,
+                      }}
+                    >
+                      {title || (
+                        <span style={{ color: "#64748b" }}>Untitled</span>
+                      )}
+                      {id === modelId && (
+                        <span
+                          style={{
+                            color: "#64748b",
+                            fontSize: 11,
+                            marginLeft: 6,
+                          }}
+                        >
+                          (current)
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      title={`Delete ${title || id}`}
+                      onClick={() => deleteModel(id)}
+                      style={{
+                        ...btn,
+                        padding: "8px 10px",
+                        fontSize: 12,
+                        color: "#64748b",
+                        borderRadius: 0,
+                        flexShrink: 0,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))
               )}
             </div>

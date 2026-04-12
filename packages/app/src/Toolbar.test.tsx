@@ -281,6 +281,67 @@ describe("model title input", () => {
   });
 });
 
+describe("Open dropdown — delete button", () => {
+  let deleteModel: ReturnType<typeof vi.fn>;
+  let loadModel: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    deleteModel = vi.fn();
+    loadModel = vi.fn();
+    localStorage.setItem("swoopy_graph_m1", "{}");
+    localStorage.setItem("swoopy_title_m1", "Alpha");
+    localStorage.setItem("swoopy_graph_m2", "{}");
+    localStorage.setItem("swoopy_title_m2", "Beta");
+    useStore.setState({
+      graph: seedGraph,
+      modelId: "m1",
+      deleteModel,
+      loadModel,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("renders a delete button for each model row", () => {
+    const { getByTitle, getAllByTitle } = render(<Toolbar />);
+    fireEvent.click(getByTitle("Open local model"));
+    expect(getAllByTitle(/Delete .*/)).toHaveLength(2);
+  });
+
+  it("clicking × calls deleteModel with the row's id", async () => {
+    const { getByTitle, getAllByTitle } = render(<Toolbar />);
+    fireEvent.click(getByTitle("Open local model"));
+    const deleteButtons = getAllByTitle(/Delete .*/);
+    await act(async () => {
+      fireEvent.click(deleteButtons[0]!);
+    });
+    expect(deleteModel).toHaveBeenCalledOnce();
+    expect(deleteModel).toHaveBeenCalledWith(expect.any(String));
+  });
+
+  it("clicking × does not close the dropdown", async () => {
+    const { getByTitle, getAllByTitle } = render(<Toolbar />);
+    fireEvent.click(getByTitle("Open local model"));
+    const deleteButtons = getAllByTitle(/Delete .*/);
+    await act(async () => {
+      fireEvent.click(deleteButtons[0]!);
+    });
+    expect(getAllByTitle(/Delete .*/)).not.toHaveLength(0);
+  });
+
+  it("clicking a model row calls loadModel and closes the dropdown", async () => {
+    const { getByTitle, getByText, queryByTitle } = render(<Toolbar />);
+    fireEvent.click(getByTitle("Open local model"));
+    await act(async () => {
+      fireEvent.click(getByText("Alpha"));
+    });
+    expect(loadModel).toHaveBeenCalledOnce();
+    expect(queryByTitle(/Delete .*/)).toBeNull();
+  });
+});
+
 describe("share with naming prompt", () => {
   let shareGraph: ReturnType<typeof vi.fn>;
   let setModelTitle: ReturnType<typeof vi.fn>;
