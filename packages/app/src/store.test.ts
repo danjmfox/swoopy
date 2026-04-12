@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { useStore } from "./store.ts";
+import { useStore, listLocalModels } from "./store.ts";
+import { serialize } from "@swoopy/engine";
 
 beforeEach(() => {
   useStore.setState({
@@ -86,6 +87,106 @@ describe("modelTitle / setModelTitle", () => {
     useStore.getState().setModelTitle("Hello World");
     const params = new URLSearchParams(window.location.search);
     expect(params.get("title")).toBe("Hello World");
+  });
+});
+
+// listLocalModels
+describe("listLocalModels", () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("returns empty array when no models in storage", () => {
+    expect(listLocalModels(localStorage)).toEqual([]);
+  });
+
+  it("returns one model with its title", () => {
+    localStorage.setItem("swoopy_graph_abc123", "{}");
+    localStorage.setItem("swoopy_title_abc123", "My Loop");
+    expect(listLocalModels(localStorage)).toEqual([
+      { id: "abc123", title: "My Loop" },
+    ]);
+  });
+
+  it("returns empty title when no title key exists", () => {
+    localStorage.setItem("swoopy_graph_abc123", "{}");
+    expect(listLocalModels(localStorage)).toEqual([
+      { id: "abc123", title: "" },
+    ]);
+  });
+
+  it("sorts titled models alphabetically, untitled at end", () => {
+    localStorage.setItem("swoopy_graph_z", "{}");
+    localStorage.setItem("swoopy_title_z", "Zebra");
+    localStorage.setItem("swoopy_graph_a", "{}");
+    localStorage.setItem("swoopy_title_a", "Alpha");
+    localStorage.setItem("swoopy_graph_u", "{}"); // no title
+    const result = listLocalModels(localStorage);
+    expect(result.map((m) => m.title)).toEqual(["Alpha", "Zebra", ""]);
+  });
+
+  it("ignores non-graph localStorage keys", () => {
+    localStorage.setItem("swoopy_current_model", "abc123");
+    localStorage.setItem("swoopy_welcomed", "true");
+    localStorage.setItem("swoopy_title_abc123", "Orphan Title");
+    expect(listLocalModels(localStorage)).toEqual([]);
+  });
+});
+
+// loadModel
+describe("loadModel", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    history.replaceState(null, "", "?");
+  });
+
+  it("loads graph and title from localStorage into store state", () => {
+    const graph = { nodes: [], edges: [], annotations: [], modulators: [] };
+    localStorage.setItem(
+      "swoopy_graph_model1",
+      JSON.stringify(serialize(graph)),
+    );
+    localStorage.setItem("swoopy_title_model1", "My Diagram");
+    useStore.getState().loadModel("model1");
+    expect(useStore.getState().modelId).toBe("model1");
+    expect(useStore.getState().modelTitle).toBe("My Diagram");
+    expect(useStore.getState().graph.nodes).toEqual([]);
+    expect(useStore.getState().transient).toBe(false);
+  });
+
+  it("clears undo/redo history when loading a model", () => {
+    const graph = { nodes: [], edges: [], annotations: [], modulators: [] };
+    localStorage.setItem(
+      "swoopy_graph_model2",
+      JSON.stringify(serialize(graph)),
+    );
+    useStore.setState({ past: [graph], future: [graph] });
+    useStore.getState().loadModel("model2");
+    expect(useStore.getState().past).toHaveLength(0);
+    expect(useStore.getState().future).toHaveLength(0);
+  });
+
+  it("sets URL to ?m=<id>&title=<title> when loading", () => {
+    const graph = { nodes: [], edges: [], annotations: [], modulators: [] };
+    localStorage.setItem(
+      "swoopy_graph_model3",
+      JSON.stringify(serialize(graph)),
+    );
+    localStorage.setItem("swoopy_title_model3", "Feedback Loop");
+    useStore.getState().loadModel("model3");
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get("m")).toBe("model3");
+    expect(params.get("title")).toBe("Feedback Loop");
+  });
+
+  it("does not mutate the previously active model's localStorage entry", () => {
+    const graph = { nodes: [], edges: [], annotations: [], modulators: [] };
+    localStorage.setItem("swoopy_graph_prev", JSON.stringify(serialize(graph)));
+    localStorage.setItem("swoopy_graph_next", JSON.stringify(serialize(graph)));
+    useStore.setState({ modelId: "prev" });
+    const prevData = localStorage.getItem("swoopy_graph_prev");
+    useStore.getState().loadModel("next");
+    expect(localStorage.getItem("swoopy_graph_prev")).toBe(prevData);
   });
 });
 
