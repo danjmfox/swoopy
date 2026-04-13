@@ -31,7 +31,7 @@ root scripts, and tests. Boilerplate was excluded: `main.tsx` (12 LOC),
 `index.ts` re-exports (~30 LOC combined), lock files, and generated config.
 
 | Category | Files | LOC |
-|---|---|---|
+| --- | --- | --- |
 | `packages/app/src` — React frontend | 15 | 2,934 |
 | `packages/engine/src` — simulation engine | 8 | 1,167 |
 | `packages/renderer/src` — Canvas renderer | 8 | 1,519 |
@@ -53,7 +53,7 @@ discounted rate.
 
 **Organic model** (lower bound — small team, stable requirements):
 
-```
+```plaintext
 PM = 2.4 × (KSLOC)^1.05
    = 2.4 × (6.821)^1.05
    ≈ 18.0 person-months
@@ -61,7 +61,7 @@ PM = 2.4 × (KSLOC)^1.05
 
 **Semi-Detached model** (upper bound — some novelty, mixed experience):
 
-```
+```plaintext
 PM = 3.0 × (KSLOC)^1.12
    = 3.0 × (6.821)^1.12
    ≈ 25.7 person-months
@@ -69,7 +69,7 @@ PM = 3.0 × (KSLOC)^1.12
 
 **COCOMO II Post-Architecture** (central estimate):
 
-```
+```plaintext
 PM = 2.94 × (KSLOC)^1.12
    = 2.94 × (6.821)^1.12
    ≈ 25.2 person-months
@@ -78,7 +78,7 @@ PM = 2.94 × (KSLOC)^1.12
 **Test code supplement:** Tests are real work but written faster than production
 logic. A 0.4× rate multiplier is applied:
 
-```
+```plaintext
 Extra PM ≈ 0.4 × Organic(10.164 KSLOC)
          = 0.4 × (2.4 × 10.164^1.05)
          ≈ 10.5 person-months
@@ -90,7 +90,7 @@ fact can be faster. The real ratio here is likely 0.35–0.5× given the test su
 complexity (see Method 2 below).
 
 | Scenario | Person-Months | Hours (@ 160 hrs/PM) |
-|---|---|---|
+| --- | --- | --- |
 | Organic — source only | 18.0 | 2,880 |
 | Semi-Detached — source only | 25.7 | 4,110 |
 | COCOMO II central | 25.2 | 4,030 |
@@ -109,7 +109,7 @@ discarding failed approaches before writing the final code. These are itemised
 separately as a "Discovery Tax" on top of the COCOMO base.
 
 | Domain | Why it's non-average | Est. hours |
-|---|---|---|
+| --- | --- | --- |
 | Systems dynamics theory | Causal loop diagrams, polarity conventions, reinforcing vs. balancing loops — none of this is assumed knowledge; requires domain reading and internalisation | 20 |
 | Custom signal relay algorithm | The relay model (bucketing arrivals, zero-net guard, polarity accumulation, `MAX_HOPS=26` calibration) is original. A human would prototype 2–3 approaches before converging on this one | 24 |
 | Canvas 2D game-loop patterns | `requestAnimationFrame` with `dt`, high-DPI scaling, `save/restore` discipline, clearing strategies | 10 |
@@ -139,7 +139,7 @@ Semi-Detached model is more appropriate than Organic for this codebase.
 `.git`, `graphify-out`, `pnpm-lock.yaml`, and binary assets) to produce both a
 full pack and a compressed (skeleton-only) pack.
 
-```
+```sh
 npx repomix --style plain \
   --ignore "node_modules,dist,.git,graphify-out,pnpm-lock.yaml,*.png,*.jpg,*.svg" \
   -o repomix-output.txt
@@ -152,7 +152,7 @@ npx repomix --style plain --compress \
 #### Raw repomix output
 
 | | Full pack | Compressed (skeletons only) |
-|---|---|---|
+| --- | --- | --- |
 | Files | 120 | 120 |
 | **Tokens** | **230,866** | **111,414** |
 | Characters | 850,348 | 411,151 |
@@ -174,7 +174,7 @@ Repomix exposed something the LOC analysis missed: the documentation corpus is
 substantial and was invisible to COCOMO.
 
 | Category | Tokens | Share |
-|---|---|---|
+| --- | --- | --- |
 | Production source code (`packages/`) | ~46,400 | 20.1% |
 | Test code (`packages/`) | ~84,800 | 36.7% |
 | Documentation (`docs/`) | 81,519 | 35.3% |
@@ -184,7 +184,7 @@ substantial and was invisible to COCOMO.
 **Documentation breakdown:**
 
 | File | Tokens | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `docs/MODELS.md` | 43,468 | Library of worked causal diagram examples — 18.8% of entire repo |
 | `docs/PRD.md` | 10,499 | Full product requirements document |
 | `docs/decisions/` (15 ADRs) | 20,537 | Architecture decision records |
@@ -201,7 +201,7 @@ LOC-only analysis ignores entirely.
 Per-file token ratios reveal which components are hardest to verify:
 
 | Production file | Tokens | Test file | Tokens | Ratio |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `LoopyRenderer.ts` | 5,113 | `LoopyRenderer.test.ts` | 18,269 | 3.57× |
 | `Canvas.tsx` | 3,850 | `Canvas.test.tsx` | 13,726 | 3.57× |
 | `store.ts` | 6,177 | `store.test.tsx` + `store.test.ts` | 15,747 | 2.55× |
@@ -221,7 +221,7 @@ Industry throughput benchmarks for mid-level engineers producing work from
 scratch (not editing AI output):
 
 | Category | Tokens | Rate (tok/day) | Person-days | Hours |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Production source code | 46,400 | 250 | 185 | 1,484 |
 | Test code | 84,800 | 400 | 212 | 1,696 |
 | Documentation (MODELS.md, PRD, ADRs, guides) | 81,519 | 500 | 163 | 1,304 |
@@ -240,7 +240,7 @@ non-trivial design and verification effort, not just transcription.
 ### Cross-check and convergence
 
 | Method | Person-Months | Man-Hours |
-|---|---|---|
+| --- | --- | --- |
 | COCOMO II Organic (source LOC only) | 18.0 | 2,880 |
 | COCOMO II Semi-Detached (source LOC only) | 25.7 | 4,110 |
 | COCOMO II central + test supplement | ~35.7 | ~5,710 |
@@ -259,6 +259,7 @@ requirements churn that don't apply to a solo, well-scoped build.
 > for a mid-level engineer working manually, without AI assistance.
 
 This represents approximately:
+
 - 27–28 months of solo full-time work, or
 - 11–12 months for a focused two-person team
 
