@@ -1,18 +1,19 @@
 ---
 id: DR--20260413--renderer--static-live-renderer-split
-dateCreated: '2026-04-13'
+dateCreated: "2026-04-13"
 version: 1.0.0
 status: draft
 changeType: creation
 domain: renderer
 slug: static-live-renderer-split
 changelog:
-  - date: '2026-04-13'
+  - date: "2026-04-13"
     note: Initial creation
-  - date: '2026-04-13'
+  - date: "2026-04-13"
     note: Marked as draft
-lastEdited: '2026-04-13'
+lastEdited: "2026-04-13"
 ---
+
 # Static / Live Renderer Split
 
 ## 🧭 Context
@@ -26,11 +27,11 @@ This coupling prevented headless rendering. When doc image generation was needed
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-| ------ | ----------- | -------- | --------- |
-| A | Keep everything in `LoopyRenderer.ts` | Rejected | Browser globals bleed into drawing code; any new headless consumer duplicates or stubs |
-| B | Extract `drawScene.ts` as env-agnostic static renderer; `LoopyRenderer` imports primitives and adds live overlays | **Accepted** | Clear boundary; `drawScene` works with any `CanvasRenderingContext2D`; duplication eliminated |
-| C | Full delegation: `LoopyRenderer.draw()` calls `drawScene()` as a base pass, then adds overlays | Deferred | Cleanest long-term, but requires replacing `LoopyRenderer.drawNodes` (which uses `TrendTracker` smoothing) — behaviour change out of proportion to current need |
+| Option | Description                                                                                                       | Outcome      | Rationale                                                                                                                                                       |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A      | Keep everything in `LoopyRenderer.ts`                                                                             | Rejected     | Browser globals bleed into drawing code; any new headless consumer duplicates or stubs                                                                          |
+| B      | Extract `drawScene.ts` as env-agnostic static renderer; `LoopyRenderer` imports primitives and adds live overlays | **Accepted** | Clear boundary; `drawScene` works with any `CanvasRenderingContext2D`; duplication eliminated                                                                   |
+| C      | Full delegation: `LoopyRenderer.draw()` calls `drawScene()` as a base pass, then adds overlays                    | Deferred     | Cleanest long-term, but requires replacing `LoopyRenderer.drawNodes` (which uses `TrendTracker` smoothing) — behaviour change out of proportion to current need |
 
 ## 🧠 Decision
 

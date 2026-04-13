@@ -53,6 +53,11 @@ Double-click any node (in any mode) to open its popover:
 | Annotation | Short label (max ~24 chars) shown below the node circle — useful for units, context, or caveats                                                                                   |
 | Role       | Optional: **Lever** (a direct action point — displayed with an amber ring), **Outcome** (an emergent result that should only change via its causes), or **None** (no designation) |
 
+![Node colour tiers](images/node-colour-tiers.png)
+![Node size tiers](images/node-size-tiers.png)
+![Node value fill (low / mid / high)](images/node-value-fill.png)
+![Node roles — default and lever (amber ring)](images/node-roles.png)
+
 ### Draw a causal edge
 
 Switch to **Add Edge** mode, then drag from one node to another. The arrow direction shows which node influences which.
@@ -65,7 +70,13 @@ A new edge is reinforcing (`+`) by default. To configure it:
 | Delay marks (if any) — left of centre      | Cycle delay: none → `‖` (days) → `‖‖` (weeks) → `‖‖‖` (months) → none   |
 | Weight region — right of centre            | Open weight popover (0–5); default 1.0; higher weight = stronger signal |
 
+![Edge polarity — reinforcing (+) and balancing (−)](images/edge-polarity.png)
+![Edge weight — 0.5 / 1.0 / 2.0](images/edge-weight.png)
+![Edge delay — none / short / medium / long](images/edge-delay.png)
+
 **Quick-Fix edges:** an edge with a dashed line and a `QF` label marks a fast-acting but potentially problematic intervention. Quick-Fix edges are rendered offset from the normal edge if a node pair has both. To mark an edge as quick-fix, toggle the `QF` flag in the weight popover.
+
+![Quick-fix edge](images/edge-quickfix.png)
 
 ### Create a Modulator
 
@@ -84,6 +95,8 @@ The modulator's **polarity** (shown as a coloured badge at the arc midpoint) con
 
 Modulators affect the effective strength of causal signals without changing the graph structure. This is distinct from drawing a new edge directly to the target node.
 
+![Modulator — context node scaling the strength of an edge](images/modulator.png)
+
 ### Draw a constraint edge
 
 Hold **Alt** and drag from one node to another (works in any mode). On release, choose:
@@ -92,6 +105,8 @@ Hold **Alt** and drag from one node to another (works in any mode). On release, 
 - **Floor ⌊** — the source node's current value becomes the lower limit of the target
 
 Constraint edges are dashed lines with a `⌈` or `⌊` label. They have no arrowhead and carry no signals — they reshape the effective range of the target as the simulation runs.
+
+![Constraint edges — ceiling (⌈) and floor (⌊)](images/constraint-edges.png)
 
 ---
 
@@ -109,7 +124,13 @@ Watch signals travel along edges as small coloured dots with directional chevron
 - **Blue dot with ▲ chevron** — positive signal (value increasing)
 - **Red dot with ▼ chevron** — negative signal (value decreasing)
 
+![Signal particles on a reinforcing edge](images/signal-particles.png)
+![Signal particles on a balancing (−) edge — chevrons flip at crossing](images/signal-particles-balancing.png)
+
 The chevron direction shows the accumulated effect through the causal chain. When a signal crosses a balancing (`−`) edge, the chevron flips: an up-arrow becomes a down-arrow. This is how self-correcting loops work: a positive push eventually reverses direction through the feedback path and comes back as a negative corrective effect.
+
+![Reinforcing feedback loop (R)](images/feedback-loop-reinforcing.png)
+![Balancing feedback loop (B)](images/feedback-loop-balancing.png)
 
 > **Stocks stay where signals leave them.** There is no automatic decay. A node injected with a positive signal stays elevated until a negative signal brings it back down. If your model has only reinforcing loops, stocks will climb to their maximum and stay there — that is the correct behaviour, showing you that no corrective mechanism exists in your model.
 
@@ -176,6 +197,12 @@ Signal particles display a small directional chevron (▲ or ▼) that indicates
 - **▼ (down-pointing)** — negative signal (node value change will be negative)
 
 When a signal crosses a balancing (`−`) edge, the chevron animates flipping direction, showing the sign reversal at that edge.
+
+### Annotation
+
+A free-floating text box that can be dragged anywhere on the canvas. Use it to label regions of the diagram, record assumptions, or add facilitation notes.
+
+![Annotation](images/annotation.png)
 
 ### Constraint edge labels
 
