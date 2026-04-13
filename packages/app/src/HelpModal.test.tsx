@@ -61,4 +61,12 @@ describe("HelpModal", () => {
     const { getByText } = render(<HelpModal open={true} onClose={() => {}} />);
     expect(getByText("H")).toBeTruthy();
   });
+
+  it("contains a link to the user guide on GitHub", () => {
+    const { getByRole } = render(<HelpModal open={true} onClose={() => {}} />);
+    const link = getByRole("link", { name: /user guide/i });
+    expect(link).toBeTruthy();
+    expect((link as HTMLAnchorElement).href).toContain("USER-GUIDE.md");
+    expect((link as HTMLAnchorElement).target).toBe("_blank");
+  });
 });
