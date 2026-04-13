@@ -29,14 +29,18 @@ import {
   ANNOTATION_PADDING,
 } from "./geometry.ts";
 import { nodeLabelFont } from "./nodeLabelFont.ts";
+import {
+  drawCurvedArrow,
+  signalChevronVisuals,
+  arrowheadDimensions,
+  ANIM_START,
+  ANIM_END,
+} from "./drawScene.ts";
+
+// Re-export for backward compatibility (tests import these from LoopyRenderer)
+export { signalChevronVisuals, arrowheadDimensions, ANIM_START, ANIM_END };
 
 const MAX_DT = 0.05;
-const DELAY_MARKS: Record<string, number> = {
-  none: 0,
-  short: 2,
-  medium: 4,
-  long: 6,
-};
 
 export interface RendererStore {
   graph: Graph;
@@ -50,161 +54,6 @@ export interface RendererStore {
   annotationDragPosition?: { id: AnnotationId; x: number; y: number } | null;
   hoveredEdgeRegion?: { edgeId: string; region: "delay" | "weight" } | null;
   pendingModulatorTarget?: EdgeId | null;
-}
-
-// ---------------------------------------------------------------------------
-// Signal chevron visual logic — pure function, exported for testing
-// ---------------------------------------------------------------------------
-
-export const ANIM_START = 0.45;
-export const ANIM_END = 0.55;
-const BLUE = { r: 125, g: 211, b: 252 } as const; // #7dd3fc
-const RED = { r: 252, g: 165, b: 165 } as const; // #fca5a5
-
-function angleForSign(sign: 1 | -1): number {
-  return sign === 1 ? -Math.PI / 2 : Math.PI / 2;
-}
-
-function colorForSign(sign: 1 | -1): { r: number; g: number; b: number } {
-  return sign === 1 ? BLUE : RED;
-}
-
-/**
- * Returns angle (radians) and color for the signal chevron at a given progress.
- *
- * +ve edges: visual is constant (signal.sign throughout).
- * -ve edges: starts as the parent sign (signal.sign × −1), animates to signal.sign
- *            between progress 0.45–0.55 (both angle and color interpolate linearly).
- */
-export function signalChevronVisuals(
-  progress: number,
-  sign: 1 | -1,
-  edgePolarity: 1 | -1,
-): { angle: number; color: string } {
-  if (edgePolarity === 1) {
-    const { r, g, b } = colorForSign(sign);
-    return { angle: angleForSign(sign), color: `rgb(${r},${g},${b})` };
-  }
-  // -ve edge: visual transitions from parent sign to signal sign
-  const startSign = (sign * -1) as 1 | -1;
-  const t =
-    progress < ANIM_START
-      ? 0
-      : progress > ANIM_END
-        ? 1
-        : (progress - ANIM_START) / (ANIM_END - ANIM_START);
-  const frac = t * t * (3 - 2 * t);
-  const angle =
-    angleForSign(startSign) +
-    (angleForSign(sign) - angleForSign(startSign)) * frac;
-  const sc = colorForSign(startSign);
-  const ec = colorForSign(sign);
-  const r = Math.round(sc.r + (ec.r - sc.r) * frac);
-  const g = Math.round(sc.g + (ec.g - sc.g) * frac);
-  const b = Math.round(sc.b + (ec.b - sc.b) * frac);
-  return { angle, color: `rgb(${r},${g},${b})` };
-}
-
-export function arrowheadDimensions(weight: number): {
-  len: number;
-  half: number;
-} {
-  const lw = 3 + weight * 2;
-  return { len: Math.max(10, lw * 2.5), half: Math.max(5, lw * 1.2) };
-}
-
-function drawCurvedArrow(
-  ctx: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  edge: CausalEdge,
-  bow: number,
-  alpha = 1,
-  weight = edge.weight,
-) {
-  const base = edge.polarity === 1 ? "#38bdf8" : "#f87171";
-  const colour =
-    alpha < 1
-      ? `rgba(${edge.polarity === 1 ? "56,189,248" : "248,113,113"},${alpha.toFixed(2)})`
-      : base;
-  const { cx, cy } = controlPoint(x1, y1, x2, y2, bow);
-
-  // Arrowhead geometry computed first so stroke can end at base, not tip.
-  // This prevents the thick line cap from squaring off the arrowhead point.
-  const { len: headLen, half: headHalf } = arrowheadDimensions(weight);
-  const tlen = Math.hypot(x2 - cx, y2 - cy);
-  const ux = (x2 - cx) / tlen;
-  const uy = (y2 - cy) / tlen;
-  const ax = x2 - ux * headLen;
-  const ay = y2 - uy * headLen;
-
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.quadraticCurveTo(cx, cy, ax, ay);
-  ctx.strokeStyle = colour;
-  ctx.lineWidth = 3 + weight * 2;
-  if (edge.isQuickFix) ctx.setLineDash([6, 4]);
-  ctx.stroke();
-  if (edge.isQuickFix) ctx.setLineDash([]);
-  ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(ax + uy * headHalf, ay - ux * headHalf);
-  ctx.lineTo(ax - uy * headHalf, ay + ux * headHalf);
-  ctx.closePath();
-  ctx.fillStyle = colour;
-  ctx.fill();
-
-  // Polarity badge at t=0.5
-  const mid = bezierPoint(x1, y1, cx, cy, x2, y2, T_POLARITY);
-  ctx.beginPath();
-  ctx.arc(mid.x, mid.y, 9, 0, Math.PI * 2);
-  ctx.fillStyle = "#0f172a";
-  ctx.fill();
-  ctx.strokeStyle = colour;
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
-  ctx.fillStyle = colour;
-  ctx.font = "bold 11px system-ui";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(edge.polarity === 1 ? "+" : "−", mid.x, mid.y);
-
-  // Delay bars at t=0.2
-  const marks = DELAY_MARKS[edge.delay] ?? 0;
-  if (marks > 0) {
-    const dp = bezierPoint(x1, y1, cx, cy, x2, y2, T_DELAY);
-    ctx.strokeStyle = colour;
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < marks; i++) {
-      const ox = (i - (marks - 1) / 2) * 4;
-      ctx.beginPath();
-      ctx.moveTo(dp.x + ox, dp.y - 5);
-      ctx.lineTo(dp.x + ox, dp.y + 5);
-      ctx.stroke();
-    }
-  }
-
-  // Weight indicator at t=0.8 — show as dim number if not at default (1.0)
-  if (edge.weight !== 1.0) {
-    const wp = bezierPoint(x1, y1, cx, cy, x2, y2, T_WEIGHT);
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "10px system-ui";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(edge.weight.toFixed(2), wp.x, wp.y - 8);
-  }
-
-  // QF label at t=0.65
-  if (edge.isQuickFix) {
-    const qp = bezierPoint(x1, y1, cx, cy, x2, y2, 0.65);
-    ctx.fillStyle = colour;
-    ctx.font = "bold 13px system-ui";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("QF", qp.x, qp.y + 14);
-  }
 }
 
 export class LoopyRenderer {
