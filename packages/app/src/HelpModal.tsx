@@ -69,6 +69,17 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
           </div>
         ))}
       </div>
+
+      <div style={{ marginTop: 14, borderTop: "1px solid #334155", paddingTop: 10 }}>
+        <a
+          href="https://github.com/danjmfox/swoopy/blob/main/docs/USER-GUIDE.md"
+          target="_blank"
+          rel="noreferrer"
+          style={guideLink}
+        >
+          User guide →
+        </a>
+      </div>
     </div>
   );
 }
@@ -153,4 +164,10 @@ const closeBtn: React.CSSProperties = {
   fontSize: 14,
   padding: "2px 4px",
   borderRadius: 4,
+};
+
+const guideLink: React.CSSProperties = {
+  color: "#94a3b8",
+  fontSize: 12,
+  textDecoration: "none",
 };
