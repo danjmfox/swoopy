@@ -321,7 +321,7 @@ counts distinguish source, test, and documentation files.
 
 ---
 
-#### Session 01 — Mon 30 Mar, 13:07–17:26 UTC `4h 19m` · 11 commits
+#### Session 01 `4h 19m` · 11 commits
 
 Branches merged: `fix/trend-triangle-regression`, `fix/restore-gemini-damage`
 (a prior session with a different AI model had broken things and needed
@@ -331,7 +331,7 @@ features.
 
 ---
 
-#### Session 02 — Tue 31 Mar, 08:46–13:26 UTC `4h 40m` · 9 commits · +1,662 / -427 · 16 files (6 src, 6 test, 4 doc)
+#### Session 02 `4h 40m` · 9 commits · +1,662 / -427 · 16 files (6 src, 6 test, 4 doc)
 
 Staggered-density signal emission (DR--20260330), spring-loaded mode switching
 (GE-32/33), and persistent trend + delay queue arc indicator (SI-18/19). Three
@@ -339,7 +339,7 @@ distinct features shipped in one morning.
 
 ---
 
-#### Session 03 — Wed 01 Apr, 10:33–10:38 UTC `5m` · 2 commits
+#### Session 03 `5m` · 2 commits
 
 A 5-minute burst: `inject()` emitting relay signals on outgoing edges, then
 `step()` relay propagation fan-out. The core of the signal engine landed in
@@ -347,7 +347,7 @@ two rapid commits.
 
 ---
 
-#### Session 04 — Wed 01 Apr, 13:56–14:03 UTC `7m` · 4 commits · +1,667 / -750 · 19 files (8 src, 8 test, 3 doc)
+#### Session 04 `7m` · 4 commits · +1,667 / -750 · 19 files (8 src, 8 test, 3 doc)
 
 Seven minutes, 2,417 net lines: weight-as-amplitude fragments, `hopsRemaining`
 aging, `prevNodeValues` removed, integration scenarios (reinforcing/balancing/
@@ -355,14 +355,14 @@ diamond), docs updated. The relay model completed in a single focused burst.
 
 ---
 
-#### Session 05 — Wed 01 Apr, 17:19 UTC `<1m` · 2 commits · +10 / -10 · 4 files
+#### Session `<1m` · 2 commits · +10 / -10 · 4 files
 
 Instant typecheck cleanup on the relay model (`claude/wonderful-poincare`),
 then merged to main. Four files, zero net lines.
 
 ---
 
-#### Session 06 — Thu 02 Apr, 09:14–14:00 UTC `4h 45m` · 9 commits · +958 / -451 · 29 files (11 src, 15 test, 3 doc)
+#### Session 06 `4h 45m` · 9 commits · +958 / -451 · 29 files (11 src, 15 test, 3 doc)
 
 V2.0 docs correction, node size tiers (XS/S/M/L/XL) across all three
 packages, first pass at colour tiers and WCAG AA contrast fixes. Heavy test
@@ -371,14 +371,14 @@ files.
 
 ---
 
-#### Session 07 — Thu 02 Apr, 19:25–20:07 UTC `41m` · 7 commits · +297 / -100 · 10 files (6 src, 3 test, 1 doc)
+#### Session 07: `41m` · 7 commits · +297 / -100 · 10 files (6 src, 3 test, 1 doc)
 
 Evening sprint finishing the WCAG colour palette and landing node annotations
 (free text below circle) in 41 minutes.
 
 ---
 
-#### Session 08 — Fri 03 Apr, 06:56–13:51 UTC `6h 54m` · 12 commits · +3,687 / -460 · 67 files (23 src, 21 test, 12 doc)
+#### Session 08 `6h 54m` · 12 commits · +3,687 / -460 · 67 files (23 src, 21 test, 12 doc)
 
 The largest single-session LOC swing. Three features: free-floating box
 annotations (GE-37), simulation history logger and data table (GE-38), and the
@@ -387,7 +387,7 @@ test suite grew almost as fast as the features.
 
 ---
 
-#### Session 09 — Fri 03 Apr, 20:01–21:29 UTC `1h 27m` · 8 commits · +298 / -141 · 30 files (8 src, 18 test, 1 doc)
+#### Session 09 `1h 27m` · 8 commits · +298 / -141 · 30 files (8 src, 18 test, 1 doc)
 
 TypeScript strict-mode enforcement across all packages, then live-reactive
 history overlay (GE-40). 18 of the 30 changed files were tests — a
@@ -395,7 +395,7 @@ type-tightening sweep that rippled through the whole test suite.
 
 ---
 
-#### Session 10 — Sat 04 Apr, 13:14–19:09 UTC `5h 54m` · 19 commits · +1,108 / -390 · 23 files (8 src, 12 test, 2 doc)
+#### Session 10 `5h 54m` · 19 commits · +1,108 / -390 · 23 files (8 src, 12 test, 2 doc)
 
 The most commits in a single session. Quick-fix edge flag (GE-41), multi-edge
 semantics (GE-42), then an immediate `refactor/reduce-complexity` pass:
@@ -404,7 +404,7 @@ flatten. Feature work followed by cleanup in the same sitting.
 
 ---
 
-#### Session 11 — Wed 08 Apr, 08:27–16:12 UTC `7h 44m` · 19 commits · +2,439 / -94 · 37 files (13 src, 21 test, 3 doc)
+#### Session 11 `7h 44m` · 19 commits · +2,439 / -94 · 37 files (13 src, 21 test, 3 doc)
 
 The longest session, and almost entirely additive (+2,439 / -94). Three major
 features: the Modulator type across all three packages, modulator polarity
@@ -414,7 +414,7 @@ concepts with minimal rework.
 
 ---
 
-#### Session 12 — Fri 10 Apr, 09:23–16:34 UTC `7h 11m` · 18 commits · +1,953 / -413 · 44 files (10 src, 5 test, 18 doc)
+#### Session 12 `7h 11m` · 18 commits · +1,953 / -413 · 44 files (10 src, 5 test, 18 doc)
 
 Zero-net guard engine feature, then a graphify deep scan triggering updates
 across all five documentation files, then Dependabot dependency bumps, then an
@@ -423,14 +423,14 @@ maintenance all in one day.
 
 ---
 
-#### Session 13 — Fri 10 Apr, 20:15 UTC `<1m` · 1 commit · +80 / -68 · 4 files (0 src, 0 test, 4 doc)
+#### Session 13 `<1m` · 1 commit · +80 / -68 · 4 files (0 src, 0 test, 4 doc)
 
 Single commit: post-graphify docs update across ARCHITECTURE, PRD, USER-GUIDE,
 and README.
 
 ---
 
-#### Session 14 — Sat 11 Apr, 20:30–22:51 UTC `2h 21m` · 8 commits · +336 / -61 · 9 files (4 src, 2 test, 3 doc)
+#### Session 14 `2h 21m` · 8 commits · +336 / -61 · 9 files (4 src, 2 test, 3 doc)
 
 Saturday evening: modulated edge weight rendering (DR--20260411) worked
 through the full drctl ADR lifecycle — draft → propose → implement → format —
@@ -438,14 +438,14 @@ visible as distinct commits.
 
 ---
 
-#### Session 15 — Sun 12 Apr, 07:52–09:40 UTC `1h 48m` · 4 commits · +59 / -3 · 5 files (2 src, 2 test, 1 doc)
+#### Session 15 `1h 48m` · 4 commits · +59 / -3 · 5 files (2 src, 2 test, 1 doc)
 
 Sunday morning tidy: MD040 lint fix on the new DR, then node role type added
 to the engine with a serialisation round-trip test.
 
 ---
 
-#### Session 16 — Sun 12 Apr, 14:20–20:08 UTC `5h 47m` · 15 commits · +1,223 / -68 · 18 files (7 src, 8 test, 2 doc)
+#### Session 16 `5h 47m` · 15 commits · +1,223 / -68 · 18 files (7 src, 8 test, 2 doc)
 
 Node role indicators end-to-end: Role selector in NodePopover, lever/outcome
 amber ring in renderer, outcome warning in simulate mode, docs updated. Then
@@ -454,7 +454,7 @@ model title (toolbar, URL, page title, canvas), undo keyboard routing fix, and
 
 ---
 
-#### Session 17 — Mon 13 Apr, 07:47–08:42 UTC `55m` · 2 commits · +1,941 / -183 · 27 files (6 src, 2 test, 2 doc)
+#### Session 17 `55m` · 2 commits · +1,941 / -183 · 27 files (6 src, 2 test, 2 doc)
 
 Two PRs merged in under an hour: `drawScene` extraction and doc-image
 generation (a significant renderer refactor plus new script infrastructure),
@@ -463,7 +463,7 @@ drawScene split and generated documentation images.
 
 ---
 
-#### Session 18 — Mon 13 Apr, 14:06–14:19 UTC `13m` · 2 commits · +302 / -0 · 1 file (0 src, 0 test, 1 doc)
+#### Session 18 `13m` · 2 commits · +302 / -0 · 1 file (0 src, 0 test, 1 doc)
 
 This document. `HOW-IT-WAS-MADE.md` created, then markdownlint fixes applied.
 
@@ -474,12 +474,6 @@ This document. `HOW-IT-WAS-MADE.md` created, then markdownlint fixes applied.
 | | |
 | --- | --- |
 | Total sessions | 18 |
-| Total calendar days | 14 (30 Mar – 13 Apr 2026) |
+| Total calendar days | 14 |
 | Total commits | 152 |
-| Longest session | Session 11 — 7h 44m |
-| Shortest substantive session | Session 04 — 7 minutes, 2,417 net lines |
-| Most commits in a session | Sessions 10 & 11 — 19 each |
-| Largest LOC swing | Session 08 — +3,687 / -460 |
-| Most additive session | Session 11 — +2,439 / -94 (96% net adds) |
-| Most doc files changed | Session 12 — 18 documentation files |
-| Weekend sessions | 4 (Sessions 10, 14, 15, 16) |
+| Total duration | ~54h 52m | 
