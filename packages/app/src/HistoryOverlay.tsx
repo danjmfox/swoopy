@@ -16,6 +16,17 @@ function HistoryGraph({
   nodes: readonly Node[];
   histories: { tick: number; value: number }[][];
 }) {
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+
+  const toggleNode = (id: string) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const innerW = SVG_W - PAD.left - PAD.right;
   const innerH = SVG_H - PAD.top - PAD.bottom;
 
@@ -28,55 +39,100 @@ function HistoryGraph({
     PAD.left + ((tick - minTick) / tickRange) * innerW;
 
   return (
-    <svg
-      width={SVG_W}
-      height={SVG_H}
-      style={{ display: "block", overflow: "visible" }}
-    >
-      {/* x-axis */}
-      <line
-        x1={PAD.left}
-        y1={SVG_H - PAD.bottom}
-        x2={SVG_W - PAD.right}
-        y2={SVG_H - PAD.bottom}
-        stroke="#475569"
-        strokeWidth={1}
-      />
-      {/* x-axis tick labels */}
-      {histories[0]?.map((s) => (
-        <text
-          key={s.tick}
-          x={toX(s.tick)}
-          y={SVG_H - PAD.bottom + 14}
-          textAnchor="middle"
-          fill="#64748b"
-          fontSize={10}
-        >
-          {s.tick / 60}s
-        </text>
-      ))}
-      {/* one path per node */}
-      {nodes.map((node, ni) => {
-        const history = histories[ni]!;
-        if (history.length === 0) return null;
-        const valueRange = node.max - node.min || 1;
-        const toY = (value: number) =>
-          PAD.top + innerH - ((value - node.min) / valueRange) * innerH;
-        const d = history
-          .map((s, i) => `${i === 0 ? "M" : "L"}${toX(s.tick)},${toY(s.value)}`)
-          .join(" ");
-        const colour = NODE_COLOURS[node.colourTier].swatch;
-        return (
-          <path
-            key={node.id}
-            d={d}
-            fill="none"
-            stroke={colour}
-            strokeWidth={2}
-          />
-        );
-      })}
-    </svg>
+    <div>
+      <svg
+        width={SVG_W}
+        height={SVG_H}
+        style={{ display: "block", overflow: "visible" }}
+      >
+        {/* x-axis */}
+        <line
+          x1={PAD.left}
+          y1={SVG_H - PAD.bottom}
+          x2={SVG_W - PAD.right}
+          y2={SVG_H - PAD.bottom}
+          stroke="#475569"
+          strokeWidth={1}
+        />
+        {/* x-axis tick labels */}
+        {histories[0]?.map((s) => (
+          <text
+            key={s.tick}
+            x={toX(s.tick)}
+            y={SVG_H - PAD.bottom + 14}
+            textAnchor="middle"
+            fill="#64748b"
+            fontSize={10}
+          >
+            {s.tick / 60}s
+          </text>
+        ))}
+        {/* one path per node */}
+        {nodes.map((node, ni) => {
+          if (hiddenIds.has(node.id)) return null;
+          const history = histories[ni]!;
+          if (history.length === 0) return null;
+          const valueRange = node.max - node.min || 1;
+          const toY = (value: number) =>
+            PAD.top + innerH - ((value - node.min) / valueRange) * innerH;
+          const d = history
+            .map((s, i) => `${i === 0 ? "M" : "L"}${toX(s.tick)},${toY(s.value)}`)
+            .join(" ");
+          const colour = NODE_COLOURS[node.colourTier].swatch;
+          return (
+            <path
+              key={node.id}
+              d={d}
+              fill="none"
+              stroke={colour}
+              strokeWidth={2}
+            />
+          );
+        })}
+      </svg>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "6px 12px",
+          marginTop: 10,
+        }}
+      >
+        {nodes.map((node) => {
+          const colour = NODE_COLOURS[node.colourTier].swatch;
+          const hidden = hiddenIds.has(node.id);
+          return (
+            <button
+              key={node.id}
+              onClick={() => toggleNode(node.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                opacity: hidden ? 0.35 : 1,
+                color: "#f1f5f9",
+                fontSize: 12,
+                padding: "2px 4px",
+              }}
+            >
+              <span
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  background: colour,
+                  flexShrink: 0,
+                }}
+              />
+              {node.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
