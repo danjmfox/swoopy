@@ -3,6 +3,7 @@ import { render, act } from "@testing-library/react";
 import { useStore } from "./store.ts";
 import { seedGraph } from "./seed.ts";
 import { makeInitialSim, inject, makeEdgeId } from "@swoopy/engine";
+import { decodeGraphFromUrl } from "./url-encoding.ts";
 
 import { ConstraintChoiceDialog } from "./ConstraintChoiceDialog.tsx";
 
@@ -596,9 +597,9 @@ describe("SE-02 / SE-06: shareGraph", () => {
     );
     const encoded = url.searchParams.get("g");
     expect(encoded).not.toBeNull();
-    const decoded = JSON.parse(atob(encoded!));
-    expect(decoded.graph.nodes).toHaveLength(1);
-    expect(decoded.graph.nodes[0].x).toBe(10);
+    const decoded = decodeGraphFromUrl(encoded!);
+    expect(decoded?.nodes).toHaveLength(1);
+    expect(decoded?.nodes[0].x).toBe(10);
   });
 
   it("includes &title= in the share URL when modelTitle is set", async () => {
