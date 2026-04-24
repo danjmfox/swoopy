@@ -10,6 +10,7 @@ import type {
   ConstraintKind,
   AnnotationId,
 } from "@swoopy/engine";
+import { encodeGraphForUrl, decodeGraphFromUrl } from "./url-encoding.ts";
 
 export type AppMode =
   | "select"
@@ -606,9 +607,7 @@ export const useStore = create<StoreState>((set, get) => ({
   setSimSpeed: (speed: number) => set({ simSpeed: speed }),
   shareGraph: async () => {
     const { graph, modelTitle } = get();
-    const json = JSON.stringify(serialize(graph));
-    const bytes = new TextEncoder().encode(json);
-    const encoded = btoa(String.fromCharCode(...bytes));
+    const encoded = encodeGraphForUrl(graph);
     const url = new URL(window.location.href);
     url.searchParams.set("g", encoded);
     url.searchParams.delete("m");
@@ -624,15 +623,9 @@ export const useStore = create<StoreState>((set, get) => ({
     const encoded = params.get("g");
     if (!encoded) return;
     const title = params.get("title") ?? "";
-    try {
-      const binary = atob(encoded);
-      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-      const json = new TextDecoder().decode(bytes);
-      const graph = deserialize(JSON.parse(json));
-      set({ graph, past: [], future: [], transient: true, modelTitle: title });
-    } catch {
-      // malformed param — leave current graph intact
-    }
+    const graph = decodeGraphFromUrl(encoded);
+    if (!graph) return;
+    set({ graph, past: [], future: [], transient: true, modelTitle: title });
   },
   newModel: () => {
     const newId = crypto.randomUUID();
