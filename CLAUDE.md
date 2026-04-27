@@ -95,3 +95,7 @@ Fetch when relevant — do not read every session:
 - `.claude/EVOLUTIONARY-OS-PROMPT.md` - if you sense we are working in the complex domain
 - `~/.claude/stack.md` — preferred tools and libraries
 - `~/.claude/projects.md` — active and parked projects
+
+## Development Paradigm
+
+This project follows the **object-oriented** paradigm. Use `@nw-software-crafter` for implementation.

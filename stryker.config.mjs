@@ -1,6 +1,6 @@
 export default {
   mutate: [
-    "packages/app/src/url-encoding.ts",
+    "**/url-encoding.ts",
   ],
   testRunner: "vitest",
   vitest: {
