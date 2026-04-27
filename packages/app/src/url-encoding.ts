@@ -1,4 +1,4 @@
-import { deflateSync, inflateSync } from "fflate/node";
+import { deflateSync, inflateSync } from "fflate";
 import type { Graph } from "@swoopy/engine";
 import { serialize, deserialize } from "@swoopy/engine";
 
@@ -6,7 +6,12 @@ export function encodeGraphForUrl(graph: Graph): string {
   const json = JSON.stringify(serialize(graph));
   const bytes = new TextEncoder().encode(json);
   const compressed = deflateSync(bytes, { raw: true });
-  return btoa(String.fromCharCode(...compressed));
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < compressed.length; i += chunk) {
+    binary += String.fromCharCode(...compressed.subarray(i, i + chunk));
+  }
+  return btoa(binary);
 }
 
 export function decodeGraphFromUrl(encoded: string): Graph | null {
