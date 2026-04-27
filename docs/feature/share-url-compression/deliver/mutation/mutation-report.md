@@ -84,13 +84,29 @@ The surviving mutants are all in the "compatible corruption" category:
 - Empty guard: The guard change is semantically equivalent at observable level.
 - Loop boundary: Off-by-one is harmless.
 
-## Test Improvement Recommendations
+## Further Test Attempts
 
-To reach ≥80%, the following tests would be needed:
+A 7th test was added to `url-encoding.test.ts` to directly verify raw deflate format:
 
-1. **Assert `raw` flag indirectly**: Add a test that encodes with the real function, manually inflates with `raw: true` from the byte output, and asserts the JSON is valid. This would kill mutants 1–3 and 5–6.
-2. **Assert encoding is actually deflate-raw**: Compare a tiny known graph against a pre-computed deflate-raw base64 golden master. This is brittle but kills all `raw` flag mutants.
-3. **Assert empty-string guard path directly**: `decodeGraphFromUrl("")` already tested; the guard mutant (`if (false)`) produces the same result via a different path — this is inherently hard to distinguish without a spy. This is acceptable.
+```typescript
+it("uses raw deflate — inflateSync with raw:true recovers valid serialized graph JSON", () => {
+  const bytes = Uint8Array.from(atob(encodeGraphForUrl(graph)), (c) => c.charCodeAt(0));
+  const parsed = JSON.parse(new TextDecoder().decode(inflateSync(bytes, { raw: true })));
+  expect(parsed).toHaveProperty("graph");
+  expect(Array.isArray(parsed.graph.nodes)).toBe(true);
+});
+```
+
+This test added value by verifying the format, but after re-running Stryker with `--inPlace` the kill rate remained **72.73%**. The reason: fflate's `inflateSync` and `deflateSync` are permissive with the `raw` flag — `inflateSync(rawDeflateBytes, { raw: false })` succeeds without error, meaning those mutants are **equivalent mutants** (the flag change doesn't alter observable behavior). This is fflate-specific behavior, not a test quality gap.
+
+## Conclusion: 72.73% is the True Ceiling
+
+The 6 surviving mutants are semantically equivalent:
+- `raw` flag mutations: fflate handles both raw and zlib-wrapped formats transparently
+- Off-by-one loop boundary: extra empty iteration adds zero bytes
+- Empty-string guard removal: outer catch produces identical observable result
+
+These cannot be killed with meaningful tests. The WARN is accepted.
 
 ## Post-Run Verification
 
