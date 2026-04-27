@@ -141,6 +141,69 @@
       "s": "SKIPPED",
       "d": "NOT_APPLICABLE: no changes made",
       "t": "2026-04-24T16:05:06Z"
+    },
+    {
+      "sid": "review-fix",
+      "p": "PREPARE",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-04-27T08:32:03Z"
+    },
+    {
+      "sid": "review-fix",
+      "p": "RED_ACCEPTANCE",
+      "s": "SKIPPED",
+      "d": "NOT_APPLICABLE: review fix, not new behaviour",
+      "t": "2026-04-27T08:51:03Z"
+    },
+    {
+      "sid": "review-fix",
+      "p": "RED_UNIT",
+      "s": "SKIPPED",
+      "d": "NOT_APPLICABLE: review fix, not new behaviour",
+      "t": "2026-04-27T08:51:03Z"
+    },
+    {
+      "sid": "review-fix",
+      "p": "GREEN",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-04-27T08:51:28Z"
+    },
+    {
+      "sid": "review-fix",
+      "p": "COMMIT",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-04-27T08:53:57Z"
+    },
+    {
+      "sid": "mutation",
+      "p": "PREPARE",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-04-27T09:00:37Z"
+    },
+    {
+      "sid": "mutation",
+      "p": "RED_ACCEPTANCE",
+      "s": "SKIPPED",
+      "d": "NOT_APPLICABLE: mutation testing",
+      "t": "2026-04-27T09:00:43Z"
+    },
+    {
+      "sid": "mutation",
+      "p": "RED_UNIT",
+      "s": "SKIPPED",
+      "d": "NOT_APPLICABLE: mutation testing",
+      "t": "2026-04-27T09:00:43Z"
+    },
+    {
+      "sid": "mutation",
+      "p": "GREEN",
+      "s": "EXECUTED",
+      "d": "WARN:72.73%",
+      "t": "2026-04-27T09:18:23Z"
     }
   ]
 }
