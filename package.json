@@ -15,6 +15,7 @@
     ]
   },
   "devDependencies": {
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@swoopy/engine": "workspace:*",
     "@swoopy/renderer": "workspace:*",
     "@types/node": "^22.0.0",
