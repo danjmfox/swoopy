@@ -1,0 +1,85 @@
+name: share-compressed-url
+feature: share-url-compression
+type: cross-cutting
+research_depth: lightweight
+
+steps:
+  - id: build-model
+    actor: facilitator
+    action: Has a complex model open in Swoopy
+    output: graph in Zustand store
+    emotion: neutral
+
+  - id: click-share
+    actor: facilitator
+    action: Clicks Share button in toolbar
+    output: shareGraph() invoked
+    emotion: neutral
+
+  - id: encode
+    actor: system
+    action: >
+      JSON.stringify(serialize(graph)) → UTF-8 bytes → deflate compress → base64
+    output: encoded string (shorter than current plain base64)
+    emotion: neutral
+
+  - id: url-construct
+    actor: system
+    action: Constructs URL with ?g={encoded}; copies to clipboard
+    output: shareUrl in clipboard
+    emotion: satisfied
+
+  - id: paste-url
+    actor: facilitator
+    action: Pastes URL into Slack / email / doc
+    output: URL fits without wrapping
+    emotion: relieved
+
+  - id: open-url
+    actor: recipient
+    action: Opens shareUrl in browser
+    output: loadFromUrl() triggered
+    emotion: neutral
+
+  - id: decode
+    actor: system
+    action: >
+      base64 → deflate decompress (or fallback plain atob) → UTF-8 → JSON →
+      deserialize()
+    output: Graph restored in store
+    emotion: neutral
+
+  - id: view-model
+    actor: recipient
+    action: Canvas renders model
+    output: Model visible, no blank canvas
+    emotion: delighted
+
+error_paths:
+  - step: decode
+    failure: compressed ?g= param is corrupt
+    recovery: catch → leave current graph intact (existing behaviour)
+
+  - step: decode
+    failure: legacy uncompressed ?g= URL opened with new code
+    recovery: try decompress → fail → fall back to plain atob → success
+
+  - step: encode
+    failure: compression library throws
+    recovery: fall through to plain base64 encoding
+
+shared_artifacts:
+  - name: graph
+    type: Graph
+    source: graphSlice (Zustand)
+    consumers: [shareGraph]
+
+  - name: encoded
+    type: string (base64 compressed)
+    source: shareGraph
+    consumers: [URL ?g= param]
+
+  - name: shareUrl
+    type: string
+    source: shareGraph
+    consumers: [clipboard, recipient browser]
