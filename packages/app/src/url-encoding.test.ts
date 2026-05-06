@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
 import { inflateSync } from "fflate";
-import type { Graph } from "@swoopy/engine";
+import type { Graph, Edge } from "@swoopy/engine";
 import {
   serialize,
   makeNodeId,
@@ -39,7 +39,19 @@ const nodeArbitrary = fc
     fc.integer({ min: 1, max: 200 }),
   )
   .chain(
-    ([id, label, x, y, radius, sizeTier, colourTier, annotation, role, minVal, range]) => {
+    ([
+      id,
+      label,
+      x,
+      y,
+      radius,
+      sizeTier,
+      colourTier,
+      annotation,
+      role,
+      minVal,
+      range,
+    ]) => {
       const min = minVal;
       const max = minVal + range;
       return fc
@@ -112,10 +124,7 @@ const annotationArbitrary = fc
 
 const modulatorArbitrary = (fromId: string, targetEdgeId: string) =>
   fc
-    .tuple(
-      fc.integer({ min: 0, max: 99999 }),
-      fc.constantFrom(1, -1 as const),
-    )
+    .tuple(fc.integer({ min: 0, max: 99999 }), fc.constantFrom(1, -1 as const))
     .map(([id, polarity]) => ({
       id: makeModulatorId(String(id)),
       from: makeNodeId(fromId),
@@ -143,32 +152,41 @@ const graphArbitrary: fc.Arbitrary<Graph> = fc
         fc.constantFrom(...nodeStringIds),
         fc.boolean(),
       )
-      .chain(([fromIdx, toIdx, isCausal]) => {
+      .chain(([fromIdx, toIdx, isCausal]): fc.Arbitrary<Edge> => {
         if (isCausal) {
-          return causalEdgeArbitrary(fromIdx, toIdx);
+          return causalEdgeArbitrary(fromIdx, toIdx) as fc.Arbitrary<Edge>;
         }
-        return constraintEdgeArbitrary(fromIdx, toIdx);
+        return constraintEdgeArbitrary(fromIdx, toIdx) as fc.Arbitrary<Edge>;
       });
 
-    const modulatorEdgeArb =
-      fc.tuple(
+    const modulatorEdgeArb = fc
+      .tuple(
         fc.constantFrom(...nodeStringIds),
         fc.constantFrom(...nodeStringIds),
         fc.constantFrom(...nodeStringIds),
-      ).chain(([fromIdx, fromIdx2, toIdx]) =>
+      )
+      .chain(([fromIdx, fromIdx2, toIdx]) =>
         modulatorArbitrary(fromIdx, `${fromIdx2}-${toIdx}`),
       );
 
-    return fc.tuple(
-      fc.array(edgeArb, { minLength: 0, maxLength: Math.min(nodes.length * 2, 10) }),
-      fc.array(annotationArbitrary, { minLength: 0, maxLength: 5 }),
-      fc.array(modulatorEdgeArb, { minLength: 0, maxLength: 3 }),
-    ).map(([edges, annotations, modulators]) => ({
-      nodes: nodes.map((n, i) => ({ ...n, id: makeNodeId(String(i)) })),
-      edges,
-      annotations,
-      modulators,
-    } as Graph));
+    return fc
+      .tuple(
+        fc.array(edgeArb, {
+          minLength: 0,
+          maxLength: Math.min(nodes.length * 2, 10),
+        }),
+        fc.array(annotationArbitrary, { minLength: 0, maxLength: 5 }),
+        fc.array(modulatorEdgeArb, { minLength: 0, maxLength: 3 }),
+      )
+      .map(
+        ([edges, annotations, modulators]) =>
+          ({
+            nodes: nodes.map((n, i) => ({ ...n, id: makeNodeId(String(i)) })),
+            edges,
+            annotations,
+            modulators,
+          }) as Graph,
+      );
   });
 
 // --- Tests ---
@@ -258,6 +276,15 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
   it("returns null for valid base64 that is not a valid graph", () => {
     const junk = btoa("this is not json");
     expect(decodeGraphFromUrl(junk)).toBeNull();
+  });
+
+  it("property: decode(encode(g)) deep-equals g for any valid graph", () => {
+    fc.assert(
+      fc.property(graphArbitrary, (g) => {
+        const decoded = decodeGraphFromUrl(encodeGraphForUrl(g));
+        expect(decoded).toEqual(g);
+      }),
+    );
   });
 
   it("uses raw deflate — inflateSync with raw:true recovers valid serialized graph JSON", () => {
