@@ -287,6 +287,17 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
     );
   });
 
+  it("property: encode(decode(encode(g))) === encode(g)", () => {
+    fc.assert(
+      fc.property(graphArbitrary, (g) => {
+        const once = encodeGraphForUrl(g);
+        const decoded = decodeGraphFromUrl(once);
+        if (decoded === null) return;
+        expect(encodeGraphForUrl(decoded)).toBe(once);
+      }),
+    );
+  });
+
   it("uses raw deflate — inflateSync with raw:true recovers valid serialized graph JSON", () => {
     const graph = makeComplexGraph();
     const encoded = encodeGraphForUrl(graph);
