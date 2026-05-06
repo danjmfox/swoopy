@@ -1,8 +1,187 @@
 import { describe, it, expect } from "vitest";
+import * as fc from "fast-check";
 import { inflateSync } from "fflate";
 import type { Graph } from "@swoopy/engine";
-import { serialize, makeNodeId, makeEdgeId } from "@swoopy/engine";
+import {
+  serialize,
+  makeNodeId,
+  makeEdgeId,
+  makeAnnotationId,
+  makeModulatorId,
+} from "@swoopy/engine";
 import { encodeGraphForUrl, decodeGraphFromUrl } from "./url-encoding.ts";
+
+// --- Arbitrary Generators ---
+
+const nodeArbitrary = fc
+  .tuple(
+    fc.integer({ min: 0, max: 99999 }),
+    fc.string({ unit: "grapheme", minLength: 0, maxLength: 20 }),
+    fc.float({ min: -10000, max: 10000, noNaN: true }),
+    fc.float({ min: -10000, max: 10000, noNaN: true }),
+    fc.float({ min: 1, max: 100, noNaN: true }),
+    fc.constantFrom("xs", "s", "m", "l", "xl" as const),
+    fc.constantFrom(
+      "blue",
+      "green",
+      "red",
+      "orange",
+      "yellow",
+      "teal",
+      "purple",
+      "grey" as const,
+    ),
+    fc.option(fc.string({ unit: "grapheme", minLength: 1, maxLength: 50 }), {
+      nil: undefined,
+    }),
+    fc.option(fc.constantFrom("lever", "outcome" as const), { nil: undefined }),
+    fc.integer({ min: -100, max: 100 }),
+    fc.integer({ min: 1, max: 200 }),
+  )
+  .chain(
+    ([id, label, x, y, radius, sizeTier, colourTier, annotation, role, minVal, range]) => {
+      const min = minVal;
+      const max = minVal + range;
+      return fc
+        .integer({ min: minVal, max: minVal + range })
+        .map((initial) => ({
+          id: makeNodeId(String(id)),
+          label,
+          x,
+          y,
+          radius,
+          sizeTier,
+          colourTier,
+          annotation,
+          role,
+          min,
+          max,
+          initial,
+        }));
+    },
+  );
+
+const causalEdgeArbitrary = (fromId: string, toId: string) =>
+  fc
+    .tuple(
+      fc.integer({ min: 0, max: 99999 }),
+      fc.constantFrom(1, -1 as const),
+      fc.float({ min: 0, max: 5, noNaN: true }),
+      fc.constantFrom("none", "short", "medium", "long" as const),
+      fc.option(fc.boolean(), { nil: undefined }),
+    )
+    .map(([id, polarity, weight, delay, isQuickFix]) => ({
+      kind: "causal" as const,
+      id: makeEdgeId(String(id)),
+      from: makeNodeId(fromId),
+      to: makeNodeId(toId),
+      polarity,
+      weight,
+      delay,
+      transferFn: "linear" as const,
+      isQuickFix,
+    }));
+
+const constraintEdgeArbitrary = (fromId: string, toId: string) =>
+  fc
+    .tuple(
+      fc.integer({ min: 0, max: 99999 }),
+      fc.constantFrom("ceiling", "floor" as const),
+    )
+    .map(([id, constraintKind]) => ({
+      kind: "constraint" as const,
+      constraintKind,
+      id: makeEdgeId(String(id)),
+      from: makeNodeId(fromId),
+      to: makeNodeId(toId),
+    }));
+
+const annotationArbitrary = fc
+  .tuple(
+    fc.integer({ min: 0, max: 99999 }),
+    fc.string({ unit: "grapheme", minLength: 1, maxLength: 100 }),
+    fc.float({ min: -10000, max: 10000, noNaN: true }),
+    fc.float({ min: -10000, max: 10000, noNaN: true }),
+  )
+  .map(([id, text, x, y]) => ({
+    id: makeAnnotationId(String(id)),
+    text,
+    x,
+    y,
+  }));
+
+const modulatorArbitrary = (fromId: string, targetEdgeId: string) =>
+  fc
+    .tuple(
+      fc.integer({ min: 0, max: 99999 }),
+      fc.constantFrom(1, -1 as const),
+    )
+    .map(([id, polarity]) => ({
+      id: makeModulatorId(String(id)),
+      from: makeNodeId(fromId),
+      target: makeEdgeId(targetEdgeId),
+      polarity,
+    }));
+
+const graphArbitrary: fc.Arbitrary<Graph> = fc
+  .array(nodeArbitrary, { minLength: 0, maxLength: 10 })
+  .chain((nodes) => {
+    if (nodes.length === 0) {
+      return fc.constant({
+        nodes: [],
+        edges: [],
+        annotations: [],
+        modulators: [],
+      } as Graph);
+    }
+
+    const nodeStringIds = nodes.map((n) => String(nodes.indexOf(n)));
+
+    const edgeArb = fc
+      .tuple(
+        fc.constantFrom(...nodeStringIds),
+        fc.constantFrom(...nodeStringIds),
+        fc.boolean(),
+      )
+      .chain(([fromIdx, toIdx, isCausal]) => {
+        if (isCausal) {
+          return causalEdgeArbitrary(fromIdx, toIdx);
+        }
+        return constraintEdgeArbitrary(fromIdx, toIdx);
+      });
+
+    const modulatorEdgeArb =
+      fc.tuple(
+        fc.constantFrom(...nodeStringIds),
+        fc.constantFrom(...nodeStringIds),
+        fc.constantFrom(...nodeStringIds),
+      ).chain(([fromIdx, fromIdx2, toIdx]) =>
+        modulatorArbitrary(fromIdx, `${fromIdx2}-${toIdx}`),
+      );
+
+    return fc.tuple(
+      fc.array(edgeArb, { minLength: 0, maxLength: Math.min(nodes.length * 2, 10) }),
+      fc.array(annotationArbitrary, { minLength: 0, maxLength: 5 }),
+      fc.array(modulatorEdgeArb, { minLength: 0, maxLength: 3 }),
+    ).map(([edges, annotations, modulators]) => ({
+      nodes: nodes.map((n, i) => ({ ...n, id: makeNodeId(String(i)) })),
+      edges,
+      annotations,
+      modulators,
+    } as Graph));
+  });
+
+// --- Tests ---
+
+describe("graphArbitrary generates valid Graph samples", () => {
+  it("generates at least one sample without throwing", () => {
+    const samples = fc.sample(graphArbitrary, 1);
+    expect(Array.isArray(samples[0]!.nodes)).toBe(true);
+    expect(Array.isArray(samples[0]!.edges)).toBe(true);
+    expect(Array.isArray(samples[0]!.annotations)).toBe(true);
+    expect(Array.isArray(samples[0]!.modulators)).toBe(true);
+  });
+});
 
 function makeComplexGraph(): Graph {
   const nodes = Array.from({ length: 10 }, (_, i) => ({
