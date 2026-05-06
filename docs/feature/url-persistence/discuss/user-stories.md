@@ -13,7 +13,7 @@ Derived from PRD §4.3 (SE-07 through SE-10) and DR--20260329--app--model-identi
 **I want** my graph to be automatically saved as I work,
 **so that** a browser refresh or accidental tab close doesn't lose my model.
 
-### Acceptance criteria
+### Acceptance criteria — US-01
 
 - AC-01a: When a user mutates the graph (add node, add edge, move, delete, configure), the current graph is saved to localStorage under `swoopy_graph_<modelId>` before the next user action is possible.
 - AC-01b: When a user reloads the page with `?m=<id>` in the URL, the graph stored under `swoopy_graph_<id>` is restored exactly (all nodes, edges, annotations, modulators).
@@ -30,7 +30,7 @@ Derived from PRD §4.3 (SE-07 through SE-10) and DR--20260329--app--model-identi
 **I want** to explore the shared graph without risking my own saved work,
 **so that** I can open someone else's model and still return to mine.
 
-### Acceptance criteria
+### Acceptance criteria — US-02
 
 - AC-02a: When a user opens a `?g=<base64>` URL, the graph loads without being written to localStorage (`transient: true` state).
 - AC-02b: When a transient-state user makes their first mutation, a new UUID is generated, the graph is persisted under `swoopy_graph_<newId>`, and the URL updates to `?m=<newId>` — without touching any previously stored model.
@@ -48,7 +48,7 @@ Derived from PRD §4.3 (SE-07 through SE-10) and DR--20260329--app--model-identi
 **I want** my saved graph to be migrated seamlessly,
 **so that** I don't lose my previous work when the app updates.
 
-### Acceptance criteria
+### Acceptance criteria — US-03
 
 - AC-03a: On load, if `localStorage.getItem('swoopy_graph')` exists and no `?m=`/`?g=` param is present, the graph is read from the legacy key, a new UUID is generated, and the graph is written to `swoopy_graph_<id>`.
 - AC-03b: The legacy `swoopy_graph` key is removed after migration.
@@ -66,7 +66,7 @@ Derived from PRD §4.3 (SE-07 through SE-10) and DR--20260329--app--model-identi
 **I want** a New Model action that gives me a blank canvas,
 **so that** I can start over without destroying my previous work.
 
-### Acceptance criteria
+### Acceptance criteria — US-04
 
 - AC-04a: When a user triggers the New Model action, the canvas resets to an empty graph (no nodes, no edges, no annotations).
 - AC-04b: The previous model remains intact in localStorage under its UUID.
@@ -86,7 +86,7 @@ Derived from PRD §4.3 (SE-07 through SE-10) and DR--20260329--app--model-identi
 **I want** a brief overlay explaining what the tool is and what I can do,
 **so that** I'm not dropped into a blank canvas with no context.
 
-### Acceptance criteria
+### Acceptance criteria — US-05
 
 - AC-05a: The welcome overlay is shown when there is no `swoopy_current_model` in localStorage AND no `?g=` or `?m=` param in the URL.
 - AC-05b: The overlay contains a tagline and 2–3 capability bullets describing the tool.

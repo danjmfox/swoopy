@@ -7,7 +7,7 @@ It is a pointer document — the full architecture lives in `docs/ARCHITECTURE.m
 
 ## Package map
 
-```
+```text
 packages/
   engine/     Pure TypeScript. No browser or framework dependencies.
   renderer/   Canvas 2D + RAF loop. Browser only. Not imported in tests.

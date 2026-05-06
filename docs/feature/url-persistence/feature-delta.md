@@ -2,7 +2,7 @@
 
 ## Wave: DISCUSS
 
-### [REF] Inherited commitments
+### [REF] DISCUSS commitments
 
 | Origin | Commitment                                                                               | DDD                  | Impact                                                                                 |
 | ------ | ---------------------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------- |
@@ -15,7 +15,7 @@
 
 ## Wave: DESIGN
 
-### [REF] Inherited commitments
+### [REF] DESIGN commitments
 
 | Origin  | Commitment                                                                                 | DDD | Impact                                                                                   |
 | ------- | ------------------------------------------------------------------------------------------ | --- | ---------------------------------------------------------------------------------------- |
@@ -33,9 +33,9 @@
 - `docs/feature/url-persistence/discuss/user-stories.md` — read; 5 stories (US-01 to US-05)
 - `docs/feature/url-persistence/design/wave-decisions.md` — read; 5 DWDs all referencing existing DRs
 
-* `docs/product/journeys/` — not found
-* `docs/product/kpi-contracts.yaml` — not found
-* `docs/feature/url-persistence/devops/` — not found → default env matrix applied
+- `docs/product/journeys/` — not found
+- `docs/product/kpi-contracts.yaml` — not found
+- `docs/feature/url-persistence/devops/` — not found → default env matrix applied
 
 Reconciliation: 0 contradictions. DISCUSS and DESIGN are aligned with implemented store code.
 
