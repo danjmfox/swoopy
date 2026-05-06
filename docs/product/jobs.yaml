@@ -1,0 +1,33 @@
+jobs:
+  - id: explore-system-dynamics
+    story: >
+      When I am running a systems thinking session with a team, I want to build
+      and run a causal loop diagram in real time, so I can surface non-obvious
+      dynamics and anchor the team's conversation in a shared, running model.
+    journey: build-and-run-model
+    validated: retroactive
+    notes: >
+      Core primary job. Covers the full build → simulate → inject → observe →
+      share arc. Retroactively authored from PRD §1.2 and observed use patterns.
+
+  - id: resume-ongoing-work
+    story: >
+      When I return to a model I was building across sessions, or open a
+      colleague's shared model, I want my work to be exactly where I left it
+      without accidentally overwriting anyone else's, so I can continue without
+      losing context.
+    journey: persist-and-resume
+    validated: retroactive
+    notes: >
+      Persistence and cross-session continuity job. Covers auto-save, restore,
+      transient fork, legacy migration, and new model. Retroactively authored
+      from PRD §4.3 (SE-07–SE-10) and DR--20260329.
+
+  - id: share-complex-model
+    story: >
+      When I have built a complex causal loop diagram, I want to share it via a
+      URL that fits in a chat message, so I can invite a colleague to view or continue
+      the model without losing work.
+    feature: share-url-compression
+    validated: discuss-wave
+    notes: JTBD skipped — motivation clear from user description
