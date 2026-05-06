@@ -42,8 +42,12 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
     const encoded = encodeGraphForUrl(graph);
     const decoded = decodeGraphFromUrl(encoded);
     expect(decoded).not.toBeNull();
-    expect(decoded!.nodes.map((n) => n.id)).toEqual(graph.nodes.map((n) => n.id));
-    expect(decoded!.edges.map((e) => e.id)).toEqual(graph.edges.map((e) => e.id));
+    expect(decoded!.nodes.map((n) => n.id)).toEqual(
+      graph.nodes.map((n) => n.id),
+    );
+    expect(decoded!.edges.map((e) => e.id)).toEqual(
+      graph.edges.map((e) => e.id),
+    );
   });
 
   it("produces a string at least 30% shorter than plain base64 for a 10-node graph", () => {
@@ -59,7 +63,9 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
     const legacy = legacyEncode(graph);
     const decoded = decodeGraphFromUrl(legacy);
     expect(decoded).not.toBeNull();
-    expect(decoded!.nodes.map((n) => n.id)).toEqual(graph.nodes.map((n) => n.id));
+    expect(decoded!.nodes.map((n) => n.id)).toEqual(
+      graph.nodes.map((n) => n.id),
+    );
   });
 
   it("returns null for a corrupt string", () => {
@@ -80,7 +86,9 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
     const encoded = encodeGraphForUrl(graph);
     const bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
 
-    const inflated = inflateSync(bytes, { raw: true } as Parameters<typeof inflateSync>[1]);
+    const inflated = inflateSync(bytes, { raw: true } as Parameters<
+      typeof inflateSync
+    >[1]);
     const parsed = JSON.parse(new TextDecoder().decode(inflated));
     expect(parsed).toHaveProperty("graph");
     expect(Array.isArray(parsed.graph.nodes)).toBe(true);

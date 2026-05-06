@@ -80,11 +80,25 @@ function floor(id: string, from: string, to: string) {
   };
 }
 
-function mod(id: string, from: string, target: string, polarity: 1 | -1): Modulator {
-  return { id: makeModulatorId(id), from: makeNodeId(from), target: makeEdgeId(target), polarity };
+function mod(
+  id: string,
+  from: string,
+  target: string,
+  polarity: 1 | -1,
+): Modulator {
+  return {
+    id: makeModulatorId(id),
+    from: makeNodeId(from),
+    target: makeEdgeId(target),
+    polarity,
+  };
 }
 
-function stepN(graph: Graph, sim: ReturnType<typeof makeInitialSim>, n: number) {
+function stepN(
+  graph: Graph,
+  sim: ReturnType<typeof makeInitialSim>,
+  n: number,
+) {
   let s = sim;
   for (let i = 0; i < n; i++) s = step(graph, s, 1 / 60);
   return s;
@@ -101,7 +115,10 @@ describe("signal propagation — post-arrival ceiling clamp (step-6 path)", () =
     // (Pre-clamp alone cannot catch this because B was within bounds when it fired.)
     const graph: Graph = {
       nodes: [node("ac-A", 5), node("ac-B", 3), node("ac-C", 4)],
-      edges: [causal("ac-AB", "ac-A", "ac-B"), ceiling("ac-CB", "ac-C", "ac-B")],
+      edges: [
+        causal("ac-AB", "ac-A", "ac-B"),
+        ceiling("ac-CB", "ac-C", "ac-B"),
+      ],
       annotations: [],
       modulators: [],
     };
@@ -184,8 +201,14 @@ describe("modulator scaling — polarity reversal", () => {
       annotations: [],
       modulators: [mod("mp-m", "mp-src", "mp-e", 1)],
     };
-    const atMin = computeEffectiveWeights(g, new Map([[makeNodeId("mp-src"), 0]]));
-    const atMax = computeEffectiveWeights(g, new Map([[makeNodeId("mp-src"), 10]]));
+    const atMin = computeEffectiveWeights(
+      g,
+      new Map([[makeNodeId("mp-src"), 0]]),
+    );
+    const atMax = computeEffectiveWeights(
+      g,
+      new Map([[makeNodeId("mp-src"), 10]]),
+    );
     expect(atMin.get(makeEdgeId("mp-e"))).toBe(0);
     expect(atMax.get(makeEdgeId("mp-e"))).toBe(3);
   });
@@ -197,8 +220,14 @@ describe("modulator scaling — polarity reversal", () => {
       annotations: [],
       modulators: [mod("mn-m", "mn-src", "mn-e", -1)],
     };
-    const atMax = computeEffectiveWeights(g, new Map([[makeNodeId("mn-src"), 10]]));
-    const atMin = computeEffectiveWeights(g, new Map([[makeNodeId("mn-src"), 0]]));
+    const atMax = computeEffectiveWeights(
+      g,
+      new Map([[makeNodeId("mn-src"), 10]]),
+    );
+    const atMin = computeEffectiveWeights(
+      g,
+      new Map([[makeNodeId("mn-src"), 0]]),
+    );
     expect(atMax.get(makeEdgeId("mn-e"))).toBe(0);
     expect(atMin.get(makeEdgeId("mn-e"))).toBe(3);
   });
@@ -221,8 +250,12 @@ describe("modulator scaling — polarity reversal", () => {
       modulators: [mod("sw-neg", "sw-src", "sw-e", -1)],
     };
     const srcAtMax = new Map([[makeNodeId("sw-src"), 10]]);
-    const posWeight = computeEffectiveWeights(withPos, srcAtMax).get(makeEdgeId("sw-e"))!;
-    const negWeight = computeEffectiveWeights(withNeg, srcAtMax).get(makeEdgeId("sw-e"))!;
+    const posWeight = computeEffectiveWeights(withPos, srcAtMax).get(
+      makeEdgeId("sw-e"),
+    )!;
+    const negWeight = computeEffectiveWeights(withNeg, srcAtMax).get(
+      makeEdgeId("sw-e"),
+    )!;
     expect(posWeight).toBe(2); // +1 polarity at max → full base weight
     expect(negWeight).toBe(0); // -1 polarity at max → suppressed
   });
@@ -237,12 +270,47 @@ describe("serialization — modulator round-trips", () => {
     const eAB = makeEdgeId("sr-ab");
     const graph: Graph = {
       nodes: [
-        { id: nA, label: "A", x: 0, y: 0, radius: 30, sizeTier: "m", colourTier: "blue", min: 0, max: 10, initial: 5 },
-        { id: nB, label: "B", x: 100, y: 0, radius: 30, sizeTier: "m", colourTier: "blue", min: 0, max: 10, initial: 5 },
+        {
+          id: nA,
+          label: "A",
+          x: 0,
+          y: 0,
+          radius: 30,
+          sizeTier: "m",
+          colourTier: "blue",
+          min: 0,
+          max: 10,
+          initial: 5,
+        },
+        {
+          id: nB,
+          label: "B",
+          x: 100,
+          y: 0,
+          radius: 30,
+          sizeTier: "m",
+          colourTier: "blue",
+          min: 0,
+          max: 10,
+          initial: 5,
+        },
       ],
-      edges: [{ kind: "causal", id: eAB, from: nA, to: nB, polarity: 1, weight: 2, delay: "none", transferFn: "linear" }],
+      edges: [
+        {
+          kind: "causal",
+          id: eAB,
+          from: nA,
+          to: nB,
+          polarity: 1,
+          weight: 2,
+          delay: "none",
+          transferFn: "linear",
+        },
+      ],
       annotations: [],
-      modulators: [{ id: makeModulatorId("sr-m1"), from: nA, target: eAB, polarity: 1 }],
+      modulators: [
+        { id: makeModulatorId("sr-m1"), from: nA, target: eAB, polarity: 1 },
+      ],
     };
     const restored = deserialize(serialize(graph));
     expect(restored.modulators).toEqual(graph.modulators);
@@ -255,12 +323,47 @@ describe("serialization — modulator round-trips", () => {
     const eAB = makeEdgeId("sn-ab");
     const graph: Graph = {
       nodes: [
-        { id: nA, label: "A", x: 0, y: 0, radius: 30, sizeTier: "m", colourTier: "blue", min: 0, max: 10, initial: 5 },
-        { id: nB, label: "B", x: 100, y: 0, radius: 30, sizeTier: "m", colourTier: "blue", min: 0, max: 10, initial: 5 },
+        {
+          id: nA,
+          label: "A",
+          x: 0,
+          y: 0,
+          radius: 30,
+          sizeTier: "m",
+          colourTier: "blue",
+          min: 0,
+          max: 10,
+          initial: 5,
+        },
+        {
+          id: nB,
+          label: "B",
+          x: 100,
+          y: 0,
+          radius: 30,
+          sizeTier: "m",
+          colourTier: "blue",
+          min: 0,
+          max: 10,
+          initial: 5,
+        },
       ],
-      edges: [{ kind: "causal", id: eAB, from: nA, to: nB, polarity: 1, weight: 2, delay: "none", transferFn: "linear" }],
+      edges: [
+        {
+          kind: "causal",
+          id: eAB,
+          from: nA,
+          to: nB,
+          polarity: 1,
+          weight: 2,
+          delay: "none",
+          transferFn: "linear",
+        },
+      ],
       annotations: [],
-      modulators: [{ id: makeModulatorId("sn-m1"), from: nA, target: eAB, polarity: -1 }],
+      modulators: [
+        { id: makeModulatorId("sn-m1"), from: nA, target: eAB, polarity: -1 },
+      ],
     };
     const restored = deserialize(serialize(graph));
     expect(restored.modulators[0]?.polarity).toBe(-1);
@@ -274,13 +377,64 @@ describe("serialization — modulator round-trips", () => {
     const eBC = makeEdgeId("mm-bc");
     const graph: Graph = {
       nodes: [
-        { id: nA, label: "A", x: 0, y: 0, radius: 30, sizeTier: "m", colourTier: "blue", min: 0, max: 10, initial: 5 },
-        { id: nB, label: "B", x: 100, y: 0, radius: 30, sizeTier: "m", colourTier: "blue", min: 0, max: 10, initial: 5 },
-        { id: nC, label: "C", x: 200, y: 0, radius: 30, sizeTier: "m", colourTier: "blue", min: 0, max: 10, initial: 5 },
+        {
+          id: nA,
+          label: "A",
+          x: 0,
+          y: 0,
+          radius: 30,
+          sizeTier: "m",
+          colourTier: "blue",
+          min: 0,
+          max: 10,
+          initial: 5,
+        },
+        {
+          id: nB,
+          label: "B",
+          x: 100,
+          y: 0,
+          radius: 30,
+          sizeTier: "m",
+          colourTier: "blue",
+          min: 0,
+          max: 10,
+          initial: 5,
+        },
+        {
+          id: nC,
+          label: "C",
+          x: 200,
+          y: 0,
+          radius: 30,
+          sizeTier: "m",
+          colourTier: "blue",
+          min: 0,
+          max: 10,
+          initial: 5,
+        },
       ],
       edges: [
-        { kind: "causal", id: eAB, from: nA, to: nB, polarity: 1, weight: 2, delay: "none", transferFn: "linear" },
-        { kind: "causal", id: eBC, from: nB, to: nC, polarity: -1, weight: 1, delay: "none", transferFn: "linear" },
+        {
+          kind: "causal",
+          id: eAB,
+          from: nA,
+          to: nB,
+          polarity: 1,
+          weight: 2,
+          delay: "none",
+          transferFn: "linear",
+        },
+        {
+          kind: "causal",
+          id: eBC,
+          from: nB,
+          to: nC,
+          polarity: -1,
+          weight: 1,
+          delay: "none",
+          transferFn: "linear",
+        },
       ],
       annotations: [],
       modulators: [

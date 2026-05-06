@@ -105,6 +105,7 @@ Derived from PRD §4.3 (SE-07 through SE-10) and DR--20260329--app--model-identi
 These stories cover the persistence and URL sync layer only. The Share button behavior (SE-02, SE-06) is already implemented; share-url-compression (the base64 compression feature) is archived at `docs/evolution/2026-04-27-share-url-compression.md`.
 
 Out of scope for this feature:
+
 - Multi-model management UI (list, rename, delete) — explicitly deferred per DR--20260329
 - `popstate` back-navigation handler — deferred per DR--20260330
 - Server-side persistence — deferred to v2+

@@ -21,9 +21,16 @@ import { serialize } from "@swoopy/engine";
 import type { Graph } from "@swoopy/engine";
 
 const FIXED_ID = "acceptance-test-fixed-id";
-const emptyGraph: Graph = { nodes: [], edges: [], annotations: [], modulators: [] };
+const emptyGraph: Graph = {
+  nodes: [],
+  edges: [],
+  annotations: [],
+  modulators: [],
+};
 
-function resetStore(overrides: Partial<Parameters<typeof useStore.setState>[0]> = {}) {
+function resetStore(
+  overrides: Partial<Parameters<typeof useStore.setState>[0]> = {},
+) {
   useStore.setState({
     graph: emptyGraph,
     modelId: FIXED_ID,
@@ -192,12 +199,28 @@ describe("US-03 â€” legacy migration: loadPersistedGraph migrates swoopy_graph â
 
   it("restores the graph content from the legacy key", () => {
     const graphWithNode: Graph = {
-      nodes: [{ id: "n1" as never, label: "Legacy", x: 0, y: 0, radius: 30, sizeTier: "m", colourTier: "blue", min: 0, max: 10, initial: 5 }],
+      nodes: [
+        {
+          id: "n1" as never,
+          label: "Legacy",
+          x: 0,
+          y: 0,
+          radius: 30,
+          sizeTier: "m",
+          colourTier: "blue",
+          min: 0,
+          max: 10,
+          initial: 5,
+        },
+      ],
       edges: [],
       annotations: [],
       modulators: [],
     };
-    localStorage.setItem("swoopy_graph", JSON.stringify(serialize(graphWithNode)));
+    localStorage.setItem(
+      "swoopy_graph",
+      JSON.stringify(serialize(graphWithNode)),
+    );
     useStore.getState().loadPersistedGraph();
     expect(useStore.getState().graph.nodes).toHaveLength(1);
     expect(useStore.getState().graph.nodes[0]!.label).toBe("Legacy");

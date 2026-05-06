@@ -22,14 +22,14 @@ packages/
 
 All engine behavior is exercised through exported pure functions. No harness, no DOM, no mocks required.
 
-| Port | Signature | What acceptance tests attach here |
-|------|-----------|----------------------------------|
-| `inject` | `inject(sim, graph, nodeId, strength) → SimState` | Signal injection: value change + relay emission |
-| `step` | `step(graph, sim, dt) → SimState` | Full tick: constraint pre/post clamp, signal advance, arrival, relay |
-| `computeEffectiveWeights` | `computeEffectiveWeights(graph, nodeValues) → Map<EdgeId, number>` | Modulator scaling formula |
-| `makeInitialSim` | `makeInitialSim(graph) → SimState` | Initial state from graph |
-| `serialize` | `serialize(graph) → SerializedGraph` | Graph → versioned JSON |
-| `deserialize` | `deserialize(blob) → Graph` | Versioned JSON → Graph; throws on unknown version |
+| Port                      | Signature                                                          | What acceptance tests attach here                                    |
+| ------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `inject`                  | `inject(sim, graph, nodeId, strength) → SimState`                  | Signal injection: value change + relay emission                      |
+| `step`                    | `step(graph, sim, dt) → SimState`                                  | Full tick: constraint pre/post clamp, signal advance, arrival, relay |
+| `computeEffectiveWeights` | `computeEffectiveWeights(graph, nodeValues) → Map<EdgeId, number>` | Modulator scaling formula                                            |
+| `makeInitialSim`          | `makeInitialSim(graph) → SimState`                                 | Initial state from graph                                             |
+| `serialize`               | `serialize(graph) → SerializedGraph`                               | Graph → versioned JSON                                               |
+| `deserialize`             | `deserialize(blob) → Graph`                                        | Versioned JSON → Graph; throws on unknown version                    |
 
 **All exported from** `packages/engine/src/index.ts`.
 
@@ -41,15 +41,15 @@ Test file placement: `packages/engine/src/*.test.ts` (co-located per project con
 
 App-level behavior is exercised through the Zustand store. Tests construct store state and call actions directly — no rendering required.
 
-| Port | What acceptance tests attach here |
-|------|----------------------------------|
-| `addNode`, `addEdge`, `addConstraintEdge` | Graph mutation + undo stack recording |
-| `deleteNode`, `moveNode`, `nudgeNode` | Structural mutations + undo |
-| `inject(nodeId, strength)` | Store-level injection (wraps engine inject) |
-| `tickSim(dt)` | Store-level step (wraps engine step) |
-| `undo`, `redo` | Undo stack traversal |
-| `addModulator`, `toggleModulatorPolarity` | Modulator lifecycle |
-| `newModel` | UUID generation, localStorage, URL replaceState (SE-09) |
+| Port                                      | What acceptance tests attach here                       |
+| ----------------------------------------- | ------------------------------------------------------- |
+| `addNode`, `addEdge`, `addConstraintEdge` | Graph mutation + undo stack recording                   |
+| `deleteNode`, `moveNode`, `nudgeNode`     | Structural mutations + undo                             |
+| `inject(nodeId, strength)`                | Store-level injection (wraps engine inject)             |
+| `tickSim(dt)`                             | Store-level step (wraps engine step)                    |
+| `undo`, `redo`                            | Undo stack traversal                                    |
+| `addModulator`, `toggleModulatorPolarity` | Modulator lifecycle                                     |
+| `newModel`                                | UUID generation, localStorage, URL replaceState (SE-09) |
 
 **Defined in** `packages/app/src/store.ts`.
 
@@ -61,14 +61,14 @@ Test file placement: `packages/app/src/store.test.tsx` and `packages/app/src/sto
 
 Persistence behavior is exercised through the store's startup/mutation hooks and URL param parsing. Tests use jsdom's localStorage and control `window.location.search`.
 
-| Port | Acceptance boundary | PRD ref |
-|------|---------------------|---------|
-| Auto-save on mutation | Every graph mutation calls `serialize → localStorage.setItem('swoopy_graph_<id>', ...)` | SE-07 |
-| Restore from `?m=<id>` | On load, reads `swoopy_graph_<id>` from localStorage | SE-08 |
-| Transient load from `?g=<base64>` | Deserialises without persisting; first mutation forks a new UUID | SE-08 |
-| Legacy key migration | `swoopy_graph` → `swoopy_graph_<generated-id>`, URL updated to `?m=<id>` | SE-08 |
-| New model action | Generates UUID, clears graph, updates `?m=`, preserves old model in localStorage | SE-09 |
-| Welcome overlay | Shown when no `swoopy_current_model` and no `?g=`/`?m=` params; dismissed by CTA | SE-10 |
+| Port                              | Acceptance boundary                                                                     | PRD ref |
+| --------------------------------- | --------------------------------------------------------------------------------------- | ------- |
+| Auto-save on mutation             | Every graph mutation calls `serialize → localStorage.setItem('swoopy_graph_<id>', ...)` | SE-07   |
+| Restore from `?m=<id>`            | On load, reads `swoopy_graph_<id>` from localStorage                                    | SE-08   |
+| Transient load from `?g=<base64>` | Deserialises without persisting; first mutation forks a new UUID                        | SE-08   |
+| Legacy key migration              | `swoopy_graph` → `swoopy_graph_<generated-id>`, URL updated to `?m=<id>`                | SE-08   |
+| New model action                  | Generates UUID, clears graph, updates `?m=`, preserves old model in localStorage        | SE-09   |
+| Welcome overlay                   | Shown when no `swoopy_current_model` and no `?g=`/`?m=` params; dismissed by CTA        | SE-10   |
 
 **Key tests:** `packages/app/src/persistence.integration.test.ts`, `packages/app/src/share-compression.integration.test.ts`.
 
