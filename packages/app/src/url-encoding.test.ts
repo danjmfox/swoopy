@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { inflateSync } from "fflate";
 import type { Graph } from "@swoopy/engine";
-import { serialize } from "@swoopy/engine";
+import { serialize, makeNodeId, makeEdgeId } from "@swoopy/engine";
 import { encodeGraphForUrl, decodeGraphFromUrl } from "./url-encoding.ts";
 
 function makeComplexGraph(): Graph {
   const nodes = Array.from({ length: 10 }, (_, i) => ({
-    id: `node-${i}` as ReturnType<typeof crypto.randomUUID>,
+    id: makeNodeId(`node-${i}`),
     label: `Node ${i}`,
     x: i * 80,
     y: i * 60,
@@ -19,7 +19,7 @@ function makeComplexGraph(): Graph {
   }));
   const edges = Array.from({ length: 8 }, (_, i) => ({
     kind: "causal" as const,
-    id: `edge-${i}` as ReturnType<typeof crypto.randomUUID>,
+    id: makeEdgeId(`edge-${i}`),
     from: nodes[i % 10]!.id,
     to: nodes[(i + 1) % 10]!.id,
     polarity: (i % 2 === 0 ? 1 : -1) as 1 | -1,
@@ -80,7 +80,7 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
     const encoded = encodeGraphForUrl(graph);
     const bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
 
-    const inflated = inflateSync(bytes, { raw: true });
+    const inflated = inflateSync(bytes, { raw: true } as Parameters<typeof inflateSync>[1]);
     const parsed = JSON.parse(new TextDecoder().decode(inflated));
     expect(parsed).toHaveProperty("graph");
     expect(Array.isArray(parsed.graph.nodes)).toBe(true);
