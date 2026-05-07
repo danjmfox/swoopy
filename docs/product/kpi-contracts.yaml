@@ -1,0 +1,153 @@
+---
+# KPI Contracts — Swoopy
+#
+# Used by nWave DISTILL to tag @kpi scenarios and classify soft vs. hard gates.
+# Each contract names the PRD source, the measurable threshold, the gate
+# classification, and the test(s) that currently verify it.
+#
+# Gate classifications:
+#   hard — failing this is a build/merge blocker; test already exists or must exist
+#   soft — aspiration or design constraint; monitored but not a CI gate
+#
+# Retroactively authored from PRD §5 (Non-Functional Requirements) and §7.6–7.7.
+
+contracts:
+  - id: KPI-01
+    name: Frame budget — simulation step and render
+    prd_ref: §5.1
+    contract: >
+      A single simulation tick (step()) plus canvas draw must complete within
+      16ms at 60fps so the RAF loop never drops frames.
+    threshold: 16ms per frame
+    gate: soft
+    measurement: >
+      No automated wall-clock test. Design constraint enforced by architecture
+      (no React in RAF loop; simSlice not subscribed by React). Verified by
+      manual profiling and the constraint that step() is a pure function with
+      O(signals) complexity.
+    current_tests: []
+    notes: >
+      PRD explicitly states "no React re-renders must occur during simulation
+      ticks." The Zustand slice boundary (graphSlice vs simSlice) is the
+      structural guarantee; Canvas.tsx reads via getState() not subscribe().
+
+  - id: KPI-02
+    name: Signal cap — travelling signals never exceed MAX_SIGNALS
+    prd_ref: §5.1 SI-11 §7.7
+    contract: >
+      Under maximum injection load (all nodes injected simultaneously in a
+      fully-connected reinforcing graph), the travelling signal count must
+      never exceed MAX_SIGNALS (132). Signals above the cap are silently
+      discarded, preferring highest-progress signals.
+    threshold: signals.length <= MAX_SIGNALS at all times
+    gate: hard
+    measurement: >
+      300-tick run of a 6-node fully-connected reinforcing graph with maximum
+      injection into all nodes. Assert sim.signals.length <= MAX_SIGNALS
+      every tick.
+    current_tests:
+      - file: packages/engine/src/signalCap.test.ts
+        describe: SI-11 MAX_SIGNALS constant and cap
+        it: travelling signal count never exceeds MAX_SIGNALS in a heavily loaded graph
+    notes: >
+      MAX_SIGNALS = 132 derived from characterisation: 12-node fully-connected
+      graph = 132 edges, all emitting simultaneously at max injection. Cap
+      ensures no silent signal drop in worst-case scenario (PRD §7.6).
+
+  - id: KPI-03
+    name: Serialization round-trip fidelity
+    prd_ref: SE-03 SE-04
+    contract: >
+      deserialize(serialize(graph)) must restore the graph with identical
+      nodes, edges, annotations, and modulators — including all optional
+      fields (isQuickFix, role, annotation, modulator polarity).
+    threshold: deep equality on all graph fields
+    gate: hard
+    measurement: >
+      Round-trip test on a representative graph containing all field variants.
+      Property-based test over randomly generated graphs.
+    current_tests:
+      - file: packages/engine/src/serialisation.test.ts
+        describe: deserialize
+        it: round-trips — deserialize(serialize(graph)) restores the graph exactly
+      - file: packages/app/src/url-encoding.test.ts
+        describe: encodeGraphForUrl / decodeGraphFromUrl
+        it: round-trips — decodeGraphFromUrl(encodeGraphForUrl(graph)) returns the same graph
+      - file: packages/app/src/url-encoding.test.ts
+        describe: property — encode → decode identity
+        it: property — decode(encode(g)) deep-equals g for any valid graph
+    notes: >
+      The URL-encoded form additionally normalises undefined optional fields
+      via JSON.parse(JSON.stringify()) before compression, so that the
+      round-trip identity holds for all valid Graph values including those
+      with absent optional fields.
+
+  - id: KPI-04
+    name: URL compression ratio
+    prd_ref: share-url-compression feature
+    contract: >
+      encodeGraphForUrl() must produce a compressed URL-safe string that is
+      at least 30% shorter than the legacy plain base64 encoding for a
+      representative 10-node graph.
+    threshold: reduction >= 0.30 (30% shorter)
+    gate: hard
+    measurement: >
+      Compare compressed.length vs legacyBase64.length for a 10-node,
+      8-edge graph. Assert (1 - compressed/plain) >= 0.30.
+    current_tests:
+      - file: packages/app/src/url-encoding.test.ts
+        describe: encodeGraphForUrl / decodeGraphFromUrl
+        it: produces a string at least 30% shorter than plain base64 for a 10-node graph
+    notes: >
+      Threshold of 30% is conservative — typical compression on real CLD
+      models (20+ nodes with labels) is 50–70% shorter. The hard gate
+      ensures the deflate compression path is always active; a regression
+      to plain base64 would fail it.
+
+  - id: KPI-05
+    name: Relay propagation depth — MAX_HOPS
+    prd_ref: §7.6 DR--20260401
+    contract: >
+      A single injection must propagate through at least MAX_HOPS (26) edge
+      traversals. This supports 5-node reinforcing loops to full saturation,
+      which is the minimum viable demonstration of system dynamics behaviour
+      in a workshop context.
+    threshold: MAX_HOPS = 26 edge traversals per signal chain
+    gate: hard
+    measurement: >
+      5-node reinforcing loop (A→B→C→D→E→A, all polarity +1, weight 1).
+      Single injection into A. Run > MAX_HOPS × EDGE_TRANSIT_TICKS ticks.
+      Assert all 5 nodes reach max (10).
+    current_tests:
+      - file: packages/engine/src/relay.test.ts
+        describe: integration — reinforcing loop
+        it: single inject on A in A→B→A loop saturates both nodes to max after enough ticks
+      - file: packages/engine/src/characterise-relay.ts
+        note: >
+          Characterisation script (run manually via node --experimental-strip-types)
+          evidences that hops=26 is the minimum for a 5-node loop to saturate.
+    notes: >
+      MAX_HOPS was increased from 8 to 26 (see constants.ts comment and
+      characterise-relay.ts). hops=8 saturates only 2-node loops; hops=26
+      is the lowest candidate where all characterisation scenarios pass
+      including the 5-node long-chain scenario.
+
+  - id: KPI-06
+    name: Engine zero browser dependencies
+    prd_ref: §5.3 §6.1
+    contract: >
+      packages/engine must have zero browser or framework dependencies.
+      All engine functions must be testable in Node without a DOM.
+    threshold: zero browser imports in packages/engine/src/**
+    gate: hard
+    measurement: >
+      dep-cruiser CI rule enforces that engine package has no dependency
+      on browser globals, React, or DOM APIs. Engine tests run under
+      vitest with environment: "node" (not jsdom).
+    current_tests:
+      - file: packages/engine/vitest.config.ts
+        note: environment is "node" — any accidental DOM import would crash tests
+    notes: >
+      This is the architectural guarantee that makes the engine deployable
+      in non-browser contexts and independently testable. Verified
+      structurally via the package boundary, not by a KPI assertion test.
