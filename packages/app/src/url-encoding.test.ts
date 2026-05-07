@@ -317,6 +317,22 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
     );
   });
 
+  it("property: decodeGraphFromUrl never throws for arbitrary string inputs", () => {
+    fc.assert(
+      fc.property(fc.string(), (s) => {
+        expect(() => decodeGraphFromUrl(s)).not.toThrow();
+      }),
+    );
+  });
+
+  it("property: decodeGraphFromUrl never throws for arbitrary base64 string inputs", () => {
+    fc.assert(
+      fc.property(fc.base64String(), (s) => {
+        expect(() => decodeGraphFromUrl(s)).not.toThrow();
+      }),
+    );
+  });
+
   it("uses raw deflate — inflateSync with raw:true recovers valid serialized graph JSON", () => {
     const graph = makeComplexGraph();
     const encoded = encodeGraphForUrl(graph);
