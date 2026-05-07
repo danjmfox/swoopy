@@ -181,9 +181,32 @@ const graphArbitrary: fc.Arbitrary<Graph> = fc
       .map(
         ([edges, annotations, modulators]) =>
           ({
-            nodes: nodes.map((n, i) => ({ ...n, id: makeNodeId(String(i)) })),
-            edges,
-            annotations,
+            nodes: nodes.map((n, i) => {
+              const node: Record<string, unknown> = {
+                ...n,
+                id: makeNodeId(String(i)),
+                x: n.x + 0,
+                y: n.y + 0,
+                radius: n.radius + 0,
+              };
+              if (node["annotation"] === undefined) delete node["annotation"];
+              if (node["role"] === undefined) delete node["role"];
+              if (node["isQuickFix"] === undefined) delete node["isQuickFix"];
+              return node as Graph["nodes"][number];
+            }),
+            edges: edges.map((e) => {
+              if (e.kind === "causal") {
+                const edge = { ...e, weight: e.weight + 0 } as Record<string, unknown>;
+                if (edge["isQuickFix"] === undefined) delete edge["isQuickFix"];
+                return edge as Edge;
+              }
+              return e;
+            }),
+            annotations: annotations.map((a) => ({
+              ...a,
+              x: a.x + 0,
+              y: a.y + 0,
+            })),
             modulators,
           }) as Graph,
       );
@@ -329,6 +352,16 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
     fc.assert(
       fc.property(fc.base64String(), (s) => {
         expect(() => decodeGraphFromUrl(s)).not.toThrow();
+      }),
+    );
+  });
+
+  it("property: graphs round-trip via legacy uncompressed fallback path", () => {
+    fc.assert(
+      fc.property(graphArbitrary, (g) => {
+        const legacy = legacyEncode(g);
+        const decoded = decodeGraphFromUrl(legacy);
+        expect(decoded).toEqual(g);
       }),
     );
   });
