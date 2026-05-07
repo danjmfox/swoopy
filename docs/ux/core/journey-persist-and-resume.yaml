@@ -1,0 +1,121 @@
+name: persist-and-resume
+job_ids:
+  - resume-ongoing-work
+type: primary
+research_depth: lightweight
+
+# Persistence and cross-session continuity flow. Covers the arc from returning
+# to a saved model through forking a shared model and starting fresh.
+# Retroactively authored from PRD §4.3 (SE-07–SE-10) and
+# DR--20260329--app--model-identity-persistence.
+
+steps:
+  - id: return-to-work
+    actor: facilitator
+    action: Navigates back to Swoopy (bare URL or bookmarked ?m= URL)
+    output: >
+      If ?m=<id> in URL: graph restored from swoopy_graph_<id> in localStorage.
+      If bare URL + swoopy_current_model set: same graph restored.
+      If first visit: seed graph (welcome overlay shown).
+    emotion: reassured
+
+  - id: resume-editing
+    actor: facilitator
+    action: Continues adding nodes and edges to the restored model
+    output: >
+      commitGraph() called on each mutation; persist() writes updated graph to
+      swoopy_graph_<modelId> in localStorage; URL retains ?m=<id>
+    emotion: continuous
+
+  - id: receive-shared-link
+    actor: facilitator
+    action: Colleague sends a ?g=<compressed> URL; facilitator opens it
+    output: >
+      loadFromUrl() decodes the graph; transient: true set; model loaded but
+      NOT persisted to localStorage; own model at ?m=<id> untouched
+    emotion: curious
+
+  - id: explore-shared-model
+    actor: facilitator
+    action: Reviews colleague's model; may run simulation or inject signals
+    output: >
+      Simulation runs against the transient graph; no localStorage writes while
+      transient
+    emotion: engaged
+
+  - id: fork-shared-model
+    actor: facilitator
+    action: Makes the first edit to the shared model (adds a node or edge)
+    output: >
+      forkIfTransient() fires: new UUID generated; graph persisted under
+      swoopy_graph_<newId>; URL updates to ?m=<newId> via replaceState;
+      original model at ?m=<previousId> untouched in localStorage
+    emotion: ownership
+
+  - id: start-new-model
+    actor: facilitator
+    action: Clicks New Model in toolbar to start a blank diagram
+    output: >
+      newModel() called: empty graph set; new UUID generated; persisted under
+      swoopy_graph_<newId>; swoopy_current_model updated; URL ?m=<newId>;
+      undo stack cleared; previous model preserved under old UUID
+    emotion: fresh-start
+
+error_paths:
+  - step: return-to-work
+    failure: localStorage graph is corrupted (invalid JSON or unknown serialise version)
+    recovery: >
+      deserialize() throws; loadPersistedGraph() catches silently; current
+      (seed) graph left intact; no crash (SE-05)
+
+  - step: return-to-work
+    failure: Legacy swoopy_graph key present (pre-SE-08 user)
+    recovery: >
+      loadPersistedGraph() migrates: reads legacy key, writes swoopy_graph_<newId>,
+      deletes legacy key, updates swoopy_current_model; user sees their graph
+      intact
+
+  - step: receive-shared-link
+    failure: ?g= param is a legacy plain-base64 URL (pre-compression)
+    recovery: >
+      decodeGraphFromUrl() tries deflate decompress first; on failure falls back
+      to plain atob; graph loads correctly (backward compat)
+
+  - step: receive-shared-link
+    failure: ?g= param is corrupt (truncated, wrong encoding)
+    recovery: >
+      decodeGraphFromUrl() returns null; loadFromUrl() returns early without
+      mutating store; current graph unchanged
+
+  - step: start-new-model
+    failure: User clicks New Model accidentally
+    recovery: >
+      No confirmation dialog (auto-save guarantees no data loss per
+      DR--20260330). Previous model recoverable via ?m=<oldId> URL if known.
+      No undo for newModel().
+
+shared_artifacts:
+  - name: graph
+    type: Graph
+    source: graphSlice (Zustand store)
+    consumers: [persist(), loadPersistedGraph(), loadFromUrl(), newModel()]
+
+  - name: modelId
+    type: string (UUID)
+    source: store state
+    consumers: [persist(), forkIfTransient(), localStorage keys, URL m-param]
+
+  - name: transient_flag
+    type: boolean
+    source: store state (transient field)
+    consumers: [forkIfTransient(), commitGraph()]
+
+  - name: localStorage_graph_key
+    type: swoopy_graph_uuid
+    source: persist()
+    consumers: [loadPersistedGraph(), loadModel(), deleteModel()]
+
+  - name: localStorage_current_model
+    type: swoopy_current_model
+    source: newModel(), forkIfTransient(), loadPersistedGraph()
+    consumers: [App.tsx startup sequence]

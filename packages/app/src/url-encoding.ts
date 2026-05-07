@@ -3,7 +3,8 @@ import type { Graph } from "@swoopy/engine";
 import { serialize, deserialize } from "@swoopy/engine";
 
 export function encodeGraphForUrl(graph: Graph): string {
-  const json = JSON.stringify(serialize(graph));
+  const serialized = serialize(graph);
+  const json = JSON.stringify(JSON.parse(JSON.stringify(serialized)));
   const bytes = new TextEncoder().encode(json);
   const compressed = deflateSync(bytes, { raw: true } as Parameters<
     typeof deflateSync

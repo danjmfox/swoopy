@@ -1,0 +1,5 @@
+name: build-and-run-model
+job_ids:
+  - explore-system-dynamics
+source: docs/ux/core/journey-build-and-run-model.yaml
+status: retroactive

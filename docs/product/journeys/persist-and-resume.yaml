@@ -1,0 +1,5 @@
+name: persist-and-resume
+job_ids:
+  - resume-ongoing-work
+source: docs/ux/core/journey-persist-and-resume.yaml
+status: retroactive

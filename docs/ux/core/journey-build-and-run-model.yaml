@@ -1,0 +1,163 @@
+name: build-and-run-model
+job_ids:
+  - explore-system-dynamics
+type: primary
+research_depth: lightweight
+
+# Primary facilitation flow. Covers the end-to-end arc from blank canvas to
+# shared, running model. This is the journey most users complete in a single
+# session. Retroactively authored from PRD §1.2, §4.1–4.2, and observed use.
+
+steps:
+  - id: arrive
+    actor: facilitator
+    action: Opens Swoopy at bare URL for the first time
+    output: Welcome overlay shown; seed graph (Population/Births/Deaths) in canvas
+    emotion: curious
+
+  - id: dismiss-welcome
+    actor: facilitator
+    action: Clicks "Start building" CTA on welcome overlay
+    output: >
+      Overlay dismissed; swoopy_welcomed set in localStorage; seed graph visible;
+      Select mode active
+    emotion: oriented
+
+  - id: clear-canvas
+    actor: facilitator
+    action: Deletes seed nodes to start with a blank canvas
+    output: Empty canvas; undo stack records deletions
+    emotion: in-control
+
+  - id: add-nodes
+    actor: facilitator
+    action: >
+      Switches to Add Node mode (N key); clicks canvas to place variables
+      representing system elements (e.g. "Workload", "Stress", "Capacity")
+    output: Nodes placed; each assigned default label, min=0, max=10, initial=0
+    emotion: building
+
+  - id: label-nodes
+    actor: facilitator
+    action: >
+      Double-clicks each node to open the inline popover; edits label, min, max,
+      and initial value; optionally sets size tier and colour tier
+    output: Nodes carry meaningful names and value ranges; graph reflects the team's vocabulary
+    emotion: engaged
+
+  - id: add-edges
+    actor: facilitator
+    action: >
+      Switches to Add Edge mode (E key); drags from node to node to create
+      causal links; double-clicks polarity badge to toggle reinforcing (+) or
+      balancing (−)
+    output: Directed signed edges connect variables; causal structure visible
+    emotion: engaged
+
+  - id: configure-edges
+    actor: facilitator
+    action: >
+      Double-clicks weight region on edges to set coupling amplitude (0–5);
+      double-clicks delay region to cycle through none / short (days) /
+      medium (weeks) / long (months)
+    output: >
+      Edge weights and delays encode the team's beliefs about coupling strength
+      and causal lag; delay marks rendered on curve
+    emotion: precise
+
+  - id: start-simulation
+    actor: facilitator
+    action: Switches to Simulate mode (R key or Space); simulation begins running at 60fps
+    output: Nodes show stock indicators; simulation ticking; no signals yet
+    emotion: anticipating
+
+  - id: inject-positive
+    actor: facilitator
+    action: Clicks a lever node to inject a positive signal (+1 unit)
+    output: >
+      Signal particles animate along outgoing edges; node value rises;
+      reinforcing paths amplify; balancing paths damp; values stabilise at plateau
+    emotion: fascinated
+
+  - id: inject-negative
+    actor: facilitator
+    action: Shift-clicks the same or a different node to inject a negative signal
+    output: >
+      Opposing signal propagates; polarity chain visible via chevron direction;
+      balancing loops moderate the drop
+    emotion: insightful
+
+  - id: observe-dynamics
+    actor: facilitator
+    action: >
+      Watches signal propagation; observes reinforcing vs balancing behaviour;
+      discusses with team which loops dominate
+    output: >
+      Team agrees on which variables are levers and which are outcomes;
+      conversation anchored in the running model
+    emotion: collaborative
+
+  - id: reset-simulation
+    actor: facilitator
+    action: Clicks Reset to return all node values to initial; graph structure preserved
+    output: >
+      Node values at initial; signals cleared; simulation still running;
+      undo stack unchanged (reset is not undoable)
+    emotion: controlled
+
+  - id: share-model
+    actor: facilitator
+    action: Clicks Share button in toolbar
+    output: >
+      Compressed URL copied to clipboard (?g= param); model not auto-saved
+      to a new URL (share is an explicit action)
+    emotion: satisfied
+
+error_paths:
+  - step: add-edges
+    failure: User attempts to add a duplicate causal edge between the same pair
+    recovery: >
+      Duplicate silently rejected; existing edge unchanged; no error message
+      shown (GE-10)
+
+  - step: add-edges
+    failure: User adds a Quick Fix edge (QF) when one already exists for the pair
+    recovery: >
+      QF toggle prevented (GE-41); existing QF edge retained; user sees no
+      change on second attempt
+
+  - step: configure-edges
+    failure: User sets weight to 0 — no signal propagation occurs
+    recovery: >
+      Edge rendered at minimum thickness; no fragments emitted from inject
+      (GE-13); correct and expected behaviour
+
+  - step: inject-positive
+    failure: >
+      Reinforcing loop with high weight saturates immediately — all nodes hit max
+    recovery: >
+      MAX_SIGNALS cap limits concurrent signals (SI-11); nodes clamp at max;
+      simulation remains stable; saturation visible as dimmed edges
+
+  - step: share-model
+    failure: URL too long for some chat platforms (pre-compression)
+    recovery: >
+      Compression via deflate reduces URL length ≥30% for typical models
+      (share-url-compression feature); compressor falls back to plain base64
+      if library throws
+
+shared_artifacts:
+  - name: graph
+    type: Graph
+    source: graphSlice (Zustand store)
+    consumers: [renderer, engine step/inject, serialize]
+
+  - name: simState
+    type: SimState
+    source: simSlice (Zustand store)
+    consumers: [renderer RAF loop, tickSim, inject]
+
+  - name: shareUrl
+    type: string (base64-compressed ?g= URL)
+    source: shareGraph() store action
+    consumers: [clipboard, recipient browser]
