@@ -17,9 +17,9 @@ const nodeArbitrary = fc
   .tuple(
     fc.integer({ min: 0, max: 99999 }),
     fc.string({ unit: "grapheme", minLength: 0, maxLength: 20 }),
-    fc.float({ min: -10000, max: 10000, noNaN: true }),
-    fc.float({ min: -10000, max: 10000, noNaN: true }),
-    fc.float({ min: 1, max: 100, noNaN: true }),
+    fc.float({ min: -10000, max: 10000, noNaN: true }).map((n) => n + 0),
+    fc.float({ min: -10000, max: 10000, noNaN: true }).map((n) => n + 0),
+    fc.float({ min: 1, max: 100, noNaN: true }).map((n) => n + 0),
     fc.constantFrom("xs", "s", "m", "l", "xl" as const),
     fc.constantFrom(
       "blue",
@@ -78,7 +78,7 @@ const causalEdgeArbitrary = (fromId: string, toId: string) =>
     .tuple(
       fc.integer({ min: 0, max: 99999 }),
       fc.constantFrom(1, -1 as const),
-      fc.float({ min: 0, max: 5, noNaN: true }),
+      fc.float({ min: 0, max: 5, noNaN: true }).map((n) => n + 0),
       fc.constantFrom("none", "short", "medium", "long" as const),
       fc.option(fc.boolean(), { nil: undefined }),
     )
@@ -112,8 +112,8 @@ const annotationArbitrary = fc
   .tuple(
     fc.integer({ min: 0, max: 99999 }),
     fc.string({ unit: "grapheme", minLength: 1, maxLength: 100 }),
-    fc.float({ min: -10000, max: 10000, noNaN: true }),
-    fc.float({ min: -10000, max: 10000, noNaN: true }),
+    fc.float({ min: -10000, max: 10000, noNaN: true }).map((n) => n + 0),
+    fc.float({ min: -10000, max: 10000, noNaN: true }).map((n) => n + 0),
   )
   .map(([id, text, x, y]) => ({
     id: makeAnnotationId(String(id)),
