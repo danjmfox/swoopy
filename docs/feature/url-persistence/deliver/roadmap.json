@@ -1,0 +1,59 @@
+{
+  "roadmap": {
+    "project_id": "url-persistence",
+    "created_at": "2026-05-07T07:22:07Z",
+    "total_steps": 1,
+    "phases": 1,
+    "note": "Brownfield retrofit — implementation pre-dates DISTILL. DELIVER is verification + stabilisation only. No RED phase possible."
+  },
+  "phases": [
+    {
+      "id": "01",
+      "name": "Verify and stabilise persistence contracts",
+      "steps": [
+        {
+          "id": "01-01",
+          "name": "Verify all 20 acceptance scenarios are green and commit",
+          "description": "Run the full url-persistence acceptance suite. All 20 scenarios must pass against the existing store.ts implementation. No new production code required — the store already implements persist(), forkIfTransient(), loadFromUrl(), loadPersistedGraph(), and newModel(). This step is verification-only: confirm the contract, run a refactoring pass on modified files, and commit.",
+          "criteria": "All 20 acceptance scenarios in url-persistence.acceptance.test.ts pass; full test suite green; no regressions in store.test.tsx or persistence.integration.test.ts",
+          "acceptance_criteria": [
+            "All 20 scenarios in url-persistence.acceptance.test.ts pass",
+            "pnpm --filter @swoopy/app exec vitest run src/url-persistence.acceptance.test.ts exits 0",
+            "No regressions in existing store.test.tsx or persistence.integration.test.ts",
+            "Full test suite (pnpm test --run) exits 0"
+          ],
+          "test_file": "packages/app/src/url-persistence.acceptance.test.ts",
+          "scenario_name": "all 20 scenarios (US-01 through US-04)",
+          "files_to_modify": [
+            "packages/app/src/store.ts"
+          ],
+          "implementation_notes": "Brownfield retrofit. Implementation already exists. Phases: PREPARE (read store.ts + acceptance tests) → GREEN (run suite, confirm 20/20) → REFACTOR (L1-L4 pass on store.ts if warranted) → COMMIT.",
+          "estimated_hours": 1,
+          "dependencies": [],
+          "deliverables": [
+            "Green acceptance suite (20/20)",
+            "Full test suite green",
+            "DES execution-log entry at COMMIT/PASS"
+          ]
+        }
+      ]
+    }
+  ],
+  "implementation_scope": {
+    "source_directories": [
+      "packages/app/src"
+    ],
+    "test_directories": [
+      "packages/app/src"
+    ],
+    "excluded_patterns": [
+      "node_modules/**",
+      "dist/**"
+    ]
+  },
+  "validation": {
+    "status": "approved",
+    "reviewer": "orchestrator — single verification step, brownfield retrofit",
+    "approved_at": "2026-05-07T07:22:07Z"
+  }
+}
