@@ -1,0 +1,4 @@
+name: share-compressed-url
+feature: share-url-compression
+source: docs/feature/share-url-compression/discuss/journey-share-compressed-url.yaml
+status: discuss-complete
