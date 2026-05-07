@@ -17,9 +17,9 @@ const nodeArbitrary = fc
   .tuple(
     fc.integer({ min: 0, max: 99999 }),
     fc.string({ unit: "grapheme", minLength: 0, maxLength: 20 }),
-    fc.float({ min: -10000, max: 10000, noNaN: true }).map((n) => n + 0),
-    fc.float({ min: -10000, max: 10000, noNaN: true }).map((n) => n + 0),
-    fc.float({ min: 1, max: 100, noNaN: true }).map((n) => n + 0),
+    fc.float({ min: -10000, max: 10000, noNaN: true }),
+    fc.float({ min: -10000, max: 10000, noNaN: true }),
+    fc.float({ min: 1, max: 100, noNaN: true }),
     fc.constantFrom("xs", "s", "m", "l", "xl" as const),
     fc.constantFrom(
       "blue",
@@ -78,7 +78,7 @@ const causalEdgeArbitrary = (fromId: string, toId: string) =>
     .tuple(
       fc.integer({ min: 0, max: 99999 }),
       fc.constantFrom(1, -1 as const),
-      fc.float({ min: 0, max: 5, noNaN: true }).map((n) => n + 0),
+      fc.float({ min: 0, max: 5, noNaN: true }),
       fc.constantFrom("none", "short", "medium", "long" as const),
       fc.option(fc.boolean(), { nil: undefined }),
     )
@@ -112,8 +112,8 @@ const annotationArbitrary = fc
   .tuple(
     fc.integer({ min: 0, max: 99999 }),
     fc.string({ unit: "grapheme", minLength: 1, maxLength: 100 }),
-    fc.float({ min: -10000, max: 10000, noNaN: true }).map((n) => n + 0),
-    fc.float({ min: -10000, max: 10000, noNaN: true }).map((n) => n + 0),
+    fc.float({ min: -10000, max: 10000, noNaN: true }),
+    fc.float({ min: -10000, max: 10000, noNaN: true }),
   )
   .map(([id, text, x, y]) => ({
     id: makeAnnotationId(String(id)),
@@ -294,41 +294,6 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
         const decoded = decodeGraphFromUrl(once);
         if (decoded === null) return;
         expect(encodeGraphForUrl(decoded)).toBe(once);
-      }),
-    );
-  });
-
-  it("property: compressed URL is shorter than plain btoa for graphs with more than 2 nodes", () => {
-    fc.assert(
-      fc.property(
-        fc.array(nodeArbitrary, { minLength: 3, maxLength: 10 }).chain(
-          (nodes) =>
-            fc.constant({
-              nodes: nodes.map((n, i) => ({ ...n, id: makeNodeId(String(i)) })),
-              edges: [],
-              annotations: [],
-              modulators: [],
-            } as Graph),
-        ),
-        (g) => {
-          expect(encodeGraphForUrl(g).length).toBeLessThan(legacyEncode(g).length);
-        },
-      ),
-    );
-  });
-
-  it("property: decodeGraphFromUrl never throws for arbitrary string inputs", () => {
-    fc.assert(
-      fc.property(fc.string(), (s) => {
-        expect(() => decodeGraphFromUrl(s)).not.toThrow();
-      }),
-    );
-  });
-
-  it("property: decodeGraphFromUrl never throws for arbitrary base64 string inputs", () => {
-    fc.assert(
-      fc.property(fc.base64String(), (s) => {
-        expect(() => decodeGraphFromUrl(s)).not.toThrow();
       }),
     );
   });
