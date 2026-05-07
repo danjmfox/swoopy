@@ -298,6 +298,25 @@ describe("encodeGraphForUrl / decodeGraphFromUrl", () => {
     );
   });
 
+  it("property: compressed URL is shorter than plain btoa for graphs with more than 2 nodes", () => {
+    fc.assert(
+      fc.property(
+        fc.array(nodeArbitrary, { minLength: 3, maxLength: 10 }).chain(
+          (nodes) =>
+            fc.constant({
+              nodes: nodes.map((n, i) => ({ ...n, id: makeNodeId(String(i)) })),
+              edges: [],
+              annotations: [],
+              modulators: [],
+            } as Graph),
+        ),
+        (g) => {
+          expect(encodeGraphForUrl(g).length).toBeLessThan(legacyEncode(g).length);
+        },
+      ),
+    );
+  });
+
   it("uses raw deflate — inflateSync with raw:true recovers valid serialized graph JSON", () => {
     const graph = makeComplexGraph();
     const encoded = encodeGraphForUrl(graph);
