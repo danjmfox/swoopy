@@ -7,7 +7,7 @@
 // node:zlib (not fflate) so this script has no browser/DOM dependency, and
 // does not import packages/app/src/url-encoding.ts directly (would break the
 // literal `node <file>.js` invocation and the engine<-renderer<-app layering,
-// per docs/decisions/adr-001).
+// per docs/product/architecture/adr-001-encode-script-reimplements-pipeline.md).
 
 import { readFileSync } from "node:fs";
 import { deflateRawSync, inflateRawSync } from "node:zlib";
