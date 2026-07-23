@@ -11,13 +11,21 @@ import { HistoryLogger } from "./HistoryLogger.ts";
 import { createHistorySubscriber } from "./historySubscriber.ts";
 import { HistoryOverlay } from "./HistoryOverlay.tsx";
 
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
 function shouldShowWelcome(): boolean {
   const params = new URLSearchParams(window.location.search);
   return (
     !params.has("g") &&
     !params.has("m") &&
-    !localStorage.getItem("swoopy_current_model") &&
-    !localStorage.getItem("swoopy_welcomed")
+    !safeGetItem("swoopy_current_model") &&
+    !safeGetItem("swoopy_welcomed")
   );
 }
 
@@ -55,7 +63,7 @@ export function App() {
         useStore.setState({ modelId: m });
         if (titleParam) useStore.setState({ modelTitle: titleParam });
       } else {
-        const saved = localStorage.getItem("swoopy_current_model");
+        const saved = safeGetItem("swoopy_current_model");
         if (saved) useStore.setState({ modelId: saved });
       }
       loadPersistedGraph();
