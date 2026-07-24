@@ -86,6 +86,46 @@ describe("SE-07: startup restore", () => {
   });
 });
 
+describe("SE-11: sandboxed iframe embed (Miro) does not crash render", () => {
+  let loadFromUrl: ReturnType<typeof vi.fn>;
+  let loadPersistedGraph: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    loadFromUrl = vi.fn();
+    loadPersistedGraph = vi.fn();
+    useStore.setState({
+      loadFromUrl,
+      loadPersistedGraph,
+    } as unknown as Parameters<typeof useStore.setState>[0]);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    localStorage.clear();
+  });
+
+  it("does not throw when localStorage access throws a SecurityError (opaque-origin sandboxed iframe)", async () => {
+    vi.stubGlobal("location", { search: "" });
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException(
+        "Access is denied for this document.",
+        "SecurityError",
+      );
+    });
+
+    let rejected = false;
+    try {
+      await act(async () => {
+        render(<App />);
+      });
+    } catch {
+      rejected = true;
+    }
+    expect(rejected).toBe(false);
+  });
+});
+
 describe("document.title sync", () => {
   let loadFromUrl: ReturnType<typeof vi.fn>;
   let loadPersistedGraph: ReturnType<typeof vi.fn>;
