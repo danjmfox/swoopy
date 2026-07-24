@@ -123,11 +123,8 @@ export class LoopyRenderer {
     // per frame, after the DPR setTransform/clearRect, before any drawXxx()
     // call. Every drawXxx() method below continues to receive raw graph-space
     // coordinates unchanged — the canvas matrix does the screen-space
-    // translation for free. Skipped when identity (matches pre-feature
-    // rendering exactly, DDD-6) — a no-op transform has no observable effect.
-    const { panX, panY, zoom } = viewport ?? { panX: 0, panY: 0, zoom: 1 };
-    if (panX !== 0 || panY !== 0) ctx.translate(panX, panY);
-    if (zoom !== 1) ctx.scale(zoom, zoom);
+    // translation for free.
+    this.applyViewportTransform(ctx, viewport);
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
     const causalEdges = graph.edges.filter(
       (e): e is CausalEdge => e.kind === "causal",
@@ -159,6 +156,17 @@ export class LoopyRenderer {
     this.drawNodes(ctx, graph, sim, dragPosition ?? null, state);
     this.drawAnnotations(ctx, graph, annotationDragPosition ?? null);
     if (dragPosition) this.drawGhostNode(ctx, graph, sim, dragPosition);
+  }
+
+  // Skipped when identity (matches pre-feature rendering exactly, DDD-6) —
+  // a no-op transform has no observable effect.
+  private applyViewportTransform(
+    ctx: CanvasRenderingContext2D,
+    viewport: Viewport | undefined,
+  ): void {
+    const { panX, panY, zoom } = viewport ?? { panX: 0, panY: 0, zoom: 1 };
+    if (panX !== 0 || panY !== 0) ctx.translate(panX, panY);
+    if (zoom !== 1) ctx.scale(zoom, zoom);
   }
 
   private drawConstraintEdges(
