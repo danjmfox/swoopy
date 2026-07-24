@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { LoopyRenderer, hitTest } from "@swoopy/renderer";
+import { LoopyRenderer, hitTest, screenToGraph } from "@swoopy/renderer";
 import { inject, INJECT_STRENGTH } from "@swoopy/engine";
 import { ANNOTATION_WIDTH, ANNOTATION_MIN_HEIGHT } from "@swoopy/renderer";
 import { useStore } from "./store.ts";
+
+// Movement-distance threshold (CSS px) discriminating a plain-drag pan from a
+// stationary click, evaluated on pointermove (ADR-003).
+const PAN_THRESHOLD_PX = 4;
 
 export function Canvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -23,6 +27,57 @@ export function Canvas() {
     let hasDragged = false; // true once pointermove fires after a pointerdown
     let constraintModifierHeld = false;
     let shiftHeld = false;
+
+    // Pan-vs-click discrimination (ADR-003): a plain-drag on empty background
+    // is recorded as a pending candidate on pointerdown — it stays a pending
+    // mode background action (deselect/add-node/add-annotation) until either
+    // pointerup commits it (no threshold-breaching movement occurred) or
+    // pointermove reclassifies the gesture as a pan for its remaining
+    // lifetime, discarding the pending action.
+    interface BackgroundGesture {
+      readonly startScreenX: number;
+      readonly startScreenY: number;
+      readonly startPanX: number;
+      readonly startPanY: number;
+      readonly pendingMode: import("./store.ts").AppMode;
+      isPanning: boolean;
+    }
+    let backgroundGesture: BackgroundGesture | null = null;
+
+    function screenPoint(e: { clientX: number; clientY: number }): {
+      x: number;
+      y: number;
+    } {
+      const rect = canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    function graphPoint(screen: { x: number; y: number }): {
+      x: number;
+      y: number;
+    } {
+      return screenToGraph(useStore.getState().viewport, screen.x, screen.y);
+    }
+
+    function commitBackgroundGesture(gesture: BackgroundGesture): void {
+      const { x, y } = graphPoint({
+        x: gesture.startScreenX,
+        y: gesture.startScreenY,
+      });
+      if (gesture.pendingMode === "select") {
+        useStore.getState().setFocusedNode(null);
+      } else if (gesture.pendingMode === "add-node") {
+        useStore.getState().addNode(x, y);
+      } else if (gesture.pendingMode === "add-annotation") {
+        const { addAnnotation, openAnnotationEditor } = useStore.getState();
+        const id = addAnnotation(
+          x - ANNOTATION_WIDTH / 2,
+          y - ANNOTATION_MIN_HEIGHT / 2,
+        );
+        openAnnotationEditor(id);
+      }
+      // add-edge / delete / simulate: no background action to commit (no-op)
+    }
 
     // Hold-to-inject: fires every HOLD_INTERVAL_MS while pointer is held on a node in simulate mode
     const HOLD_INTERVAL_MS = 100;
@@ -142,9 +197,8 @@ export function Canvas() {
     // Pointer events → hit test → mode-gated dispatch (GE-01/04/09, SI-02/03, GE-03/20/23)
     // Operates in CSS pixels; no DPR scaling needed (docs/decisions/DR--20260327--renderer--dpr-css-pixel-geometry.md)
     function onPointerDown(e: PointerEvent) {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const screen = screenPoint(e);
+      const { x, y } = graphPoint(screen);
       const {
         graph,
         mode,
@@ -167,6 +221,25 @@ export function Canvas() {
           addNode(x, y); // create node immediately on Shift+blank
           return;
         }
+      }
+
+      // ADR-003: plain left-drag on empty background pans in every mode.
+      // Record a pending candidate here — committed as the mode's background
+      // action on pointerup if no threshold-breaching movement occurred, or
+      // reclassified as a pan for the gesture's remaining lifetime in
+      // onPointerMove. Gated by !shiftHeld so spring-loading above is
+      // unaffected.
+      if (!hit && !shiftHeld) {
+        const { viewport } = useStore.getState();
+        backgroundGesture = {
+          startScreenX: screen.x,
+          startScreenY: screen.y,
+          startPanX: viewport.panX,
+          startPanY: viewport.panY,
+          pendingMode: mode,
+          isPanning: false,
+        };
+        return;
       }
 
       if (mode === "add-annotation") {
@@ -239,9 +312,24 @@ export function Canvas() {
     }
 
     function onPointerMove(e: PointerEvent) {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const screen = screenPoint(e);
+
+      if (backgroundGesture) {
+        const gesture = backgroundGesture;
+        const dx = screen.x - gesture.startScreenX;
+        const dy = screen.y - gesture.startScreenY;
+        if (!gesture.isPanning && Math.hypot(dx, dy) >= PAN_THRESHOLD_PX) {
+          gesture.isPanning = true;
+        }
+        if (gesture.isPanning) {
+          useStore
+            .getState()
+            .setViewportPan(gesture.startPanX + dx, gesture.startPanY + dy);
+        }
+        return;
+      }
+
+      const { x, y } = graphPoint(screen);
       if (dragAnnotationId !== null) {
         hasDragged = true;
         useStore
@@ -271,6 +359,12 @@ export function Canvas() {
 
     function onPointerUp(e: PointerEvent) {
       clearHold();
+      if (backgroundGesture) {
+        const gesture = backgroundGesture;
+        backgroundGesture = null;
+        if (!gesture.isPanning) commitBackgroundGesture(gesture);
+        return;
+      }
       if (dragAnnotationId !== null) {
         const { annotationDragPosition, moveAnnotation } = useStore.getState();
         if (annotationDragPosition && hasDragged) {
@@ -286,9 +380,7 @@ export function Canvas() {
         return;
       }
       if (dragNodeId === null) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const { x, y } = graphPoint(screenPoint(e));
       const {
         graph,
         mode,
@@ -335,9 +427,7 @@ export function Canvas() {
     }
 
     function onDblClick(e: MouseEvent) {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const { x, y } = graphPoint(screenPoint(e));
       const {
         graph,
         mode,

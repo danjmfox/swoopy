@@ -27,6 +27,7 @@ import {
   ANNOTATION_WIDTH,
   ANNOTATION_MIN_HEIGHT,
   ANNOTATION_PADDING,
+  type Viewport,
 } from "./geometry.ts";
 import { nodeLabelFont } from "./nodeLabelFont.ts";
 import {
@@ -50,6 +51,10 @@ export interface RendererStore {
   tickSim: (dt: number) => void;
   focusedNodeId: NodeId | null;
   mode: string;
+  // Optional so existing RendererStore test doubles that predate this
+  // feature keep compiling/working unchanged — draw() falls back to the
+  // identity transform (matches pre-feature rendering exactly, DDD-6).
+  viewport?: Viewport;
   dragPosition?: { nodeId: NodeId; x: number; y: number } | null;
   annotationDragPosition?: { id: AnnotationId; x: number; y: number } | null;
   hoveredEdgeRegion?: { edgeId: string; region: "delay" | "weight" } | null;
@@ -108,10 +113,21 @@ export class LoopyRenderer {
       graph,
       sim,
       mode,
+      viewport,
       dragPosition,
       annotationDragPosition,
       pendingModulatorTarget,
     } = state;
+
+    // Viewport transform (canvas-pan-zoom-navigation, ADR-004): applied once
+    // per frame, after the DPR setTransform/clearRect, before any drawXxx()
+    // call. Every drawXxx() method below continues to receive raw graph-space
+    // coordinates unchanged — the canvas matrix does the screen-space
+    // translation for free. Skipped when identity (matches pre-feature
+    // rendering exactly, DDD-6) — a no-op transform has no observable effect.
+    const { panX, panY, zoom } = viewport ?? { panX: 0, panY: 0, zoom: 1 };
+    if (panX !== 0 || panY !== 0) ctx.translate(panX, panY);
+    if (zoom !== 1) ctx.scale(zoom, zoom);
     const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
     const causalEdges = graph.edges.filter(
       (e): e is CausalEdge => e.kind === "causal",

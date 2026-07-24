@@ -11,6 +11,7 @@ import type {
   AnnotationId,
 } from "@swoopy/engine";
 import { encodeGraphForUrl, decodeGraphFromUrl } from "./url-encoding.ts";
+import type { Viewport } from "@swoopy/renderer";
 
 export type AppMode =
   | "select"
@@ -137,6 +138,13 @@ interface StoreState {
   setHoveredEdgeRegion: (
     region: { edgeId: EdgeId; region: "delay" | "weight" } | null,
   ) => void;
+
+  // Ephemeral viewport state (canvas-pan-zoom-navigation) — not persisted,
+  // not in undo/redo stack (DDD-7/D5), same category as dragPosition above.
+  viewport: Viewport;
+  setViewportPan: (panX: number, panY: number) => void;
+  zoomAt: (screenX: number, screenY: number, deltaY: number) => void;
+  resetViewport: (canvasWidth: number, canvasHeight: number) => void;
 
   // Constraint edge pending state
   pendingConstraintEdge: { from: NodeId; to: NodeId } | null;
@@ -276,6 +284,32 @@ export const useStore = create<StoreState>((set, get) => ({
   setHoveredEdgeRegion: (
     region: { edgeId: EdgeId; region: "delay" | "weight" } | null,
   ) => set({ hoveredEdgeRegion: region }),
+  // Ephemeral viewport state (canvas-pan-zoom-navigation) — not persisted,
+  // not in undo/redo stack (DDD-7/D5), same category as dragPosition above.
+  // Default value is the identity transform (matches pre-feature rendering
+  // exactly, DDD-6). setViewportPan writes ONLY viewport (bounded-change
+  // contract) — never graph.nodes[].x/y or any stored coordinate.
+  viewport: { panX: 0, panY: 0, zoom: 1 } as Viewport,
+  setViewportPan: (panX: number, panY: number) =>
+    set({ viewport: { ...get().viewport, panX, panY } }),
+  // __SCAFFOLD_VIEWPORT__: zoomAt/resetViewport remain RED scaffolds — real
+  // implementation (delegating to packages/renderer/src/geometry.ts's
+  // zoomAtCursor/computeFitViewport) lands in later DELIVER steps (US-02/03).
+  zoomAt: (screenX: number, screenY: number, deltaY: number) => {
+    void screenX;
+    void screenY;
+    void deltaY;
+    throw new Error(
+      "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
+    );
+  },
+  resetViewport: (canvasWidth: number, canvasHeight: number) => {
+    void canvasWidth;
+    void canvasHeight;
+    throw new Error(
+      "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
+    );
+  },
   pendingConstraintEdge: null as { from: NodeId; to: NodeId } | null,
   setPendingConstraintEdge: (from: NodeId, to: NodeId) =>
     set({ pendingConstraintEdge: { from, to } }),

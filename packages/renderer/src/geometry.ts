@@ -105,3 +105,102 @@ export const EDGE_HIT_RADIUS = 10;
 export const T_DELAY = 0.2;
 export const T_POLARITY = 0.5;
 export const T_WEIGHT = 0.8;
+
+// ─── Viewport (canvas-pan-zoom-navigation, DISTILL wave RED scaffold) ───────
+// __SCAFFOLD_VIEWPORT__: these 5 functions + the Viewport type are RED
+// scaffolds created by DISTILL (docs/feature/canvas-pan-zoom-navigation).
+// Real implementation lands during DELIVER, one scenario at a time.
+// See docs/product/architecture/adr-003-pan-drag-vs-click-discrimination.md
+// and adr-004-viewport-transform-mechanism.md for the mechanism contract
+// these functions must satisfy once implemented.
+export const __SCAFFOLD_VIEWPORT__ = true;
+
+/** Pan/zoom camera state — owned here per DDD-8, consumed by app/src/store.ts. */
+export interface Viewport {
+  panX: number;
+  panY: number;
+  zoom: number;
+}
+
+export const ZOOM_MIN = 0.5;
+export const ZOOM_MAX = 4;
+
+/**
+ * Screen (CSS px) → graph-space coordinate, given the current viewport.
+ * Inverse of graphToScreen — the draw-time matrix is `translate(pan) then
+ * scale(zoom)`, so screen = graph * zoom + pan (ADR-004).
+ */
+export function screenToGraph(
+  viewport: Viewport,
+  screenX: number,
+  screenY: number,
+): { x: number; y: number } {
+  return {
+    x: (screenX - viewport.panX) / viewport.zoom,
+    y: (screenY - viewport.panY) / viewport.zoom,
+  };
+}
+
+/** Graph-space → screen (CSS px) coordinate, given the current viewport. */
+export function graphToScreen(
+  viewport: Viewport,
+  graphX: number,
+  graphY: number,
+): { x: number; y: number } {
+  return {
+    x: graphX * viewport.zoom + viewport.panX,
+    y: graphY * viewport.zoom + viewport.panY,
+  };
+}
+
+/** Clamps a requested zoom level to [ZOOM_MIN, ZOOM_MAX]. */
+export function clampZoom(zoom: number): number {
+  void zoom;
+  throw new Error(
+    "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
+  );
+}
+
+/**
+ * Zoom centered on a screen-space cursor position: the graph-space point
+ * under the cursor stays fixed under the new scale (DDD-5).
+ */
+export function zoomAtCursor(
+  viewport: Viewport,
+  screenX: number,
+  screenY: number,
+  deltaY: number,
+): Viewport {
+  void viewport;
+  void screenX;
+  void screenY;
+  void deltaY;
+  throw new Error(
+    "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
+  );
+}
+
+/**
+ * Fit-to-content viewport: bounding box over all nodes (+ radius) and
+ * annotations, guarded for degenerate (0/1-node) extents, result passed
+ * through clampZoom (DDD-6).
+ */
+export function computeFitViewport(
+  nodes: ReadonlyArray<{ x: number; y: number; radius: number }>,
+  annotations: ReadonlyArray<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>,
+  canvasWidth: number,
+  canvasHeight: number,
+): Viewport {
+  void nodes;
+  void annotations;
+  void canvasWidth;
+  void canvasHeight;
+  throw new Error(
+    "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
+  );
+}
