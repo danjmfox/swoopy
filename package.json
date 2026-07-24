@@ -8,12 +8,6 @@
     "lint": "trunk check",
     "gen-doc-images": "tsx scripts/gen-doc-images.ts"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "canvas",
-      "esbuild"
-    ]
-  },
   "devDependencies": {
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@swoopy/engine": "workspace:*",
