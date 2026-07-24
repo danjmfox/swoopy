@@ -106,14 +106,9 @@ export const T_DELAY = 0.2;
 export const T_POLARITY = 0.5;
 export const T_WEIGHT = 0.8;
 
-// ─── Viewport (canvas-pan-zoom-navigation, DISTILL wave RED scaffold) ───────
-// __SCAFFOLD_VIEWPORT__: these 5 functions + the Viewport type are RED
-// scaffolds created by DISTILL (docs/feature/canvas-pan-zoom-navigation).
-// Real implementation lands during DELIVER, one scenario at a time.
+// ─── Viewport (canvas-pan-zoom-navigation) ──────────────────────────────────
 // See docs/product/architecture/adr-003-pan-drag-vs-click-discrimination.md
-// and adr-004-viewport-transform-mechanism.md for the mechanism contract
-// these functions must satisfy once implemented.
-export const __SCAFFOLD_VIEWPORT__ = true;
+// and adr-004-viewport-transform-mechanism.md for the mechanism contract.
 
 /** Pan/zoom camera state — owned here per DDD-8, consumed by app/src/store.ts. */
 export interface Viewport {
@@ -124,6 +119,16 @@ export interface Viewport {
 
 export const ZOOM_MIN = 0.5;
 export const ZOOM_MAX = 4;
+
+/**
+ * Lower bound for Reset View's fit zoom only (ADR-005). Unlike ZOOM_MIN
+ * (a legibility floor for manual wheel-zoom), this guards only against
+ * zero/negative/infinite scale (AC-03c) — Reset View may zoom out below
+ * ZOOM_MIN when content genuinely requires it to keep every node visible
+ * (AC-03a takes priority over legibility for the "see everything" escape
+ * hatch).
+ */
+export const RESET_VIEW_ZOOM_FLOOR = 0.001;
 
 /**
  * Screen (CSS px) → graph-space coordinate, given the current viewport.
@@ -183,10 +188,46 @@ export function zoomAtCursor(
   };
 }
 
+interface BoundingBox {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+/** Union of two bounding boxes (smallest box containing both). */
+function unionBox(a: BoundingBox, b: BoundingBox): BoundingBox {
+  return {
+    minX: Math.min(a.minX, b.minX),
+    maxX: Math.max(a.maxX, b.maxX),
+    minY: Math.min(a.minY, b.minY),
+    maxY: Math.max(a.maxY, b.maxY),
+  };
+}
+
 /**
  * Fit-to-content viewport: bounding box over all nodes (+ radius) and
- * annotations, guarded for degenerate (0/1-node) extents, result passed
- * through clampZoom (DDD-6).
+ * annotations, guarded for degenerate (zero-extent) content. Zoom's lower
+ * bound is RESET_VIEW_ZOOM_FLOOR, decoupled from manual zoom's ZOOM_MIN
+ * (ADR-005) — the upper bound remains ZOOM_MAX, shared with clampZoom.
+ *
+ * Two bounding boxes are tracked, not one:
+ * - `extentBounds` (node positions padded by radius, + annotation rects) —
+ *   drives the ZOOM calculation, so full node circles are accounted for.
+ * - `positionBounds` (node positions only, no radius padding — annotation
+ *   rects are unchanged since a rect has no separate "core" point) — drives
+ *   the CENTER used for panning.
+ * When ZOOM_MIN/ZOOM_MAX clamps the extent-driven zoom away from its natural
+ * fit value, centering on node positions (rather than the radius-inflated
+ * extent) keeps node centers optimally placed instead of skewed by a single
+ * large-radius outlier's padded edge.
+ *
+ * Minimum-extent guard: when there is no content at all, the graph-space
+ * extent defaults to the canvas rect itself (0,0)-(canvasWidth,canvasHeight)
+ * — the same rect the identity transform already maps 1:1 to screen space.
+ * Combined with the centering + clampZoom below, this naturally yields the
+ * identity viewport (zoom=1, pan=(0,0)) for a content-free diagram, matching
+ * pre-feature rendering exactly — no separate 0-node/1-node code paths.
  */
 export function computeFitViewport(
   nodes: ReadonlyArray<{ x: number; y: number; radius: number }>,
@@ -199,11 +240,64 @@ export function computeFitViewport(
   canvasWidth: number,
   canvasHeight: number,
 ): Viewport {
-  void nodes;
-  void annotations;
-  void canvasWidth;
-  void canvasHeight;
-  throw new Error(
-    "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
+  const annotationBoxes: BoundingBox[] = annotations.map((a) => ({
+    minX: a.x,
+    maxX: a.x + a.width,
+    minY: a.y,
+    maxY: a.y + a.height,
+  }));
+
+  const extentBoxes: BoundingBox[] = [
+    ...nodes.map((n) => ({
+      minX: n.x - n.radius,
+      maxX: n.x + n.radius,
+      minY: n.y - n.radius,
+      maxY: n.y + n.radius,
+    })),
+    ...annotationBoxes,
+  ];
+
+  const positionBoxes: BoundingBox[] = [
+    ...nodes.map((n) => ({ minX: n.x, maxX: n.x, minY: n.y, maxY: n.y })),
+    ...annotationBoxes,
+  ];
+
+  const union = (boxes: ReadonlyArray<BoundingBox>): BoundingBox | null =>
+    boxes.reduce<BoundingBox | null>(
+      (acc, box) => (acc === null ? box : unionBox(acc, box)),
+      null,
+    );
+
+  const extentBounds = union(extentBoxes);
+  const hasExtent =
+    extentBounds !== null &&
+    extentBounds.maxX - extentBounds.minX > 0 &&
+    extentBounds.maxY - extentBounds.minY > 0;
+
+  const defaultBounds: BoundingBox = {
+    minX: 0,
+    maxX: canvasWidth,
+    minY: 0,
+    maxY: canvasHeight,
+  };
+
+  const bounds = hasExtent ? extentBounds! : defaultBounds;
+  const centerBounds = hasExtent ? union(positionBoxes)! : defaultBounds;
+
+  const boundsWidth = bounds.maxX - bounds.minX;
+  const boundsHeight = bounds.maxY - bounds.minY;
+  const centerX = (centerBounds.minX + centerBounds.maxX) / 2;
+  const centerY = (centerBounds.minY + centerBounds.maxY) / 2;
+
+  const naturalZoom = Math.min(
+    canvasWidth / boundsWidth,
+    canvasHeight / boundsHeight,
   );
+  const zoom = Math.max(RESET_VIEW_ZOOM_FLOOR, Math.min(ZOOM_MAX, naturalZoom));
+
+  return {
+    panX: canvasWidth / 2 - centerX * zoom,
+    panY: canvasHeight / 2 - centerY * zoom,
+    zoom,
+  };
 }

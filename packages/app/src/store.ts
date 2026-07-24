@@ -11,7 +11,13 @@ import type {
   AnnotationId,
 } from "@swoopy/engine";
 import { encodeGraphForUrl, decodeGraphFromUrl } from "./url-encoding.ts";
-import { zoomAtCursor, type Viewport } from "@swoopy/renderer";
+import {
+  ANNOTATION_MIN_HEIGHT,
+  ANNOTATION_WIDTH,
+  computeFitViewport,
+  zoomAtCursor,
+  type Viewport,
+} from "@swoopy/renderer";
 
 export type AppMode =
   | "select"
@@ -297,15 +303,25 @@ export const useStore = create<StoreState>((set, get) => ({
   // math here.
   zoomAt: (screenX: number, screenY: number, deltaY: number) =>
     set({ viewport: zoomAtCursor(get().viewport, screenX, screenY, deltaY) }),
-  // __SCAFFOLD_VIEWPORT__: resetViewport remains a RED scaffold — real
-  // implementation (delegating to packages/renderer/src/geometry.ts's
-  // computeFitViewport) lands in a later DELIVER step (US-03).
+  // resetViewport writes only `viewport` (bounded-change contract) —
+  // delegates the fit calculation entirely to computeFitViewport, never
+  // touches graph.nodes (AC-03d).
   resetViewport: (canvasWidth: number, canvasHeight: number) => {
-    void canvasWidth;
-    void canvasHeight;
-    throw new Error(
-      "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
-    );
+    const { graph } = get();
+    const annotationBoxes = graph.annotations.map((a) => ({
+      x: a.x,
+      y: a.y,
+      width: ANNOTATION_WIDTH,
+      height: ANNOTATION_MIN_HEIGHT,
+    }));
+    set({
+      viewport: computeFitViewport(
+        graph.nodes,
+        annotationBoxes,
+        canvasWidth,
+        canvasHeight,
+      ),
+    });
   },
   pendingConstraintEdge: null as { from: NodeId; to: NodeId } | null,
   setPendingConstraintEdge: (from: NodeId, to: NodeId) =>

@@ -24,7 +24,14 @@ const MODES: {
   { mode: "delete", label: "✕", title: "Delete", shortcut: "D" },
 ];
 
-export function Toolbar() {
+interface ToolbarProps {
+  // Ref to the mounted canvas element (owned by Canvas.tsx, threaded via
+  // App.tsx) — lets Reset View read real rendered dimensions without a DOM
+  // query (canvas-pan-zoom-navigation, US-03).
+  canvasRef?: { current: HTMLCanvasElement | null };
+}
+
+export function Toolbar({ canvasRef }: ToolbarProps = {}) {
   const simRunning = useStore((s) => s.simRunning);
   const simSpeed = useStore((s) => s.simSpeed);
   const mode = useStore((s) => s.mode);
@@ -337,6 +344,23 @@ export function Toolbar() {
             margin: "0 4px",
           }}
         />
+        {/* Reset View control (US-03, AC-03b/e) — always visible regardless
+            of mode/pan/zoom/diagram size. */}
+        <button
+          title="Reset View"
+          onClick={() => {
+            const canvas = canvasRef?.current;
+            useStore
+              .getState()
+              .resetViewport(
+                canvas?.clientWidth ?? 0,
+                canvas?.clientHeight ?? 0,
+              );
+          }}
+          style={btn}
+        >
+          ⛶ Reset View
+        </button>
         <button title="Help" onClick={() => setHelpOpen((o) => !o)} style={btn}>
           ?
         </button>

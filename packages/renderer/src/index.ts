@@ -8,3 +8,13 @@ export type { HitTarget } from "./hitTest.ts";
 export { stockIndicator, timebombStrength } from "./indicators.ts";
 export type { StockIndicator } from "./indicators.ts";
 export { ANNOTATION_WIDTH, ANNOTATION_MIN_HEIGHT } from "./geometry.ts";
+export type { Viewport } from "./geometry.ts";
+export {
+  screenToGraph,
+  graphToScreen,
+  clampZoom,
+  zoomAtCursor,
+  computeFitViewport,
+  ZOOM_MIN,
+  ZOOM_MAX,
+} from "./geometry.ts";

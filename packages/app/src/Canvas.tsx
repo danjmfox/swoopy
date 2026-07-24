@@ -8,7 +8,14 @@ import { useStore } from "./store.ts";
 // stationary click, evaluated on pointermove (ADR-003).
 const PAN_THRESHOLD_PX = 4;
 
-export function Canvas() {
+interface CanvasProps {
+  // Reports the mounted canvas element to the caller — lets sibling
+  // components (e.g. Toolbar's Reset View control) read the canvas's live
+  // rendered dimensions without a DOM query (canvas-pan-zoom-navigation).
+  onMount?: (canvas: HTMLCanvasElement) => void;
+}
+
+export function Canvas({ onMount }: CanvasProps = {}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [outcomeWarning, setOutcomeWarning] = useState<string | null>(null);
   const modelTitle = useStore((s) => s.modelTitle);
@@ -16,6 +23,7 @@ export function Canvas() {
   useEffect(() => {
     if (!ref.current) return;
     const canvas = ref.current;
+    onMount?.(canvas);
 
     const renderer = new LoopyRenderer(canvas, useStore.getState);
     renderer.start();

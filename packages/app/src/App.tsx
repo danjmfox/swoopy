@@ -37,6 +37,9 @@ export function App() {
   const modelTitle = useStore((s) => s.modelTitle);
   const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
   const loggerRef = useRef(historyLogger);
+  // Shared with Toolbar so its Reset View control can read the canvas's
+  // live rendered dimensions (canvas-pan-zoom-navigation, US-03).
+  const canvasElRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     document.title = modelTitle ? `${modelTitle} — Swoopy` : "Swoopy";
@@ -83,8 +86,8 @@ export function App() {
 
   return (
     <div style={{ width: "100vw", height: "100vh", background: "#0f172a" }}>
-      <Canvas />
-      <Toolbar />
+      <Canvas onMount={(canvas) => (canvasElRef.current = canvas)} />
+      <Toolbar canvasRef={canvasElRef} />
       <NodePopover />
       <AnnotationPopover />
       <EdgeWeightPopover />

@@ -131,11 +131,15 @@ describe("GE-20 click sets focused node in select mode", () => {
   });
 
   it("pointerdown on empty canvas clears focusedNodeId", async () => {
+    // ADR-003: deselect-on-click (a background mode action) now commits on
+    // pointerup, not pointerdown, so pan-drag can be discriminated first.
+    // A stationary click still delivers both events in a real browser.
     mockHitTest.mockReturnValue(null);
     const { container } = render(<Canvas />);
     await act(async () => {});
     const canvas = container.querySelector("canvas")!;
     fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+    fireEvent.pointerUp(canvas, { clientX: 0, clientY: 0 });
     expect(setFocusedNode).toHaveBeenCalledWith(null);
   });
 });
@@ -529,12 +533,16 @@ describe("GE-01 add-node mode — click canvas creates node", () => {
   });
 
   it("pointerdown on empty space calls addNode with pointer coordinates", async () => {
+    // ADR-003: add-node placement (a background mode action) now commits on
+    // pointerup, not pointerdown. A stationary click still delivers both
+    // events in a real browser — add the matching pointerup here.
     mockHitTest.mockReturnValue(null);
     const { container } = render(<Canvas />);
     await act(async () => {});
     const canvas = container.querySelector("canvas")!;
 
     fireEvent.pointerDown(canvas, { clientX: 200, clientY: 150 });
+    fireEvent.pointerUp(canvas, { clientX: 200, clientY: 150 });
 
     expect(addNode).toHaveBeenCalledTimes(1);
   });
@@ -1239,22 +1247,24 @@ describe("GE-37 add-annotation mode — pointerdown places annotation", () => {
   });
 
   it("pointerdown calls addAnnotation with pointer coordinates", async () => {
+    // ADR-003: annotation placement (a background mode action) now commits
+    // on pointerup, not pointerdown. A stationary click still delivers both
+    // events in a real browser — add the matching pointerup here.
     const { container } = render(<Canvas />);
     await act(async () => {});
-    fireEvent.pointerDown(container.querySelector("canvas")!, {
-      clientX: 200,
-      clientY: 150,
-    });
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.pointerDown(canvas, { clientX: 200, clientY: 150 });
+    fireEvent.pointerUp(canvas, { clientX: 200, clientY: 150 });
     expect(addAnnotation).toHaveBeenCalledTimes(1);
   });
 
   it("pointerdown calls openAnnotationEditor with the returned id", async () => {
+    // ADR-003: same deferred-commit consequence as above.
     const { container } = render(<Canvas />);
     await act(async () => {});
-    fireEvent.pointerDown(container.querySelector("canvas")!, {
-      clientX: 200,
-      clientY: 150,
-    });
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.pointerDown(canvas, { clientX: 200, clientY: 150 });
+    fireEvent.pointerUp(canvas, { clientX: 200, clientY: 150 });
     expect(openAnnotationEditor).toHaveBeenCalledWith("a1");
   });
 });

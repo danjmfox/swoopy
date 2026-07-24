@@ -1,0 +1,83 @@
+{
+  "roadmap": {
+    "project_id": "canvas-pan-zoom-navigation",
+    "created_at": "2026-07-24T12:36:12Z",
+    "total_steps": 3
+  },
+  "phases": [
+    {
+      "id": "01",
+      "name": "Canvas viewport navigation — pan, zoom, reset-to-fit",
+      "steps": [
+        {
+          "id": "01-01",
+          "name": "Drag-to-pan viewport transform (walking skeleton — the one architectural risk)",
+          "description": "A facilitator can click-and-drag the empty canvas background to shift the visible viewport and bring off-screen nodes into view, without moving any node in the underlying model (US-01, slice-01-drag-to-pan.md). This is the feature's walking-skeleton-equivalent step (D3 — no separate WS phase): it proves the shared viewport transform threads consistently through geometry.ts -> LoopyRenderer.draw() -> hitTest() call sites -> Canvas.tsx pointer handlers. Replace the RED scaffold throw-bodies (__SCAFFOLD_VIEWPORT__) with real logic; do not author new tests, they already exist and are RED.",
+          "criteria": [
+            "AC-01a: Dragging on empty canvas background moves the visible viewport in the drag direction; all nodes/edges/annotations shift together.",
+            "AC-01b: Panning never changes any node's, edge's, or annotation's stored coordinates in the graph model.",
+            "AC-01c: After panning, clicking/dragging a node at its new screen position hits that node (hit-testing honors the current viewport transform).",
+            "AC-01d: Panning does not trigger the active mode's background action (node placement, annotation placement, deselect).",
+            "AC-01e: Pan works consistently across select/add-edge/delete/simulate modes without regressing each mode's existing click/drag behaviour."
+          ],
+          "test_file": "packages/renderer/src/geometry.test.ts; packages/app/src/canvas-pan-zoom.acceptance.test.tsx; packages/app/src/Canvas.test.tsx",
+          "scenario_name": "geometry.test.ts describe('screenToGraph / graphToScreen — AC-01c/AC-02d hit-test accuracy (@contract-shape:pure-function)') [it('identity viewport (pan 0,0 zoom 1) maps screen coordinates unchanged'), it('property: graphToScreen(screenToGraph(v, x, y)) round-trips to (x, y)')]; canvas-pan-zoom.acceptance.test.tsx describe('US-01 — pan the canvas by dragging (AC-01a/b)') [it('setViewportPan shifts the viewport in the drag direction'), it('@contract-shape:unbounded-preservation panning never mutates node/edge/annotation coordinates')] and describe('US-01 — pan gesture via the canvas driving port (AC-01a/c/d/e)') [it('@walking_skeleton dragging on empty canvas background shifts the viewport (AC-01a)'), it('panning in add-node mode does not create a node (AC-01d)'), it.each(['select','add-edge','delete','simulate'])('pan works in %s mode without breaking that mode's background click (AC-01e)')]; Canvas.test.tsx — 4 existing tests requiring a pointerup dispatch added per ADR-003's flagged consequence: 'GE-20 click sets focused node in select mode > pointerdown on empty canvas clears focusedNodeId', 'GE-01 add-node mode — click canvas creates node > pointerdown on empty space calls addNode with pointer coordinates', 'GE-37 add-annotation mode — pointerdown places annotation > pointerdown calls addAnnotation with pointer coordinates', 'GE-37 add-annotation mode — pointerdown places annotation > pointerdown calls openAnnotationEditor with the returned id'.",
+          "dependencies": [],
+          "implementation_notes": "Replace scaffold throw-bodies with real logic (no new files — see Design Compliance Check below): (1) `screenToGraph`/`graphToScreen` in packages/renderer/src/geometry.ts — pure inverse-affine pair, the transform's single source of truth per ADR-004; (2) LoopyRenderer.draw() — insert `ctx.translate(panX, panY)` then `ctx.scale(zoom, zoom)` once per frame, composed after the existing DPR ctx.setTransform call and before any drawXxx() call (ADR-004) — zero changes to the ~15 existing private draw methods; (3) `viewport` store state (already real default data {panX:0,panY:0,zoom:1}) + real `setViewportPan` action in packages/app/src/store.ts — bounded-change contract shape: writes only `viewport`, never `graph.nodes[].x/y`, bypasses undo/persist entirely (D5/DDD-7); (4) Canvas.tsx pan-vs-click discrimination per ADR-003 — plain left-drag on empty background pans in every mode, using a 4px movement-distance threshold evaluated on pointermove; the mode-specific background action (add-node/add-annotation/deselect) becomes a pending candidate recorded on pointerdown and only commits on pointerup if no threshold-breaching movement occurred; gate pan engagement with `!shiftHeld` so the existing spring-loading (Shift+drag instant-add-node) gesture is unaffected. Also apply the ADR-003-flagged fix to the 4 existing Canvas.test.tsx tests listed in scenario_name (add a pointerup dispatch after their lone pointerdown) — this is a timing correction matching real browser event sequencing (a genuine click always delivers both events), not a weakened assertion, so the Test Modification Prohibition does not apply; the asserted outcome is unchanged. TEST PARADIGM: unit-level pure-function properties for screenToGraph/graphToScreen are already authored as fast-check PBT in geometry.test.ts (identity + round-trip) — nothing to author, just satisfy them. Acceptance-level tests in canvas-pan-zoom.acceptance.test.tsx and Canvas.test.tsx are example-based (driving-port/integration level), which correctly stays example-based rather than property-based since it verifies wiring, not invariants. DESIGN COMPLIANCE CHECK applies — do not create new files beyond what's listed in DESIGN's Reuse Analysis table (all EXTEND, zero new files, per docs/feature/canvas-pan-zoom-navigation/design/wave-decisions.md). If you find yourself creating a new file, stop and flag it. EARNED TRUST: not applicable — every port in this step is either a driving port (jsdom fireEvent) or a driven-internal port (in-process pure-function/store call); no new external or non-deterministic dependency is introduced (per DISTILL's Adapter classification table), so no probe() is required."
+        },
+        {
+          "id": "01-02",
+          "name": "Wheel/trackpad-pinch zoom centered on cursor",
+          "description": "A facilitator can scroll the mouse wheel or pinch on a trackpad to zoom the canvas in/out, centered on the cursor, within clamped bounds, without breaking hit-testing at any zoom level (US-02, slice-02-wheel-pinch-zoom.md). Extends slice 01's viewport state with a zoom scalar and extends the shared transform additively with a scale factor — no rework of the pan-only transform API.",
+          "criteria": [
+            "AC-02a: Scroll wheel / trackpad pinch changes zoom level, centered on cursor position.",
+            "AC-02b: Zoom is clamped to a minimum and maximum level; input beyond bounds has no further effect.",
+            "AC-02c: Node labels and indicators remain legible across the supported zoom range.",
+            "AC-02d: Hit-testing remains accurate at any zoom level within the supported range.",
+            "AC-02e: Zooming never changes any node's, edge's, or annotation's stored coordinates."
+          ],
+          "test_file": "packages/renderer/src/geometry.test.ts; packages/app/src/canvas-pan-zoom.acceptance.test.tsx",
+          "scenario_name": "geometry.test.ts describe('clampZoom — AC-02b zoom clamping (@contract-shape:pure-function)') [it('property: clampZoom always returns a value within [ZOOM_MIN, ZOOM_MAX]'), it('property: clampZoom is idempotent — clamping a clamped value is a no-op')] and describe('zoomAtCursor — AC-02a cursor-centered zoom (@contract-shape:pure-function)') [it('property: the graph-space point under the cursor stays fixed after zooming'), it('property: zoomAtCursor result is always within clamped zoom bounds (AC-02b)')]; canvas-pan-zoom.acceptance.test.tsx describe('US-02 — zoom via the zoomAt driving port (AC-02a/b/e)') [it('zoomAt changes the zoom level'), it('@contract-shape:unbounded-preservation zooming never mutates node coordinates'), it('repeated zoom-in stops at the maximum bound (AC-02b)'), it('repeated zoom-out stops at the minimum bound (AC-02b)')] and describe('US-02 — wheel gesture via the canvas driving port (AC-02a)') [it.each([WheelInputPath.MouseWheelDesktop, WheelInputPath.TrackpadPinchCtrlWheel])('%s: wheel event over the canvas changes zoom')].",
+          "dependencies": ["01-01"],
+          "implementation_notes": "Replace scaffold throw-bodies with real logic (no new files): (1) `clampZoom` in packages/renderer/src/geometry.ts — clamp to [ZOOM_MIN=0.5, ZOOM_MAX=4] (DDD-5); (2) `zoomAtCursor` in geometry.ts — given the current viewport, a screen-space cursor position, and a wheel deltaY, return a new Viewport such that the graph-space point under the cursor stays fixed under the new (clamped) scale (DDD-5); (3) the `zoomAt` store action in packages/app/src/store.ts — bounded-change: writes only `viewport`, delegates the math entirely to zoomAtCursor, no reimplementation of clamping/transform math in the store; (4) Canvas.tsx's wheel-event handler — both documented input paths drive zoomAt: plain mouse wheel (deltaY, ctrlKey:false) and trackpad-pinch synthesized as a ctrlKey:true wheel event, per devops/environments.yaml. Depends on step 01-01's shared viewport state and transform (slice-02 Dependencies) — extend it additively with a scale parameter only; do not restructure the pan-only transform API (slice-02 Learning Hypothesis: if this needs rework, that disproves the shared-transform design and must be flagged, not silently patched around). TEST PARADIGM: clampZoom/zoomAtCursor pure-function properties (clamp-bounds, idempotency, cursor-fixed-point) are already authored as fast-check PBT in geometry.test.ts — satisfy them, do not author new unit tests. Acceptance-level tests in canvas-pan-zoom.acceptance.test.tsx (zoomAt driving port + wheel gesture driving port, both input paths) are example-based integration/wiring tests — correct per the paradigm mandate, since they verify wiring not invariants. DESIGN COMPLIANCE CHECK applies — do not create new files beyond what's listed in DESIGN's Reuse Analysis table (all EXTEND, zero new files, per docs/feature/canvas-pan-zoom-navigation/design/wave-decisions.md). If you find yourself creating a new file, stop and flag it. EARNED TRUST: not applicable — same rationale as step 01-01 (no new external/non-deterministic dependency; wheel events are a driving port exercised via jsdom fireEvent, zoomAtCursor/clampZoom are driven-internal pure functions)."
+        },
+        {
+          "id": "01-03",
+          "name": "Reset View — fit viewport to diagram content",
+          "description": "A facilitator who has panned or zoomed into a disorienting view can, in a single action, snap back to a view containing every node in the current diagram, fully visible and legible (US-03, slice-03-reset-view-to-fit.md). Lowest-effort slice — no new gesture handling, only a bounding-box calculation and one UI control wired to the viewport state established in steps 01-01/01-02.",
+          "criteria": [
+            "AC-03a: Activating Reset View sets the viewport so every node is fully visible with legible labels (fit-to-content).",
+            "AC-03b: Reset View is always available (button and/or keyboard shortcut) regardless of current pan/zoom state, mode, or diagram size — including zero-node and one-node diagrams.",
+            "AC-03c: Reset View never errors or produces a broken viewport (zero/negative/infinite scale) on any diagram, including empty diagrams.",
+            "AC-03d: Reset View does not alter the graph model — only the viewport changes.",
+            "AC-03e: The Reset View control is visually discoverable (labelled, always visible) without requiring documentation."
+          ],
+          "test_file": "packages/renderer/src/geometry.test.ts; packages/app/src/canvas-pan-zoom.acceptance.test.tsx",
+          "scenario_name": "geometry.test.ts describe('computeFitViewport — AC-03a/b/c reset-to-fit (@contract-shape:pure-function)') [it('0 nodes: returns the identity viewport (zoom=1, pan=(0,0)) — DDD-6'), it('1 node: returns a centered, non-extreme, finite zoom'), it('property: for any node count (0/1/many), the result is finite and within clamp bounds — AC-03c'), it('property: after fitting, every node's screen position lies within the canvas bounds — AC-03a')]; canvas-pan-zoom.acceptance.test.tsx describe('US-03 — reset view via the resetViewport driving port (AC-03a/b/c/d)') [it.each([DiagramSize.Empty, DiagramSize.Single, DiagramSize.Many])('resetViewport produces a finite, non-erroring viewport for a %s diagram (AC-03c)'), it('@contract-shape:unbounded-preservation Reset View never mutates the graph model (AC-03d)'), it('Reset View recovers from an extreme zoomed-out state (AC-03a)')] and describe('US-03 — Reset View control on the Toolbar (AC-03b/e)') [it('Reset View control is discoverable — visibly labelled, always rendered (AC-03e)'), it.each(['select','add-node','add-edge','delete','simulate'])('Reset View control is available regardless of mode (AC-03b, mode=%s)')].",
+          "dependencies": ["01-01", "01-02"],
+          "implementation_notes": "Replace scaffold throw-body with real logic (no new files): (1) `computeFitViewport` in packages/renderer/src/geometry.ts — bounding box over all node positions (+ radius) and annotations, mapped to a viewport that makes everything visible with legible labels, result passed through `clampZoom` (DDD-6); guard the degenerate-extent cases explicitly — 0 nodes returns the identity viewport (zoom=1, pan=(0,0)), 1 node returns a centered, non-extreme, finite zoom; (2) the `resetViewport` store action in packages/app/src/store.ts — bounded-change: writes only `viewport`, delegates the fit calculation entirely to computeFitViewport, never touches `graph.nodes`; (3) wire the Reset View button in packages/app/src/Toolbar.tsx to call `resetViewport(canvasWidth, canvasHeight)` with real canvas dimensions — revisit the scaffold's `document.querySelector('canvas')` placeholder flagged by DISTILL (Toolbar currently has no canvas ref); choose a proper ref/dimension-sourcing approach as a DELIVER-owned implementation decision, not a new architectural component. Depends on steps 01-01 and 01-02 (reuses their viewport state and transform; introduces no new gesture handling). TEST PARADIGM: computeFitViewport pure-function properties (0/1/N-node cardinality, finite-and-in-bounds) are already authored as fast-check PBT in geometry.test.ts — satisfy them, do not author new unit tests. Acceptance-level tests in canvas-pan-zoom.acceptance.test.tsx (resetViewport driving port + Toolbar Reset View control) are example-based integration/wiring tests — correct per the paradigm mandate, since they verify wiring not invariants. DESIGN COMPLIANCE CHECK applies — do not create new files beyond what's listed in DESIGN's Reuse Analysis table (all EXTEND, zero new files, per docs/feature/canvas-pan-zoom-navigation/design/wave-decisions.md). If you find yourself creating a new file, stop and flag it. EARNED TRUST: not applicable — same rationale as steps 01-01/01-02; no new external/non-deterministic dependency, computeFitViewport/resetViewport are driven-internal pure-function/store calls, the Reset View click is a driving port exercised via jsdom fireEvent."
+        }
+      ]
+    }
+  ],
+  "implementation_scope": {
+    "source_directories": [
+      "packages/renderer/src/",
+      "packages/app/src/"
+    ],
+    "test_directories": [
+      "packages/renderer/src/",
+      "packages/app/src/"
+    ],
+    "excluded_patterns": [
+      "node_modules/**",
+      "dist/**",
+      "coverage/**"
+    ]
+  },
+  "validation": {
+    "status": "approved",
+    "reviewer": "nw-acceptance-designer-reviewer",
+    "approved_at": "2026-07-24"
+  }
+}
