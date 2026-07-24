@@ -74,6 +74,22 @@ Persistence behavior is exercised through the store's startup/mutation hooks and
 
 ---
 
+### scripts/ — agent-facing encode CLI
+
+Standalone Node CLI, not part of any package — invoked directly (by an AI agent or a human) to turn a hand-built graph JSON into a share URL without going through the app UI. Added by the `swoopy-diagram-agent-authoring` feature; mirrors `scripts/decodeSharedModelURL.js`'s existing reimplementation pattern (Node builtin `zlib`, not a `packages/app/src/url-encoding.ts` import — see `docs/product/architecture/adr-001-encode-script-reimplements-pipeline.md`).
+
+| Port | Signature | What acceptance tests attach here |
+| --- | --- | --- |
+| `node scripts/encodeSharedModelURL.js <file> [--title <text>]` | CLI. stdout = `?g=...&title=...` on success (exit 0); stderr + non-zero exit on an invalid graph, no URL printed | Real subprocess invocation via `execFileSync` — not an imported function call |
+
+**Defined in** `scripts/encodeSharedModelURL.js`.
+
+Test file placement: `scripts/encodeSharedModelURL.test.js` (co-located, new `scripts/vitest.config.ts` project).
+
+Agent-facing guidance doc (schema reference, worked example, iteration loop): `docs/AGENT-GRAPH-AUTHORING.md` — see `docs/product/architecture/adr-002-guidance-doc-location.md`.
+
+---
+
 ## Constraint: no test touches the renderer
 
 `packages/renderer` is browser-only. Tests that exercise the app/store layer mock the renderer via `vi.mock('@swoopy/renderer', ...)`. The renderer's own pure functions (`stockIndicator`, `timebombStrength`, `saturationAlpha`) are tested directly in `packages/renderer/src/indicators.test.ts`.
@@ -87,3 +103,4 @@ Persistence behavior is exercised through the store's startup/mutation hooks and
 3. **Serialization is versioned at v5** — `deserialize` migrates v1–v4 blobs; `serialize` always emits v5.
 4. **Undo does not include sim state** — `inject()` and `tickSim()` are not in the undo stack; only graph structure mutations are.
 5. **Transient model flag** — a model loaded from `?g=` is `transient: true` until the first mutation forks it; `persist()` is a no-op while transient.
+6. **Encode script self-checks before printing** — `scripts/encodeSharedModelURL.js` decodes its own output and deep-equals it against the input graph before printing a URL; a broken encode is a non-zero exit with no URL, never a silently wrong link.
