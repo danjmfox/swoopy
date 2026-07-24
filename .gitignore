@@ -9,3 +9,6 @@ vite.config.js.map
 vite.config.d.ts
 vite.config.d.ts.map
 graphify-out
+# nWave activation marker (keep .nwave/local-config.json trackable)
+.nwave/*
+!.nwave/local-config.json
