@@ -12,7 +12,7 @@
     "@swoopy/engine": "workspace:*",
     "@swoopy/renderer": "workspace:*",
     "fflate": "^0.8.3",
-    "react": "^19.2.5",
+    "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zustand": "^5.0.14"
   },
@@ -21,7 +21,7 @@
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.0.0",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.0.0",
     "fast-check": "^4.9.0",
