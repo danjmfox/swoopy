@@ -11,7 +11,7 @@
   "dependencies": {
     "@swoopy/engine": "workspace:*",
     "@swoopy/renderer": "workspace:*",
-    "fflate": "^0.8.2",
+    "fflate": "^0.8.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "zustand": "^5.0.0"
