@@ -426,6 +426,15 @@ export function Canvas() {
       dragNodeId = null;
     }
 
+    // Wheel/trackpad-pinch zoom centered on cursor (US-02). Browsers deliver
+    // trackpad pinch gestures as wheel events with ctrlKey:true — no
+    // separate gesture path is needed, both route through zoomAt.
+    function onWheel(e: WheelEvent) {
+      e.preventDefault();
+      const screen = screenPoint(e);
+      useStore.getState().zoomAt(screen.x, screen.y, e.deltaY);
+    }
+
     function onDblClick(e: MouseEvent) {
       const { x, y } = graphPoint(screenPoint(e));
       const {
@@ -484,6 +493,7 @@ export function Canvas() {
     canvas.addEventListener("pointercancel", clearHold);
     canvas.addEventListener("pointerleave", onPointerLeave);
     canvas.addEventListener("dblclick", onDblClick);
+    canvas.addEventListener("wheel", onWheel, { passive: false });
     canvas.addEventListener("keydown", onKeyDown);
     return () => {
       renderer.stop();
@@ -494,6 +504,7 @@ export function Canvas() {
       canvas.removeEventListener("pointercancel", clearHold);
       canvas.removeEventListener("pointerleave", onPointerLeave);
       canvas.removeEventListener("dblclick", onDblClick);
+      canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("keydown", onDocKeyDown);
       document.removeEventListener("keyup", onDocKeyUp);

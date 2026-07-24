@@ -155,11 +155,13 @@ export function graphToScreen(
 
 /** Clamps a requested zoom level to [ZOOM_MIN, ZOOM_MAX]. */
 export function clampZoom(zoom: number): number {
-  void zoom;
-  throw new Error(
-    "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
-  );
+  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom));
 }
+
+// Wheel sensitivity (DDD-5): ~10% zoom change per standard wheel notch
+// (deltaY of 100), applied multiplicatively so relative zoom-in/out feel
+// stays consistent regardless of current zoom level.
+const ZOOM_WHEEL_SENSITIVITY = 0.001;
 
 /**
  * Zoom centered on a screen-space cursor position: the graph-space point
@@ -171,13 +173,14 @@ export function zoomAtCursor(
   screenY: number,
   deltaY: number,
 ): Viewport {
-  void viewport;
-  void screenX;
-  void screenY;
-  void deltaY;
-  throw new Error(
-    "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
-  );
+  const graphPoint = screenToGraph(viewport, screenX, screenY);
+  const zoomFactor = Math.exp(-deltaY * ZOOM_WHEEL_SENSITIVITY);
+  const nextZoom = clampZoom(viewport.zoom * zoomFactor);
+  return {
+    panX: screenX - graphPoint.x * nextZoom,
+    panY: screenY - graphPoint.y * nextZoom,
+    zoom: nextZoom,
+  };
 }
 
 /**

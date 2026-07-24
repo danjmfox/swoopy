@@ -11,7 +11,7 @@ import type {
   AnnotationId,
 } from "@swoopy/engine";
 import { encodeGraphForUrl, decodeGraphFromUrl } from "./url-encoding.ts";
-import type { Viewport } from "@swoopy/renderer";
+import { zoomAtCursor, type Viewport } from "@swoopy/renderer";
 
 export type AppMode =
   | "select"
@@ -292,17 +292,14 @@ export const useStore = create<StoreState>((set, get) => ({
   viewport: { panX: 0, panY: 0, zoom: 1 } as Viewport,
   setViewportPan: (panX: number, panY: number) =>
     set({ viewport: { ...get().viewport, panX, panY } }),
-  // __SCAFFOLD_VIEWPORT__: zoomAt/resetViewport remain RED scaffolds — real
+  // zoomAt writes only `viewport` (bounded-change contract) — delegates the
+  // math entirely to zoomAtCursor, no reimplementation of clamping/transform
+  // math here.
+  zoomAt: (screenX: number, screenY: number, deltaY: number) =>
+    set({ viewport: zoomAtCursor(get().viewport, screenX, screenY, deltaY) }),
+  // __SCAFFOLD_VIEWPORT__: resetViewport remains a RED scaffold — real
   // implementation (delegating to packages/renderer/src/geometry.ts's
-  // zoomAtCursor/computeFitViewport) lands in later DELIVER steps (US-02/03).
-  zoomAt: (screenX: number, screenY: number, deltaY: number) => {
-    void screenX;
-    void screenY;
-    void deltaY;
-    throw new Error(
-      "Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)",
-    );
-  },
+  // computeFitViewport) lands in a later DELIVER step (US-03).
   resetViewport: (canvasWidth: number, canvasHeight: number) => {
     void canvasWidth;
     void canvasHeight;
