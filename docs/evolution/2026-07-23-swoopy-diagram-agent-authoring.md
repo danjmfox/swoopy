@@ -26,14 +26,15 @@ query-param scheme verbatim — zero changes to end-user-facing behaviour.
 
 ## Steps Completed
 
-| Step | Name | Outcome |
-|------|------|---------|
+| Step  | Name                                                 | Outcome                                                  |
+| ----- | ---------------------------------------------------- | -------------------------------------------------------- |
 | 01-01 | Implement encode script pure functions and CLI shell | PASS (commit `fb7ef064d7f5f0f6bc0ad73903f6372e797c0755`) |
-| 01-02 | Write agent-facing graph authoring guidance doc | PASS (commit `a194d1869cbad5636e7c7b8ea29c655efe0efcab`) |
+| 01-02 | Write agent-facing graph authoring guidance doc      | PASS (commit `a194d1869cbad5636e7c7b8ea29c655efe0efcab`) |
 
 ## Key Decisions
 
 ### DISCUSS
+
 - **D1**: Feature type infrastructure/tooling — CLI script + agent-facing doc, no UI/API surface.
 - **D2**: No walking skeleton — brownfield addition wrapping the already-proven `share-url-compression` pipeline.
 - **D3**: Lightweight UX research depth — single happy path, no emotional arc needed.
@@ -41,12 +42,14 @@ query-param scheme verbatim — zero changes to end-user-facing behaviour.
 - **D5**: Lean density mode, no Tier-2 expansion triggers fired.
 
 ### DESIGN
+
 - **DES-1**: Encode script reimplements the deflate+base64 wire-format pipeline via `node:zlib` builtins rather than importing `packages/app/src/url-encoding.ts` — preserves the literal `node <file>.js` invocation (AC1) and the `engine ← renderer ← app` layering (ADR-001).
 - **DES-2**: Guidance doc lives at `docs/AGENT-GRAPH-AUTHORING.md`, referenced by a one-line pointer from `CLAUDE.md`'s Key Files section, not inlined (ADR-002).
 - **DES-3**: No schema-validation library added — hand-rolled `validateGraph` pure function; avoids a Cognitive Load Tax disproportionate to scale.
 - **DES-4**: Outcome Collision Check treated as out-of-scope — both stories already `job_id: infrastructure-only`, no new typed contract.
 
 ### DISTILL
+
 - **DIS-1**: Acceptance scenarios authored as Vitest `describe`/`it` blocks with AC tags in the title, not Gherkin `.feature` files — no Cucumber/BDD dependency exists anywhere in this repo. Project-convention override of the skill's default Gherkin framing.
 - **DIS-2**: Tier B (state-machine property-based testing) skipped — single-shot, config-shaped CLI, no chained multi-step journey.
 - **DIS-3**: ATDD Infrastructure Policy file not bootstrapped — zero driven-internal/external ports in scope (only `fs.readFileSync`/stdout/stderr, already builtin-classified by DESIGN).
@@ -56,13 +59,18 @@ query-param scheme verbatim — zero changes to end-user-facing behaviour.
 ## Issues Encountered
 
 ### Stale second decode script found (out of scope, flagged as drift risk)
+
 While confirming the reference pattern to mirror, DISTILL discovered `scripts/decode-url.mjs` — an
 older decode script that does plain base64→JSON with no `zlib` inflate step, so it silently
 mis-decodes any real compressed share URL produced since `share-url-compression` shipped. This did
 not change any DESIGN decision (`scripts/decodeSharedModelURL.js` remains the correct pattern) but is
 a real drift risk left unresolved. **Recommended follow-up**: remove or fix `scripts/decode-url.mjs`.
 
+**Resolved**: removed in commit `285c87e` (`chore(scripts): remove superseded decode-url.mjs`,
+#49). Confirmed absent as of the 2026-07-27 docs audit.
+
 ### Long-pending uncommitted CLAUDE.md diff surfaced mid-feature
+
 `CLAUDE.md` had an uncommitted diff sitting in the working tree since before this feature started
 (flagged during a `/nw-buddy` project-status check at session start). Step 01-02 was the first
 DELIVER step to touch `CLAUDE.md`, so its commit captured that pending diff alongside the new
@@ -73,23 +81,23 @@ carried silently into its first touching commit.
 
 ## Test Coverage
 
-| File | Tests | Type |
-|------|-------|------|
-| `scripts/encodeSharedModelURL.test.js` | 9 | Unit/acceptance (Vitest, `@driving_adapter`/`@real-io`/`@error` tagged) |
+| File                                   | Tests | Type                                                                    |
+| -------------------------------------- | ----- | ----------------------------------------------------------------------- |
+| `scripts/encodeSharedModelURL.test.js` | 9     | Unit/acceptance (Vitest, `@driving_adapter`/`@real-io`/`@error` tagged) |
 
 9/9 green (`pnpm vitest run --project scripts`, 2026-07-23T18:27Z). Full workspace suite: 34/34
 files, 554 passed + 6 skipped, 0 regressions.
 
 ## Quality Gates
 
-| Gate | Outcome |
-|------|---------|
-| Roadmap review | Approved, 0 findings |
-| Per-step TDD (RED/GREEN/COMMIT) | Both steps PASS |
-| Adversarial review | Approved, 0 findings, zero Testing Theater patterns |
-| Refactor (L1-L6) | Reviewed, zero changes needed |
-| Mutation testing | Skipped — CLAUDE.md scopes the 80% kill-rate gate to `packages/engine` only; `scripts/` was never in scope |
-| Integrity verification | `des-verify-integrity` — all 2 steps complete DES traces, exit 0 |
+| Gate                            | Outcome                                                                                                    |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Roadmap review                  | Approved, 0 findings                                                                                       |
+| Per-step TDD (RED/GREEN/COMMIT) | Both steps PASS                                                                                            |
+| Adversarial review              | Approved, 0 findings, zero Testing Theater patterns                                                        |
+| Refactor (L1-L6)                | Reviewed, zero changes needed                                                                              |
+| Mutation testing                | Skipped — CLAUDE.md scopes the 80% kill-rate gate to `packages/engine` only; `scripts/` was never in scope |
+| Integrity verification          | `des-verify-integrity` — all 2 steps complete DES traces, exit 0                                           |
 
 ## Lessons Learned
 
@@ -105,12 +113,12 @@ Architecture artifacts were written directly to their permanent SSOT location du
 migration needed (this repo uses the lean v3.14 single-file `feature-delta.md` model, not the
 legacy multi-file temp-workspace layout).
 
-| Artifact | Location |
-|----------|----------|
-| Architecture brief | `docs/product/architecture/brief.md` |
-| ADR-001 (encode script reimplements pipeline) | `docs/product/architecture/adr-001-encode-script-reimplements-pipeline.md` |
-| ADR-002 (guidance doc location) | `docs/product/architecture/adr-002-guidance-doc-location.md` |
-| C4 diagrams | `docs/product/architecture/c4-diagrams.md` |
-| Agent-facing guidance doc | `docs/AGENT-GRAPH-AUTHORING.md` |
-| Encode script | `scripts/encodeSharedModelURL.js` |
-| Slice brief (scope reasoning record) | `docs/feature/swoopy-diagram-agent-authoring/slices/slice-01-encode-script-and-guidance.md` (retained in place — feature directory preserved per finalize Phase C) |
+| Artifact                                      | Location                                                                                                                                                                                                |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Architecture brief                            | `docs/product/architecture/brief.md`                                                                                                                                                                    |
+| ADR-006 (encode script reimplements pipeline) | `docs/product/architecture/adr-006-encode-script-reimplements-pipeline.md` (renamed 2026-07-27 from adr-001 — collided with `adr-001-share-url-compression-library.md`, found during a full docs audit) |
+| ADR-002 (guidance doc location)               | `docs/product/architecture/adr-002-guidance-doc-location.md`                                                                                                                                            |
+| C4 diagrams                                   | `docs/product/architecture/c4-diagrams.md`                                                                                                                                                              |
+| Agent-facing guidance doc                     | `docs/AGENT-GRAPH-AUTHORING.md`                                                                                                                                                                         |
+| Encode script                                 | `scripts/encodeSharedModelURL.js`                                                                                                                                                                       |
+| Slice brief (scope reasoning record)          | `docs/feature/swoopy-diagram-agent-authoring/slices/slice-01-encode-script-and-guidance.md` (retained in place — feature directory preserved per finalize Phase C)                                      |

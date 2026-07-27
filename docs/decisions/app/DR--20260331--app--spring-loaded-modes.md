@@ -14,7 +14,7 @@ changelog:
 
 # DR--20260331--app--spring-loaded-modes
 
-## Status: Proposed
+## Status: Accepted
 
 ## Context
 

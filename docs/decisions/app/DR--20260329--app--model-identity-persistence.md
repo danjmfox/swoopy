@@ -80,3 +80,10 @@ collection at v1). This is low risk for a local-only single-user tool.
 1. Create story: SE-07-fix — wire startup hook (`loadFromUrl` → `loadPersistedGraph` → seedGraph fallback)
 2. Create story: SE-08 — implement model identity (UUID generation, ID-scoped localStorage, `?m=<id>` URL param, fork-on-first-edit, legacy key migration)
 3. Update PRD, ARCHITECTURE, USER-GUIDE to reflect the new persistence model once SE-08 is scoped.
+
+## Confidence
+
+High. Implemented and shipped (see `docs/evolution/2026-05-07-url-persistence.md`); the
+`swoopy_graph_<id>` keying, `?m=<id>` URL param, and fork-on-first-edit behavior described above
+all match the current `packages/app/src/store.ts`. Next Actions 1–3 are complete — PRD and
+ARCHITECTURE both describe the shipped persistence model.

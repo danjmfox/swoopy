@@ -75,8 +75,7 @@ The simulation is deliberately imprecise. Node values are qualitative proxies, n
 - **No export to image** — data export as CSV is available via the History overlay.
 - **No flow / rate-of-change constraints** — ceiling/floor cap values, not rates; flow constraints are a v2 candidate.
 - **No multiplayer or shared sessions.**
-- **No model naming** — the page title and canvas do not reflect a user-assigned model name.
-- **No zoom** — canvas is fixed-viewport; large models require scrolling or small nodes.
+- **No keyboard-only panning** — canvas pan/zoom (see below) is pointer/wheel-driven only; no arrow-key camera movement.
 
 ---
 

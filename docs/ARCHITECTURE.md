@@ -79,15 +79,21 @@ Owns the canvas draw loop and hit testing. Browser-only — not imported by test
 
 Key exports:
 
-| Export                                       | Purpose                                                            |
-| -------------------------------------------- | ------------------------------------------------------------------ |
-| `LoopyRenderer`                              | Class managing the RAF loop and canvas draw                        |
-| `hitTest`                                    | Re-exported from engine; used by `Canvas.tsx` for pointer handling |
-| `stockIndicator(value, min, max, prevValue)` | Pure: fill ratio 0–1, trend direction                              |
-| `timebombStrength(pending, nodeId, edges)`   | Pure: aggregate pending signal strength from a node                |
-| `saturationAlpha(signalCount, maxSignals)`   | Pure: edge opacity 1→0.3 as signal count approaches cap            |
+| Export                                         | Purpose                                                                   |
+| ---------------------------------------------- | ------------------------------------------------------------------------- |
+| `LoopyRenderer`                                | Class managing the RAF loop and canvas draw                               |
+| `hitTest`                                      | Re-exported from engine; used by `Canvas.tsx` for pointer handling        |
+| `stockIndicator(value, min, max, prevValue)`   | Pure: fill ratio 0–1, trend direction                                     |
+| `timebombStrength(pending, nodeId, edges)`     | Pure: aggregate pending signal strength from a node                       |
+| `saturationAlpha(signalCount, maxSignals)`     | Pure: edge opacity 1→0.3 as signal count approaches cap                   |
+| `screenToGraph` / `graphToScreen`              | Pure: viewport-aware coordinate conversion (canvas pan/zoom)              |
+| `clampZoom(zoom)`                              | Pure: clamps to `[ZOOM_MIN, ZOOM_MAX] = [0.5, 4]` (manual zoom)           |
+| `zoomAtCursor(viewport, x, y, deltaY)`         | Pure: cursor-centered zoom, wheel/pinch-driven                            |
+| `computeFitViewport(nodes, annotations, w, h)` | Pure: fit-to-content viewport for Reset View (own zoom floor — see below) |
 
 `LoopyRenderer` takes a canvas ref and a `getState()` callback. It manages its own lifecycle — React does not re-mount it on state changes. The RAF loop calls `getState()` every frame, ticks the sim if running, and redraws.
+
+**Canvas viewport (pan/zoom/reset-view).** `LoopyRenderer.draw()` applies `ctx.translate(panX, panY)` then `ctx.scale(zoom, zoom)` once per frame, composed after the existing DPR transform and before any node/edge drawing — every existing draw method is unaware of the viewport and needs no changes (ADR-004). `hitTest` itself stays viewport-agnostic; callers (`Canvas.tsx`) convert screen→graph coordinates via `screenToGraph` before every hit-test call. Reset View's `computeFitViewport` deliberately does **not** share `clampZoom`'s manual-zoom floor (`ZOOM_MIN = 0.5`) — it has its own near-zero floor, so it can always show every node even on diagrams too spread out for the manual-zoom legibility floor to display (ADR-005).
 
 When `dragPosition` is set in the store, the renderer draws the dragged node dimmed at its stored position and a ghost copy at the cursor coordinates. The ghost uses a dashed outer ring and 0.75 alpha to distinguish it from a committed position. This gives immediate visual feedback during a drag without committing to `moveNode` until `pointerup`.
 
@@ -110,6 +116,8 @@ The store is read in two ways:
 
 The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and writes back into the store. React does not subscribe to sim state changes — only the renderer reads `sim`.
 
+`viewport` (`{ panX, panY, zoom }`, default identity) is ephemeral state in the same category as `dragPosition` — never recorded in the undo stack, never persisted to localStorage or the shared URL. A page reload or a shared link always opens at the identity viewport; pan/zoom is a per-session display concern only.
+
 ### Key store actions
 
 | Action                          | Behaviour                                                                                                                     |
@@ -131,21 +139,24 @@ The sim tick path (`state.tickSim(dt)`) calls `step()` from the engine and write
 | `toggleQuickFix(edgeId)`        | Toggle isQuickFix flag; prevented if QF edge already exists for the pair (GE-41)                                              |
 | `toggleModulatorPolarity(id)`   | Toggle Modulator between +1 and -1 (emerged from use 2026-04-05)                                                              |
 | `setDragPosition(nodeId, x, y)` | Record cursor position while dragging a node; cleared by `moveNode`; not in undo stack                                        |
+| `setViewportPan(panX, panY)`    | Pan the canvas viewport; ephemeral, not in undo stack, not persisted                                                          |
+| `zoomAt(x, y, deltaY)`          | Wheel/pinch-driven zoom centered on cursor; delegates math to `zoomAtCursor`                                                  |
+| `resetViewport(w, h)`           | Fit viewport to diagram content; delegates to `computeFitViewport`                                                            |
 
 ### UI components
 
-| Component                    | Responsibility                                                                                                                                                  |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Canvas.tsx`                 | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode; manages pending-modulator state (GE-45) |
-| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher (Select/Add Node/Add Edge/Simulate/Add Annotation/Delete)                                                     |
-| `NodePopover.tsx`            | Inline label/min/max/initial/sizeTier/colourTier/annotation editor triggered by double-click                                                                    |
-| `AnnotationPopover.tsx`      | Inline text editor for free-floating canvas annotation boxes (GE-37)                                                                                            |
-| `EdgeWeightPopover.tsx`      | Inline weight editor triggered by double-click on edge weight region; includes Quick-Fix toggle (GE-41)                                                         |
-| `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor                                                                                  |
-| `ModulatorPolarityBadge`     | Renders polarity badge at Modulator arc midpoint; togglable (emerged from use 2026-04-05)                                                                       |
-| `HistoryOverlay.tsx`         | Toggle via `H` key or toolbar button; two views: table of recent mutations (tick + delta) and SVG line chart of node value trajectories; CSV export button      |
-| `WelcomeOverlay.tsx`         | First-visit overlay; dismissed via "Start building" CTA; sets `swoopy_welcomed` in localStorage                                                                 |
-| `HelpModal.tsx`              | `?` button overlay showing mode descriptions and keyboard shortcut reference; toggleable, Escape-dismissible                                                    |
+| Component                    | Responsibility                                                                                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Canvas.tsx`                 | Canvas mount, pointer events, keyboard nav, drag state machine; updates `dragPosition` on `pointerMove` in select mode; manages pending-modulator state (GE-45); drag-to-pan and wheel/pinch-zoom on the canvas viewport |
+| `Toolbar.tsx`                | Pause/resume, reset, speed control, mode switcher (Select/Add Node/Add Edge/Simulate/Add Annotation/Delete), Reset View (fit viewport to diagram content)                                                                |
+| `NodePopover.tsx`            | Inline label/min/max/initial/sizeTier/colourTier/annotation editor triggered by double-click                                                                                                                             |
+| `AnnotationPopover.tsx`      | Inline text editor for free-floating canvas annotation boxes (GE-37)                                                                                                                                                     |
+| `EdgeWeightPopover.tsx`      | Inline weight editor triggered by double-click on edge weight region; includes Quick-Fix toggle (GE-41)                                                                                                                  |
+| `ConstraintChoiceDialog.tsx` | Modal triggered when a modifier+drag gesture completes; confirms ceiling/floor                                                                                                                                           |
+| `ModulatorPolarityBadge`     | Renders polarity badge at Modulator arc midpoint; togglable (emerged from use 2026-04-05)                                                                                                                                |
+| `HistoryOverlay.tsx`         | Toggle via `H` key or toolbar button; two views: table of recent mutations (tick + delta) and SVG line chart of node value trajectories; CSV export button                                                               |
+| `WelcomeOverlay.tsx`         | First-visit overlay; dismissed via "Start building" CTA; sets `swoopy_welcomed` in localStorage                                                                                                                          |
+| `HelpModal.tsx`              | `?` button overlay showing mode descriptions and keyboard shortcut reference; toggleable, Escape-dismissible                                                                                                             |
 
 ### History logging
 
@@ -175,6 +186,8 @@ Share button: `serialize` → base64 → write to `?g=` param → copy URL to cl
 Pointer events are handled in `Canvas.tsx` directly on the native canvas element — not via React's synthetic event system. This avoids re-render pressure on every mouse move.
 
 Alt key state for the constraint drag gesture is tracked two ways. A document-level `keydown`/`keyup` listener maintains a `constraintModifierHeld` boolean — the primary approach for a modifier held continuously across a drag sequence. Additionally, `e.altKey` is checked directly on the `pointerup` event as a belt-and-suspenders fallback for Mac, where document-level key events are sometimes not delivered during a pointer drag. Both conditions are OR'd in `onPointerUp()`. In jsdom tests, `PointerEvent` does not propagate `altKey` through `fireEvent`, so tests simulate the modifier via `fireEvent.keyDown(document, { key: 'Alt' })` before the drag sequence.
+
+**Pan-vs-click discrimination (ADR-003).** Dragging on empty canvas background pans the viewport in every mode, with no modifier key — but background clicks also have existing mode-specific meaning (place a node in Add Node mode, place an annotation in Add Annotation mode, deselect in Select mode). These are distinguished by a 4px movement threshold evaluated on `pointermove`: the candidate mode-action is recorded on `pointerdown` but not applied until `pointerup`, and only if no threshold-breaching movement occurred in between; otherwise the gesture is reclassified as a pan for its remaining lifetime. Shift-held background drag is excluded from the pan gate to preserve the existing spring-loaded instant-add-node gesture. One consequence: mode actions now commit on `pointerup` rather than `pointerdown` — any test dispatching only a `pointerdown` to assert a mode action needs a matching `pointerup` too (a real browser always delivers both for a stationary click).
 
 ---
 

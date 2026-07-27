@@ -3,12 +3,15 @@
  * Run with: node --experimental-strip-types packages/engine/src/characterise-relay.ts
  *
  * Implements the NEW relay model (DR--20260408--engine--signal-direction) inline
- * to characterise behaviour across MAX_HOPS candidates {3, 5, 8, 13} on four scenarios:
+ * to characterise behaviour across MAX_HOPS candidates {3, 5, 8, 13, 26} on five scenarios
+ * (scenario 5 added later to evidence raising MAX_HOPS from 8 to 26 — see
+ * DR--20260727--engine--max-hops-increase.md):
  *
  *   1. Reinforcing loop  A→B→A (+/+)       — expect: both nodes saturate at max
  *   2. Balancing loop    A→B→A (+/-)       — expect: system corrects, no runaway
  *   3. Diamond           A→B→D(+)/A→C→D(-) — expect: D receives from BOTH paths
  *   4. Polarity chain    A→B(−1)→C(+1)     — expect: B decreases AND C decreases
+ *   5. Long chain        A→B→C→D→E→A (+/+/+/+/+), 5-node loop — expect: full saturation
  *
  * New formula (Option C from DR--20260408):
  *   - Each signal carries sign: 1 | -1 (accumulated polarity chain)

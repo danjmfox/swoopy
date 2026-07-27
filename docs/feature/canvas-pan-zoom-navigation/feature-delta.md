@@ -774,9 +774,10 @@ Full summary lives in `docs/feature/canvas-pan-zoom-navigation/discuss/wave-deci
 - ✓ `docs/product/architecture/brief.md` — read; extended with a new `## Application Architecture`
   section (first architect section in this file — no prior conflicting content to reconcile).
 - ✓ `docs/product/architecture/adr-001-share-url-compression-library.md`,
-  `adr-001-encode-script-reimplements-pipeline.md`, `adr-002-guidance-doc-location.md` — skimmed;
-  no precedent conflicts with this feature's decisions. `adr-002` supplied the ADR format followed
-  for `adr-003`/`adr-004` below.
+  `adr-001-encode-script-reimplements-pipeline.md` (renamed `adr-006-...` on 2026-07-27 after this
+  wave ran — collided with the file above), `adr-002-guidance-doc-location.md` — skimmed; no
+  precedent conflicts with this feature's decisions. `adr-002` supplied the ADR format followed for
+  `adr-003`/`adr-004` below.
 - ✓ `docs/product/journeys/canvas-pan-zoom-navigation.yaml` — read (short pointer file: job id
   `navigate-diagram-viewport`, status `discuss-complete`).
 - ⊘ No SPIKE wave preceded this feature — skipped per task scope, nothing to reconcile.

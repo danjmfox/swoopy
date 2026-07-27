@@ -30,6 +30,24 @@ The toolbar at the bottom of the screen controls what your mouse does. The activ
 | **Add Annotation** | `A` | Click empty canvas to place a free-floating text box. Drag to reposition in Select mode.                            |
 | **Delete**         | `D` | Click a node or edge to remove it. Deleting a node removes all its connected edges.                                 |
 
+Dragging on **empty canvas background** pans the view instead — this works the same way in every mode above, so it never conflicts with a mode's own click behaviour (see [Canvas navigation](#canvas-navigation)).
+
+---
+
+## Canvas navigation
+
+Once a model grows past what fits on one screen, three controls keep it fully reachable — all work regardless of which mode you're in.
+
+| Action         | How                                                                                                                                                                                                                         |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pan**        | Click and drag on empty canvas background. The whole diagram shifts with your drag.                                                                                                                                         |
+| **Zoom**       | Scroll the mouse wheel, or pinch on a trackpad, while hovering over the canvas. Zoom is centered on the cursor and clamped between 50% and 400%.                                                                            |
+| **Reset View** | Click **⛶ Reset View** in the toolbar. Snaps the viewport to fit every node in the diagram, fully visible and readable — works from any pan/zoom state, in any mode, on any diagram size (including a brand-new empty one). |
+
+None of these change your model — panning, zooming, and Reset View only move the camera. Node positions, edges, and values are untouched, and nothing is saved to the URL or your browser storage: reloading the page or opening a shared link always starts at the default view.
+
+There's no keyboard shortcut for pan/zoom/reset yet, and touch/mobile pinch-zoom isn't supported.
+
 ---
 
 ## Building a model
@@ -138,7 +156,7 @@ The chevron direction shows the accumulated effect through the causal chain. Whe
 
 | Control                              | Action                                                                    |
 | ------------------------------------ | ------------------------------------------------------------------------- |
-| ⏸ / ▶                              | Pause and resume the simulation                                           |
+| ⏸ / ▶                                | Pause and resume the simulation                                           |
 | ↺                                    | Reset all node values to their initial settings; clear all signals        |
 | Speed: `0.25×` `0.5×` `1×` `2×` `4×` | Compress or expand time — useful for observing slow delay effects quickly |
 

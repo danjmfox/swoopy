@@ -9,6 +9,12 @@ slug: relay-propagation-model
 changelog:
   - date: "2026-04-01"
     note: Initial creation — characterisation completed, MAX_HOPS=8 chosen, accepted
+  - date: "2026-07-27"
+    note: >-
+      MAX_HOPS revised 8 -> 26 (see amendment note below and
+      DR--20260727--engine--max-hops-increase.md). Found stale during a full docs audit;
+      the code and its comment had already carried the real value and rationale, this DR
+      had not been updated to match.
 supersedes: DR--20260330--engine--staggered-density-signals
 ---
 
@@ -83,6 +89,13 @@ Replace the delta-emission engine with a **relay propagation model**:
 - Fragments staggered across `EDGE_TRANSIT_TICKS` (visual contract unchanged)
 - `MAX_HOPS = 8` (empirically determined: saturates simple reinforcing loops; supports
   paths up to 8 edges in length)
+
+  > **Amended 2026-07-27**: `MAX_HOPS` is now **26**, not 8 — see
+  > `DR--20260727--engine--max-hops-increase.md`. hops=8 saturates only 2-node loops; a
+  > 5-node reinforcing loop needs 25+ hops for full saturation. The relay _model_ described
+  > in this DR (fragment-per-hop, amplitude semantics, staggering) is unchanged — only the
+  > hop-count constant was revised.
+
 - `prevNodeValues`, `displayPrevNodeValues`, and `EMIT_THRESHOLD` are **removed**
 
 **Semantic change for weight:**
