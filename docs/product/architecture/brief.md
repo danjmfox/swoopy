@@ -104,3 +104,93 @@ Agent-facing guidance doc (schema reference, worked example, iteration loop): `d
 4. **Undo does not include sim state** — `inject()` and `tickSim()` are not in the undo stack; only graph structure mutations are.
 5. **Transient model flag** — a model loaded from `?g=` is `transient: true` until the first mutation forks it; `persist()` is a no-op while transient.
 6. **Encode script self-checks before printing** — `scripts/encodeSharedModelURL.js` decodes its own output and deep-equals it against the input graph before printing a URL; a broken encode is a non-zero exit with no URL, never a silently wrong link.
+
+---
+
+## Application Architecture
+
+Added by DESIGN wave, feature `canvas-pan-zoom-navigation` (Morgan). Extends the package map and
+driving-ports tables above — no prior architect's section exists in this brief, so this is the
+first `## Application Architecture` entry. See
+`docs/feature/canvas-pan-zoom-navigation/feature-delta.md` (`## Wave: DESIGN`) for the full
+reuse analysis, rejected alternatives, and rationale; `adr-003`/`adr-004` for the two significant
+decisions.
+
+### Viewport: new shared state + pure transform ports
+
+| Port | Owner | Signature | Contract shape |
+| --- | --- | --- | --- |
+| `Viewport` (type) | `packages/renderer/src/geometry.ts` | `{ panX: number; panY: number; zoom: number }` | Data shape, no behavior |
+| `screenToGraph` | `packages/renderer/src/geometry.ts` | `(viewport: Viewport, screenX: number, screenY: number) => { x: number; y: number }` | pure-function (return-only) |
+| `graphToScreen` | `packages/renderer/src/geometry.ts` | `(viewport: Viewport, graphX: number, graphY: number) => { x: number; y: number }` | pure-function (return-only) |
+| `clampZoom` | `packages/renderer/src/geometry.ts` | `(zoom: number) => number` — clamps to `[ZOOM_MIN, ZOOM_MAX] = [0.5, 4]` | pure-function (return-only) |
+| `zoomAtCursor` | `packages/renderer/src/geometry.ts` | `(viewport: Viewport, screenX: number, screenY: number, deltaY: number) => Viewport` | pure-function (return-only); internally uses `clampZoom` |
+| `computeFitViewport` | `packages/renderer/src/geometry.ts` | `(nodes: readonly {x,y,radius}[], annotations: readonly {x,y,width,height}[], canvasWidth: number, canvasHeight: number) => Viewport` | pure-function (return-only); guards zero-width/height bounding box (0/1-node cases) with a minimum-extent substitution, result passed through `clampZoom` |
+| `LoopyRenderer.draw(state)` | `packages/renderer/src/LoopyRenderer.ts` | `RendererStore` gains a read-only `viewport: Viewport` field; `draw()` applies `ctx.translate(panX,panY); ctx.scale(zoom,zoom)` once per frame, after the existing DPR transform, before all existing `drawXxx()` calls | bounded-change (canvas pixels only, unchanged mutation universe — see ADR-004) |
+| `hitTest(graph, x, y)` | `packages/renderer/src/hitTest.ts` | **Unchanged.** Callers convert screen→graph via `screenToGraph` before calling. | pure-function (return-only), unaffected |
+| `viewport` (state) | `packages/app/src/store.ts` | `{ panX: 0, panY: 0, zoom: 1 }` default; ephemeral — same category as `dragPosition`/`hoveredEdgeRegion` (ADR: not in undo stack, not persisted, matches D5) | bounded-change: writes only `viewport`, never `graph.nodes[].x/y` |
+| `setViewportPan(panX, panY)` | `packages/app/src/store.ts` | `(panX: number, panY: number) => void` | bounded-change |
+| `zoomAt(screenX, screenY, deltaY)` | `packages/app/src/store.ts` | `(screenX: number, screenY: number, deltaY: number) => void` — delegates to `zoomAtCursor` | bounded-change |
+| `resetViewport(canvasWidth, canvasHeight)` | `packages/app/src/store.ts` | `(canvasWidth: number, canvasHeight: number) => void` — delegates to `computeFitViewport` | bounded-change |
+
+Driving surfaces in `Canvas.tsx`: existing `pointerdown`/`pointermove`/`pointerup` handlers gain a
+screen→graph conversion step at every `hitTest()` call site, plus a movement-threshold pan-vs-click
+gate for background gestures (ADR-003); a new `wheel` listener (`{ passive: false }`) drives
+`zoomAt`; a new "Reset View" control (host TBD by acceptance-designer/crafter — `Toolbar.tsx` is
+the precedented location) drives `resetViewport`.
+
+### C4 Container — viewport state flow
+
+```mermaid
+C4Container
+  title Container Diagram — Canvas Pan/Zoom/Reset Viewport (Swoopy)
+  Person(facilitator, "Facilitator", "Drags background, scrolls wheel, clicks Reset View during a live session")
+
+  Container_Boundary(app, "packages/app") {
+    Container(canvasTsx, "Canvas.tsx", "React component", "Pointer/wheel handlers; converts screen to graph coords before hit-testing; dispatches viewport actions")
+    Container(toolbar, "Toolbar.tsx", "React component", "Hosts the Reset View control")
+    Container(store, "store.ts", "Zustand store", "Owns viewport {panX,panY,zoom} as session-only state")
+  }
+
+  Container_Boundary(renderer, "packages/renderer") {
+    Container(loopyRenderer, "LoopyRenderer", "Canvas 2D + RAF loop", "Reads viewport each frame; applies ctx.translate/scale before existing draw calls")
+    Container(geometry, "geometry.ts", "Pure functions", "screenToGraph, graphToScreen, clampZoom, zoomAtCursor, computeFitViewport")
+    Container(hitTestC, "hitTest.ts", "Pure function", "Unchanged: hit-tests graph-space coordinates only")
+  }
+
+  Container_Boundary(engine, "packages/engine") {
+    Container(graphModel, "Graph model", "Pure TS types", "node.x/y - never mutated by viewport operations")
+  }
+
+  Rel(facilitator, canvasTsx, "Drags background / scrolls wheel / clicks Reset View via")
+  Rel(canvasTsx, geometry, "Converts screen to graph coordinates using")
+  Rel(canvasTsx, store, "Dispatches setViewportPan / zoomAt / resetViewport to")
+  Rel(canvasTsx, hitTestC, "Hit-tests using graph-space coords produced by")
+  Rel(store, geometry, "Delegates zoomAtCursor / computeFitViewport math to")
+  Rel(store, graphModel, "Reads node/annotation positions from - never writes on viewport ops")
+  Rel(loopyRenderer, store, "Reads viewport and graph each frame from")
+  Rel(loopyRenderer, geometry, "Applies transform derived from (ctx.translate/scale)")
+  Rel(loopyRenderer, graphModel, "Draws node/edge/annotation positions from (unchanged)")
+```
+
+No Component (L3) diagram: this feature adds no new module/subsystem — every change lands inside
+existing files (`geometry.ts`, `LoopyRenderer.ts`, `store.ts`, `Canvas.tsx`, `Toolbar.tsx`); the
+added complexity is control-flow branching within `Canvas.tsx`'s existing pointer-handler
+functions, not a new decomposable subsystem.
+
+### External integrations
+
+None. No new dependency, no external API, no network/filesystem/subprocess boundary. The only
+browser APIs touched (`ctx.translate`/`ctx.scale`, `getBoundingClientRect`, `devicePixelRatio`,
+`wheel`/`pointer*` events) are synchronous, well-specified, and already exercised by the existing
+renderer/Canvas.tsx — no new adapter boundary to an environment known to lie (Earned Trust
+principle 13 considered and found not applicable: no probe() contract is warranted here).
+
+### Enforcement
+
+No new dependency-cruiser rule needed: this feature does not change the `engine ← renderer ← app`
+import direction (viewport math stays inside `packages/renderer`, consumed by `packages/app`,
+exactly like the existing `geometry.ts`/`hitTest.ts` exports). When dependency-cruiser is
+eventually configured for this project (per project CLAUDE.md, "not yet configured"), the existing
+planned rule ("engine may not import from app; app may import from engine") already covers this
+feature's boundary — no additional rule required.

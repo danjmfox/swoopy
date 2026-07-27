@@ -1,0 +1,104 @@
+# environments.yaml — canvas-pan-zoom-navigation
+# Consumed by DISTILL for Mandate 4 (Environmental Realism).
+#
+# ADAPTATION NOTE (read before use):
+# The skill's default template (target_environments: clean / with-pre-commit /
+# with-stale-config) models an INSTALLED tool with setup/upgrade lifecycle
+# (pre-commit hooks, config versions, uninstall paths). This feature has none
+# of that — it is pure client-side browser UI shipped as part of the existing
+# static SPA bundle (no install step, no config file, no upgrade path for an
+# end user). Applying the literal template would produce three meaningless
+# entries ("clean" / "with-pre-commit" / "with-stale-config" have no bearing
+# on whether drag-to-pan or wheel-zoom works).
+#
+# Instead, target_environments below are adapted to the two documented INPUT
+# PATHS this feature actually depends on (US-01/US-02 Domain Examples,
+# DDD-3/DDD-5, and the "Driving Surfaces" section of feature-delta.md DISCUSS
+# wave): mouse+wheel and trackpad+pinch(ctrlKey-wheel). This is the realistic
+# environment axis for a pan/zoom feature — not OS/install-state.
+
+target_environments:
+  - name: mouse-wheel-desktop
+    description: >
+      Desktop browser, mouse with a discrete physical wheel, no ctrlKey held.
+      Plain wheel events (deltaY only) drive zoomAtCursor per AC-02a.
+    platform: [chromium, firefox, safari-desktop]
+    preconditions:
+      - "wheel event dispatched without ctrlKey"
+    verified_by: >
+      packages/renderer/src/geometry.test.ts (unit, jsdom-simulated
+      WheelEvent) — jsdom simulates event dispatch but does not reproduce
+      real-browser deltaMode/deltaY-scaling variance across Chromium/Firefox/
+      Safari. Cross-browser wheel-scaling nuances are NOT exercised by CI;
+      covered only by occasional manual usability session (Decision 5).
+
+  - name: trackpad-pinch-ctrl-wheel
+    description: >
+      Trackpad pinch gesture, synthesized by the browser as a wheel event
+      with ctrlKey: true and fractional deltaY (documented browser behavior,
+      not a Swoopy-specific convention — see feature-delta.md DISCUSS wave,
+      "Driving Surfaces"). Same zoomAtCursor code path as mouse-wheel per
+      DDD-5 (no separate branch).
+    platform: [chromium-macos, firefox-macos, safari-macos]
+    preconditions:
+      - "wheel event dispatched with ctrlKey: true"
+    verified_by: >
+      packages/renderer/src/geometry.test.ts (unit, jsdom-simulated
+      WheelEvent with ctrlKey) — the ctrlKey-as-pinch synthesis heuristic
+      itself is real trackpad hardware/OS/browser behavior, not reproducible
+      in jsdom. Covered only by manual usability session on real hardware.
+
+  - name: mouse-drag-pan-all-modes
+    description: >
+      Plain left-button drag on empty canvas background, exercised across
+      every existing interaction mode (select/add-edge/delete/simulate/
+      add-node/add-annotation — AC-01e), with shift-held drag explicitly
+      excluded from the pan gate (DDD-4, preserves existing spring-load
+      add-node gesture).
+    platform: [chromium, firefox, safari-desktop]
+    preconditions:
+      - "4px movement threshold gate evaluated on pointermove (ADR-003)"
+      - "existing Canvas.test.tsx pointerdown-only scenarios for add-node/
+         add-annotation/deselect gain a pointerup, since those actions now
+         commit on pointerup instead of pointerdown (ADR-003 Consequences)"
+    verified_by: >
+      packages/app/src/Canvas.test.tsx (unit, jsdom PointerEvent simulation)
+
+# Explicitly NOT modeled as a target environment (per feature-delta.md
+# DISCUSS wave, Out of Scope): touch/mobile multi-touch gesture handling
+# beyond trackpad-synthesized wheel events. Keyboard-only panning is also
+# out of scope. Neither is a silent omission — both are flagged exclusions
+# in feature-delta.md.
+
+coexistence_matrix:
+  - tool: lefthook (project-wide pre-commit: `pnpm test --run`)
+    must_not_break: true
+    note: >
+      New geometry.ts / Canvas.tsx / store.ts / Toolbar.tsx tests (once
+      written by acceptance-designer/software-crafter) run as part of the
+      existing workspace-wide `pnpm test --run` invocation. No new hook,
+      no new pre-commit stage — this feature adds test files, not tooling.
+
+platform_coverage:
+  Desktop-Browsers: [Chromium (latest), Firefox (latest), Safari (latest, macOS)]
+  CI: [GitHub Actions ubuntu-latest — jsdom-simulated pointer/wheel events only]
+  Excluded (out of scope): [mobile/touch, keyboard-only navigation]
+
+deployment_assumptions:
+  - "Feature ships inside the same static bundle as the rest of packages/app
+     — no separate install/uninstall path exists or is needed."
+  - "GitHub Pages 'recreate' deploy (Decision 6) replaces the entire site
+     atomically on every merge to main — there is no gradual/canary rollout
+     for this or any Swoopy feature; this is a platform-given fact, not a
+     choice made for this feature specifically."
+  - "No feature flag / gradual rollout mechanism exists or is being added —
+     every merge to main goes live to 100% of users simultaneously, matching
+     existing site behavior unchanged by this feature."
+  - "Viewport state (panX/panY/zoom) is session-only, never persisted
+     (DDD-7/D5) — a bad deploy cannot corrupt any stored user data; the
+     worst case is a page reload, which the feature's own Reset View +
+     error-path design already treats as an acceptable (if undesirable)
+     recovery path (US-03)."
+  - "Rollback = revert the merge commit on main; the existing 'recreate'
+     deploy replaces the live site with the prior build. No data migration,
+     no schema versioning, no persisted state to reconcile."

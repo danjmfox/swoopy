@@ -32,8 +32,7 @@ This project has a graphify knowledge graph at graphify-out/.
 
 **Import direction:** `engine` ← `renderer` ← `app`. Engine must not import from renderer or app.
 
-Use `@nw-functional-software-crafter` for engine and URL encoding work.
-Use `@nw-software-crafter` for React/UI work.
+For substantive engine/URL-encoding work delegate to `@nw-functional-software-crafter`; for substantive React/UI work, `@nw-software-crafter`. Small edits and single-file fixes: do them inline.
 
 ## Key Invariants
 
@@ -61,8 +60,13 @@ Any persistence work must preserve these keys for backwards compatibility.
 
 ## Mutation Testing
 
-Per-feature, scoped to `packages/engine`. React component mutations are noise — exclude `packages/app`.
-Kill rate gate: 80%.
+Per-feature, scoped by module characteristic, not package boundary: pure, side-effect-free logic
+files are in scope wherever they live (`packages/engine` always; specific pure-logic files in
+`packages/renderer` or `packages/app` when they carry algorithmic logic worth verifying — e.g.
+`packages/app/src/url-encoding.ts`, `packages/renderer/src/geometry.ts`). React components,
+event-wiring/imperative-shell code, and browser-API-coupled classes (RAF loop, canvas context
+calls) are excluded regardless of package — mutating them is noise, not signal.
+Kill rate gate: 80%. See `docs/decisions/DR--20260724--process--mutation-testing-scope.md`.
 
 ## dependency-cruiser
 

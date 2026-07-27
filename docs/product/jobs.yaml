@@ -31,3 +31,25 @@ jobs:
     feature: share-url-compression
     validated: discuss-wave
     notes: JTBD skipped — motivation clear from user description
+
+  - id: navigate-diagram-viewport
+    story: >
+      When my causal loop diagram grows beyond what fits on one screen during a
+      live facilitation session, I want to pan and zoom the canvas smoothly and
+      always be able to snap back to a full, readable view, so I can keep
+      working with any part of the model and keep the group oriented without
+      ever pausing to reload the page.
+    journey: canvas-pan-zoom-navigation
+    validated: discuss-wave
+    notes: >
+      Single job covering three sub-motivations (pan / zoom / reset-to-fit) —
+      treated as one job, not three, because all three share the same Push
+      (canvas has no camera; off-screen or over/under-zoomed content becomes
+      unreachable) and the same core outcome (stay oriented without
+      interrupting the session). Opportunity scoring skipped: only one job
+      identified for this feature. Enables the existing explore-system-dynamics
+      job at larger diagram sizes; does not replace it. Full JTBD analysis
+      (job dimensions, four forces) in docs/feature/canvas-pan-zoom-navigation/
+      feature-delta.md — DISCUSS pre-authorized full JTBD per user selection
+      of "Full nWave DISCUSS", not derived from user interviews (no DISCOVER/
+      DIVERGE wave preceded this feature — flagged as a validation risk).

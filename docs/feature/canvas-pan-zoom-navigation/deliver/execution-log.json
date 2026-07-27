@@ -71,6 +71,48 @@
       "s": "EXECUTED",
       "d": "PASS",
       "t": "2026-07-24T14:23:24Z"
+    },
+    {
+      "sid": "01-03",
+      "p": "COMMIT",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-07-24T14:24:00Z"
+    },
+    {
+      "sid": "refactor-01",
+      "p": "RED",
+      "s": "SKIPPED",
+      "d": "NOT_APPLICABLE: refactor-only pass, no new behavior introduced",
+      "t": "2026-07-24T15:21:37Z"
+    },
+    {
+      "sid": "refactor-01",
+      "p": "GREEN",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-07-24T15:21:37Z"
+    },
+    {
+      "sid": "refactor-01",
+      "p": "COMMIT",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-07-27T11:03:09Z"
+    },
+    {
+      "sid": "refactor-01",
+      "p": "GREEN",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-07-27T11:03:56Z"
+    },
+    {
+      "sid": "refactor-01",
+      "p": "COMMIT",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-07-27T11:04:03Z"
     }
   ]
 }

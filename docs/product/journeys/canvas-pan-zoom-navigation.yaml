@@ -1,0 +1,5 @@
+name: canvas-pan-zoom-navigation
+job_ids:
+  - navigate-diagram-viewport
+source: docs/feature/canvas-pan-zoom-navigation/feature-delta.md
+status: discuss-complete

@@ -151,3 +151,104 @@ contracts:
       This is the architectural guarantee that makes the engine deployable
       in non-browser contexts and independently testable. Verified
       structurally via the package boundary, not by a KPI assertion test.
+
+  - id: KPI-07
+    name: Off-screen node reachability via pan
+    prd_ref: canvas-pan-zoom-navigation US-01
+    contract: >
+      A facilitator with a diagram larger than the visible viewport can
+      locate and interact with any off-screen node by dragging the canvas
+      background, without reloading the page or resizing the browser window.
+    threshold: 100% success rate (baseline 0% — impossible today, no camera exists)
+    gate: soft
+    measurement: >
+      Acceptance-test suite (AC-01a–AC-01e, DISTILL wave) verifies the
+      underlying capability. No automated usage telemetry — Swoopy is a
+      client-only app with no analytics/backend (DEVOPS Decision 5: deferred).
+      Supplemented by an occasional manual usability session (3–5
+      facilitators building a 15+ node diagram live), not continuous
+      monitoring.
+    current_tests:
+      - file: packages/app/src/canvas-pan-zoom.acceptance.test.tsx
+        describe: US-01 — pan gesture via the canvas driving port (AC-01a/c/d/e)
+        it: "@walking_skeleton dragging on empty canvas background shifts the viewport (AC-01a)"
+      - file: docs/scenarios/canvas-pan-zoom-navigation/acceptance.feature
+        describe: US-01 — Pan the canvas by dragging
+        it: Panning reveals nodes that were off-screen (@walking_skeleton @kpi)
+    notes: >
+      DEVOPS wave (2026-07-24) explicitly declined to add telemetry
+      instrumentation for this KPI — see
+      docs/feature/canvas-pan-zoom-navigation/feature-delta.md, Wave: DEVOPS,
+      Monitoring contracts. current_tests populated by DISTILL (2026-07-24) —
+      tests are RED scaffolds pending DELIVER (see distill/red-classification.md).
+      Usage-frequency portion of this KPI remains usability-session-only, not
+      automated.
+
+  - id: KPI-08
+    name: Zoom actions per session with zero hit-test regressions
+    prd_ref: canvas-pan-zoom-navigation US-02
+    contract: >
+      A facilitator working a dense diagram (15+ nodes) uses zoom at least
+      twice per session on average, with zero hit-testing errors (clicks
+      landing on the wrong node) at any zoom level in [0.5, 4].
+    threshold: >=2 zoom actions/session average; 0 hit-test errors (baseline N/A — zoom does not exist today)
+    gate: soft
+    measurement: >
+      Acceptance-test suite (AC-02a–AC-02e, DISTILL wave) verifies zoom
+      clamping, cursor-centering, and hit-test accuracy. Usage-frequency
+      portion of this KPI ("2 actions/session") is not automatically
+      measurable without telemetry (none exists, none added — DEVOPS
+      Decision 5); observed instead via manual usability session.
+    current_tests:
+      - file: packages/app/src/canvas-pan-zoom.acceptance.test.tsx
+        describe: US-02 — wheel gesture via the canvas driving port (AC-02a)
+        it: "mouse-wheel-desktop / trackpad-pinch-ctrl-wheel: wheel event over the canvas changes zoom"
+      - file: packages/app/src/canvas-pan-zoom.acceptance.test.tsx
+        describe: US-02 — zoom via the zoomAt driving port (AC-02a/b/e)
+        it: repeated zoom-in/zoom-out stops at the maximum/minimum bound (AC-02b)
+      - file: packages/renderer/src/geometry.test.ts
+        describe: zoomAtCursor — AC-02a cursor-centered zoom
+        it: "property: zoomAtCursor result is always within clamped zoom bounds (AC-02b)"
+    notes: >
+      Same telemetry-deferral rationale as KPI-07. The "0 hit-test errors"
+      half of this KPI IS acceptance-test-verifiable (AC-02d); the
+      "2 actions/session" half is not, and is explicitly usability-observed
+      only, not a CI gate. current_tests populated by DISTILL (2026-07-24) —
+      RED scaffolds pending DELIVER (see distill/red-classification.md).
+
+  - id: KPI-09
+    name: Reset View recovery in one action
+    prd_ref: canvas-pan-zoom-navigation US-03
+    contract: >
+      A facilitator who has panned or zoomed away from a readable view
+      recovers to a fully-visible, legible view of the whole diagram in
+      exactly one action (single click/keypress on Reset View), with no
+      page reload and no risk of state loss for transient (shared-URL)
+      models.
+    threshold: 1 action, 100% success (baseline: page reload only, risks state loss for transient models)
+    gate: soft
+    measurement: >
+      Acceptance-test suite (AC-03a–AC-03e, DISTILL wave) verifies
+      fit-to-content correctness including 0-node/1-node edge cases. Timing
+      ("one action") observed via manual usability session, not automated
+      telemetry (DEVOPS Decision 5: deferred).
+    current_tests:
+      - file: packages/app/src/canvas-pan-zoom.acceptance.test.tsx
+        describe: US-03 — reset view via the resetViewport driving port (AC-03a/b/c/d)
+        it: "resetViewport produces a finite, non-erroring viewport (empty/single/many diagrams)"
+      - file: packages/app/src/canvas-pan-zoom.acceptance.test.tsx
+        describe: US-03 — Reset View control on the Toolbar (AC-03b/e)
+        it: "Reset View control is discoverable — visibly labelled, always rendered (AC-03e)"
+      - file: packages/renderer/src/geometry.test.ts
+        describe: computeFitViewport — AC-03a/b/c reset-to-fit
+        it: "0/1/many-node fit-to-content examples + property tests"
+    notes: >
+      Same telemetry-deferral rationale as KPI-07/KPI-08. All three new
+      KPIs (07–09) are intentionally "soft" gates, consistent with this
+      file's existing gate classification for design constraints monitored
+      but not CI-blocking — no automated data-collection pipeline exists or
+      is planned for a client-only hobby app per the DEVOPS wave's explicit
+      Decision 5 (cost of telemetry/consent disproportionate to feature
+      scope). current_tests populated by DISTILL (2026-07-24) — RED scaffolds
+      pending DELIVER (see distill/red-classification.md). The 1-action
+      recovery timing itself remains usability-session-only.
