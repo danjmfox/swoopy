@@ -205,6 +205,19 @@ function unionBox(a: BoundingBox, b: BoundingBox): BoundingBox {
   };
 }
 
+/** Smallest box containing every box in the list, or null if the list is empty. */
+function unionAll(boxes: ReadonlyArray<BoundingBox>): BoundingBox | null {
+  return boxes.reduce<BoundingBox | null>(
+    (acc, box) => (acc === null ? box : unionBox(acc, box)),
+    null,
+  );
+}
+
+/** Square box centered on a point, padded by `padding` in every direction. */
+function pointBox(x: number, y: number, padding: number): BoundingBox {
+  return { minX: x - padding, maxX: x + padding, minY: y - padding, maxY: y + padding };
+}
+
 /**
  * Fit-to-content viewport: bounding box over all nodes (+ radius) and
  * annotations, guarded for degenerate (zero-extent) content. Zoom's lower
@@ -248,27 +261,16 @@ export function computeFitViewport(
   }));
 
   const extentBoxes: BoundingBox[] = [
-    ...nodes.map((n) => ({
-      minX: n.x - n.radius,
-      maxX: n.x + n.radius,
-      minY: n.y - n.radius,
-      maxY: n.y + n.radius,
-    })),
+    ...nodes.map((n) => pointBox(n.x, n.y, n.radius)),
     ...annotationBoxes,
   ];
 
   const positionBoxes: BoundingBox[] = [
-    ...nodes.map((n) => ({ minX: n.x, maxX: n.x, minY: n.y, maxY: n.y })),
+    ...nodes.map((n) => pointBox(n.x, n.y, 0)),
     ...annotationBoxes,
   ];
 
-  const union = (boxes: ReadonlyArray<BoundingBox>): BoundingBox | null =>
-    boxes.reduce<BoundingBox | null>(
-      (acc, box) => (acc === null ? box : unionBox(acc, box)),
-      null,
-    );
-
-  const extentBounds = union(extentBoxes);
+  const extentBounds = unionAll(extentBoxes);
   const hasExtent =
     extentBounds !== null &&
     extentBounds.maxX - extentBounds.minX > 0 &&
@@ -282,7 +284,7 @@ export function computeFitViewport(
   };
 
   const bounds = hasExtent ? extentBounds! : defaultBounds;
-  const centerBounds = hasExtent ? union(positionBoxes)! : defaultBounds;
+  const centerBounds = hasExtent ? unionAll(positionBoxes)! : defaultBounds;
 
   const boundsWidth = bounds.maxX - bounds.minX;
   const boundsHeight = bounds.maxY - bounds.minY;
