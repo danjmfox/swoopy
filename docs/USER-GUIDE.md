@@ -156,7 +156,7 @@ The chevron direction shows the accumulated effect through the causal chain. Whe
 
 | Control                              | Action                                                                    |
 | ------------------------------------ | ------------------------------------------------------------------------- |
-| ⏸ / ▶                                | Pause and resume the simulation                                           |
+| ⏸ / ▶                              | Pause and resume the simulation                                           |
 | ↺                                    | Reset all node values to their initial settings; clear all signals        |
 | Speed: `0.25×` `0.5×` `1×` `2×` `4×` | Compress or expand time — useful for observing slow delay effects quickly |
 
