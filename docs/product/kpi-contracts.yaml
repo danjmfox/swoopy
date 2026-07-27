@@ -235,13 +235,13 @@ contracts:
     current_tests:
       - file: packages/app/src/canvas-pan-zoom.acceptance.test.tsx
         describe: US-03 — reset view via the resetViewport driving port (AC-03a/b/c/d)
-        it: "resetViewport produces a finite, non-erroring viewport (empty/single/many diagrams)"
+        it: resetViewport produces a finite, non-erroring viewport (empty/single/many diagrams)
       - file: packages/app/src/canvas-pan-zoom.acceptance.test.tsx
         describe: US-03 — Reset View control on the Toolbar (AC-03b/e)
-        it: "Reset View control is discoverable — visibly labelled, always rendered (AC-03e)"
+        it: Reset View control is discoverable — visibly labelled, always rendered (AC-03e)
       - file: packages/renderer/src/geometry.test.ts
         describe: computeFitViewport — AC-03a/b/c reset-to-fit
-        it: "0/1/many-node fit-to-content examples + property tests"
+        it: 0/1/many-node fit-to-content examples + property tests
     notes: >
       Same telemetry-deferral rationale as KPI-07/KPI-08. All three new
       KPIs (07–09) are intentionally "soft" gates, consistent with this
