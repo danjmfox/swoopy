@@ -24,7 +24,7 @@ target_environments:
       Plain wheel events (deltaY only) drive zoomAtCursor per AC-02a.
     platform: [chromium, firefox, safari-desktop]
     preconditions:
-      - "wheel event dispatched without ctrlKey"
+      - wheel event dispatched without ctrlKey
     verified_by: >
       packages/renderer/src/geometry.test.ts (unit, jsdom-simulated
       WheelEvent) — jsdom simulates event dispatch but does not reproduce
@@ -57,10 +57,10 @@ target_environments:
       add-node gesture).
     platform: [chromium, firefox, safari-desktop]
     preconditions:
-      - "4px movement threshold gate evaluated on pointermove (ADR-003)"
-      - "existing Canvas.test.tsx pointerdown-only scenarios for add-node/
-         add-annotation/deselect gain a pointerup, since those actions now
-         commit on pointerup instead of pointerdown (ADR-003 Consequences)"
+      - 4px movement threshold gate evaluated on pointermove (ADR-003)
+      - existing Canvas.test.tsx pointerdown-only scenarios for add-node/
+        add-annotation/deselect gain a pointerup, since those actions now
+        commit on pointerup instead of pointerdown (ADR-003 Consequences)
     verified_by: >
       packages/app/src/Canvas.test.tsx (unit, jsdom PointerEvent simulation)
 
@@ -71,34 +71,36 @@ target_environments:
 # in feature-delta.md.
 
 coexistence_matrix:
-  - tool: lefthook (project-wide pre-commit: `pnpm test --run`)
+  - tool: "CI test matrix (pnpm test --run, no local pre-commit hook installed)"
     must_not_break: true
     note: >
-      New geometry.ts / Canvas.tsx / store.ts / Toolbar.tsx tests (once
-      written by acceptance-designer/software-crafter) run as part of the
-      existing workspace-wide `pnpm test --run` invocation. No new hook,
-      no new pre-commit stage — this feature adds test files, not tooling.
+      New geometry.ts / Canvas.tsx / store.ts / Toolbar.tsx tests run as part
+      of the existing workspace-wide `pnpm test --run` invocation in CI. No
+      new CI stage, no new dependency — this feature adds test files, not
+      tooling. No local pre-commit/pre-push git hook exists in this repo yet
+      (confirmed at DELIVER finalize); this note tracks CI, not a local hook.
 
 platform_coverage:
-  Desktop-Browsers: [Chromium (latest), Firefox (latest), Safari (latest, macOS)]
+  Desktop-Browsers:
+    [Chromium (latest), Firefox (latest), Safari (latest, macOS)]
   CI: [GitHub Actions ubuntu-latest — jsdom-simulated pointer/wheel events only]
   Excluded (out of scope): [mobile/touch, keyboard-only navigation]
 
 deployment_assumptions:
   - "Feature ships inside the same static bundle as the rest of packages/app
-     — no separate install/uninstall path exists or is needed."
+    — no separate install/uninstall path exists or is needed."
   - "GitHub Pages 'recreate' deploy (Decision 6) replaces the entire site
-     atomically on every merge to main — there is no gradual/canary rollout
-     for this or any Swoopy feature; this is a platform-given fact, not a
-     choice made for this feature specifically."
+    atomically on every merge to main — there is no gradual/canary rollout
+    for this or any Swoopy feature; this is a platform-given fact, not a
+    choice made for this feature specifically."
   - "No feature flag / gradual rollout mechanism exists or is being added —
-     every merge to main goes live to 100% of users simultaneously, matching
-     existing site behavior unchanged by this feature."
+    every merge to main goes live to 100% of users simultaneously, matching
+    existing site behavior unchanged by this feature."
   - "Viewport state (panX/panY/zoom) is session-only, never persisted
-     (DDD-7/D5) — a bad deploy cannot corrupt any stored user data; the
-     worst case is a page reload, which the feature's own Reset View +
-     error-path design already treats as an acceptable (if undesirable)
-     recovery path (US-03)."
+    (DDD-7/D5) — a bad deploy cannot corrupt any stored user data; the
+    worst case is a page reload, which the feature's own Reset View +
+    error-path design already treats as an acceptable (if undesirable)
+    recovery path (US-03)."
   - "Rollback = revert the merge commit on main; the existing 'recreate'
-     deploy replaces the live site with the prior build. No data migration,
-     no schema versioning, no persisted state to reconcile."
+    deploy replaces the live site with the prior build. No data migration,
+    no schema versioning, no persisted state to reconcile."

@@ -467,12 +467,8 @@ export function Canvas({ onMount }: CanvasProps = {}) {
     const NUDGE_PX = 8;
 
     function onKeyDown(e: KeyboardEvent) {
-      const {
-        focusedNodeId,
-        focusNextNode,
-        nudgeNode,
-        deleteNode,
-      } = useStore.getState();
+      const { focusedNodeId, focusNextNode, nudgeNode, deleteNode } =
+        useStore.getState();
       if (e.key === "Tab") {
         e.preventDefault();
         focusNextNode();

@@ -74,7 +74,9 @@ function buildDiagram(size: DiagramSize): Graph {
   return { ...emptyGraph, nodes, edges };
 }
 
-function resetStore(overrides: Partial<Parameters<typeof useStore.setState>[0]> = {}) {
+function resetStore(
+  overrides: Partial<Parameters<typeof useStore.setState>[0]> = {},
+) {
   useStore.setState({
     graph: buildDiagram(DiagramSize.Many),
     mode: "select",
@@ -194,7 +196,12 @@ describe("US-02 — wheel gesture via the canvas driving port (AC-02a)", () => {
     const canvas = container.querySelector("canvas")!;
     const before = useStore.getState().viewport.zoom;
 
-    fireEvent.wheel(canvas, { deltaY: -100, clientX: 300, clientY: 200, ...opts });
+    fireEvent.wheel(canvas, {
+      deltaY: -100,
+      clientX: 300,
+      clientY: 200,
+      ...opts,
+    });
 
     expect(useStore.getState().viewport.zoom).not.toBe(before);
   });
@@ -206,7 +213,10 @@ describe("US-03 — reset view via the resetViewport driving port (AC-03a/b/c/d)
   it.each([DiagramSize.Empty, DiagramSize.Single, DiagramSize.Many])(
     "resetViewport produces a finite, non-erroring viewport for a %s diagram (AC-03c)",
     (size) => {
-      resetStore({ graph: buildDiagram(size), viewport: { panX: 999, panY: -999, zoom: 3.7 } });
+      resetStore({
+        graph: buildDiagram(size),
+        viewport: { panX: 999, panY: -999, zoom: 3.7 },
+      });
       useStore.getState().resetViewport(800, 600);
       const { panX, panY, zoom } = useStore.getState().viewport;
       expect(Number.isFinite(panX)).toBe(true);

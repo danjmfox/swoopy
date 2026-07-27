@@ -1,9 +1,11 @@
 # ADR-005: Reset View's zoom floor is decoupled from manual zoom's ZOOM_MIN
 
 ## Status
+
 Accepted
 
 ## Context
+
 DDD-6 (DESIGN wave) specified that `computeFitViewport`'s computed zoom is passed through the
 same `clampZoom` function used by manual wheel-zoom (`ZOOM_MIN=0.5`, `ZOOM_MAX=4`), reasoning that
 "one shared zoom-validity invariant, applied everywhere zoom is set" was simpler than two.
@@ -18,6 +20,7 @@ bounds") generates node spreads up to 4000 units and correctly failed, proving t
 a test artifact.
 
 This is a genuine conflict between two acceptance criteria that DDD-6 implicitly assumed compatible:
+
 - **AC-03a** (Reset View correctness): every node must be visible after Reset View — an
   unconditional promise.
 - **AC-02b / ZOOM_MIN's actual purpose** (manual zoom legibility): 0.5× is a UX floor — DESIGN's own
@@ -27,19 +30,22 @@ This is a genuine conflict between two acceptance criteria that DDD-6 implicitly
   by giving Reset View the same floor as the mechanism it was meant to be the escape hatch for.
 
 ## Decision
+
 `computeFitViewport`'s zoom is clamped to its own dedicated range, not `clampZoom`'s
 `[ZOOM_MIN, ZOOM_MAX]`:
+
 - **Lower bound**: a small positive constant (`RESET_VIEW_ZOOM_FLOOR`, e.g. `0.001`) whose only job
   is preventing zero/negative/infinite scale (AC-03c) — not a legibility floor. Reset View may zoom
   out below manual zoom's 0.5× floor when content genuinely requires it to keep every node visible.
 - **Upper bound**: unchanged, still `ZOOM_MAX=4` — this direction never conflicts with AC-03a
-  (capping zoom-*in* only ever shows more area than the natural fit requires, never less), so
+  (capping zoom-_in_ only ever shows more area than the natural fit requires, never less), so
   reusing the existing ceiling is safe and requires no new reasoning.
 
 Manual wheel-zoom's `clampZoom`/`ZOOM_MIN=0.5` is unchanged — this ADR narrows DDD-6, it does not
 reopen DDD-5.
 
 ## Alternatives Considered
+
 1. **(Rejected — user's non-chosen option) Narrow the property test's node-spread generator** to a
    range the 0.5× floor can satisfy. Rejected: treats a real product gap (Reset View silently
    failing to show everything on a large, legitimately-buildable diagram) as a test artifact. The
@@ -51,6 +57,7 @@ reopen DDD-5.
    View's entire purpose is recovery from disorientation, not maintaining a legible zoom level.
 
 ## Consequences
+
 **Positive**: AC-03a holds unconditionally, matching its literal wording and the feature's Anxiety
 force (DISCUSS JTBD) — Reset View always works, full stop. No change to manual zoom's UX floor.
 
@@ -61,6 +68,7 @@ would immediately notice and address (e.g. by deleting stray far-flung nodes) ra
 steady-state working mode.
 
 ## Amends
+
 DDD-6 (`docs/feature/canvas-pan-zoom-navigation/design/wave-decisions.md`) — the "one shared
 zoom-validity invariant" simplification is superseded by this ADR for the lower bound only; upper
 bound sharing (`ZOOM_MAX`) is retained from DDD-6 unchanged.

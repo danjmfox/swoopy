@@ -27,16 +27,17 @@ conversation while building" — once a live session's diagram grew past what fi
 
 ## Steps Completed
 
-| Step | Name | Outcome |
-|------|------|---------|
-| 01-01 | Drag-to-pan viewport transform (walking skeleton) | PASS (commit `0c0c21e`) |
-| 01-02 | Wheel/trackpad-pinch zoom centered on cursor | PASS (commit `6e188c9`) |
-| 01-03 | Reset View — fit viewport to diagram content | PASS (commit `738af0d`), after one genuine mid-flight architecture escalation (see Issues below) |
-| refactor-01 | L1-L6 refactoring pass | PASS (commits `5943465`, `216d974` — two passes, both found real cleanup opportunities) |
+| Step        | Name                                              | Outcome                                                                                          |
+| ----------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 01-01       | Drag-to-pan viewport transform (walking skeleton) | PASS (commit `0c0c21e`)                                                                          |
+| 01-02       | Wheel/trackpad-pinch zoom centered on cursor      | PASS (commit `6e188c9`)                                                                          |
+| 01-03       | Reset View — fit viewport to diagram content      | PASS (commit `738af0d`), after one genuine mid-flight architecture escalation (see Issues below) |
+| refactor-01 | L1-L6 refactoring pass                            | PASS (commits `5943465`, `216d974` — two passes, both found real cleanup opportunities)          |
 
 ## Key Decisions
 
 ### DISCUSS
+
 - **D1–D6** (full list in `docs/feature/canvas-pan-zoom-navigation/discuss/wave-decisions.md`): one
   JTBD job (`navigate-diagram-viewport`) covering pan/zoom/reset as sub-motivations, not three
   separate jobs; no separate walking-skeleton phase (slice 1/pan serves as the thin end-to-end
@@ -46,6 +47,7 @@ conversation while building" — once a live session's diagram grew past what fi
   default, given the intent to exercise the whole pipeline deliberately.
 
 ### DESIGN
+
 - **DDD-1–DDD-8** (`design/wave-decisions.md`): single canvas-matrix transform
   (`ctx.translate`/`ctx.scale`) in `LoopyRenderer.draw()`, not per-shape coordinate rewriting
   (ADR-004); pan-vs-click discrimination via a 4px movement threshold with mode-action commit
@@ -55,8 +57,9 @@ conversation while building" — once a live session's diagram grew past what fi
   files.
 
 ### DEVOPS
+
 - Confirmed the existing GitHub Actions CI (`lint → typecheck → test → dependency-review → build →
-  sbom → deploy`) needed **zero changes** — later verified empirically, not just assumed.
+sbom → deploy`) needed **zero changes** — later verified empirically, not just assumed.
 - KPI instrumentation explicitly **deferred** (user's choice) — client-only hobby app, no backend;
   acceptance tests + occasional manual usability sessions substitute for telemetry.
 - Surfaced and resolved a real gap in the project's mutation-testing policy: `packages/renderer`
@@ -66,8 +69,9 @@ conversation while building" — once a live session's diagram grew past what fi
   already-existing but previously-undocumented practice (`url-encoding.ts`).
 
 ### DISTILL
+
 - 18 Gherkin scenarios authored as documentation SSOT (`docs/scenarios/canvas-pan-zoom-navigation/
-  acceptance.feature`), executed as hand-written Vitest tests — no Cucumber/pytest-bdd dependency,
+acceptance.feature`), executed as hand-written Vitest tests — no Cucumber/pytest-bdd dependency,
   following this repo's established `share-url-compression` precedent.
 - RED scaffolds created for all 5 new geometry functions and 3 new store actions; 34/34 classified
   genuinely RED (thrown scaffold errors), zero BROKEN.
@@ -76,6 +80,7 @@ conversation while building" — once a live session's diagram grew past what fi
   as documented DELIVER plan) — zero blockers.
 
 ### DELIVER
+
 - **ADR-005** (new): Reset View's zoom floor is decoupled from manual zoom's `ZOOM_MIN=0.5`,
   amending DDD-6. Surfaced by a property test correctly proving the shared-floor design was
   mathematically incompatible with AC-03a ("every node fully visible") for diagrams spread wider
@@ -83,18 +88,20 @@ conversation while building" — once a live session's diagram grew past what fi
   View its own near-zero floor, guarding only against zero/negative/infinite) rather than narrow
   the test's input space — the crafter's own recommended path, and the substantively correct one
   since Reset View's entire purpose is the "see everything" escape hatch manual zoom was
-  deliberately *not* designed to be.
+  deliberately _not_ designed to be.
 
 ## Issues Encountered
 
 ### Local `nwave-ai` toolchain partially broken
+
 Three separate tooling gaps surfaced across this feature's delivery, none blocking the actual work
 but all worth fixing:
+
 1. `drctl` is not installed at all — decision records were hand-authored matching the existing
    `docs/decisions/DR--*.md` template instead.
 2. `nwave-ai outcomes register` fails on every attempt with a tool-internal bug (bad `schema.json`
    path resolution against the installed package). The outcomes registry (`docs/product/
-   outcomes/registry.yaml`) stayed empty for this feature's new typed contracts — flagged, not
+outcomes/registry.yaml`) stayed empty for this feature's new typed contracts — flagged, not
    silently skipped. Per explicit user direction, not pursued further this session.
 3. `des-init-log`/`des-log-phase`/`des-commit`/`des-verify-integrity`/`des-roadmap` all failed via
    the default `PATH` (`~/.local/bin/*`, missing the `des` Python module and a broken `uv` cache).
@@ -105,6 +112,7 @@ but all worth fixing:
    project-wide.
 
 ### Genuine architecture-vs-test conflict at step 01-03 (handled correctly, not a process failure)
+
 The crafter found — via a property test that generates realistic large node-position spreads — that
 routing `computeFitViewport`'s zoom through the shared `clampZoom`/`ZOOM_MIN` floor makes AC-03a
 ("every node fully visible") mathematically unsatisfiable for sufficiently spread diagrams. Rather
@@ -115,11 +123,11 @@ issue to prevent recurring.
 
 ## Test Coverage
 
-| File | Tests | Type |
-|------|-------|------|
-| `packages/renderer/src/geometry.test.ts` | 18 (incl. fast-check PBT for all 5 new functions) | Unit/property |
-| `packages/app/src/canvas-pan-zoom.acceptance.test.tsx` | ~19 | Acceptance (driving-port, jsdom `fireEvent`) |
-| `packages/app/src/Canvas.test.tsx` | 89 (4 modified per ADR-003) | Integration |
+| File                                                   | Tests                                             | Type                                         |
+| ------------------------------------------------------ | ------------------------------------------------- | -------------------------------------------- |
+| `packages/renderer/src/geometry.test.ts`               | 18 (incl. fast-check PBT for all 5 new functions) | Unit/property                                |
+| `packages/app/src/canvas-pan-zoom.acceptance.test.tsx` | ~19                                               | Acceptance (driving-port, jsdom `fireEvent`) |
+| `packages/app/src/Canvas.test.tsx`                     | 89 (4 modified per ADR-003)                       | Integration                                  |
 
 Full workspace suite: 38 files, **635 passed, 6 skipped, 0 failed**, `pnpm typecheck` clean
 (2026-07-27T15:24Z). Zero regressions against the pre-feature 601-test baseline.
@@ -130,15 +138,15 @@ demo evidence (`feature-delta.md`'s DELIVER section), zero console errors.
 
 ## Quality Gates
 
-| Gate | Outcome |
-|------|---------|
-| Roadmap review | Approved, 0 findings |
-| Per-step TDD (RED/GREEN/COMMIT) | All 3 steps PASS; step 01-03 includes 2 honest GREEN/FAIL entries during genuine escalation |
-| Post-merge integration gate | PASS — full suite green, all 3 Elevator Pitch demos verified live in browser |
-| Refactor (L1-L6) | Two passes, both found genuine cleanup (helper extraction in `computeFitViewport`) |
-| Adversarial review (full 4-reviewer DISTILL gate + Phase 4 DELIVER code review) | All APPROVED or CONDITIONALLY_APPROVED; DELIVER code review: APPROVED, zero Testing Theater patterns, all 3 ADRs verified compliant against actual committed code |
-| Mutation testing | Deferred — project rigor profile runs this on-demand via `/nw-mutation-test`, not a DELIVER-blocking gate (per DR--20260724, `packages/renderer/src/geometry.ts` is now in scope for when it runs) |
-| Integrity verification | `des-verify-integrity` — all 3 steps complete DES traces, exit 0 |
+| Gate                                                                            | Outcome                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Roadmap review                                                                  | Approved, 0 findings                                                                                                                                                                               |
+| Per-step TDD (RED/GREEN/COMMIT)                                                 | All 3 steps PASS; step 01-03 includes 2 honest GREEN/FAIL entries during genuine escalation                                                                                                        |
+| Post-merge integration gate                                                     | PASS — full suite green, all 3 Elevator Pitch demos verified live in browser                                                                                                                       |
+| Refactor (L1-L6)                                                                | Two passes, both found genuine cleanup (helper extraction in `computeFitViewport`)                                                                                                                 |
+| Adversarial review (full 4-reviewer DISTILL gate + Phase 4 DELIVER code review) | All APPROVED or CONDITIONALLY_APPROVED; DELIVER code review: APPROVED, zero Testing Theater patterns, all 3 ADRs verified compliant against actual committed code                                  |
+| Mutation testing                                                                | Deferred — project rigor profile runs this on-demand via `/nw-mutation-test`, not a DELIVER-blocking gate (per DR--20260724, `packages/renderer/src/geometry.ts` is now in scope for when it runs) |
+| Integrity verification                                                          | `des-verify-integrity` — all 3 steps complete DES traces, exit 0                                                                                                                                   |
 
 ## Lessons Learned
 
@@ -169,15 +177,15 @@ No migration needed — this repo uses the lean v3.14 single-file `feature-delta
 throughout, and every wave already wrote its lasting artifacts directly to their permanent SSOT
 location as it went, not to a temporary path requiring a finalize-time move.
 
-| Artifact | Location |
-|----------|----------|
-| Architecture brief (Application Architecture section) | `docs/product/architecture/brief.md` |
-| ADR-003 (pan-vs-click discrimination) | `docs/product/architecture/adr-003-pan-drag-vs-click-discrimination.md` |
-| ADR-004 (viewport transform mechanism) | `docs/product/architecture/adr-004-viewport-transform-mechanism.md` |
-| ADR-005 (Reset View zoom-floor decoupling) | `docs/product/architecture/adr-005-reset-view-zoom-floor-decoupled.md` |
-| DR (mutation-testing scope) | `docs/decisions/DR--20260724--process--mutation-testing-scope.md` |
-| Job story + journey | `docs/product/jobs.yaml`, `docs/product/journeys/canvas-pan-zoom-navigation.yaml` |
-| KPI contracts (KPI-07/08/09) | `docs/product/kpi-contracts.yaml` |
-| Gherkin scenario SSOT | `docs/scenarios/canvas-pan-zoom-navigation/acceptance.feature` |
-| Full wave narrative (all 5 waves) | `docs/feature/canvas-pan-zoom-navigation/feature-delta.md` (retained in place — feature directory preserved per finalize Phase C) |
-| Slice briefs, wave-decisions, environments.yaml, red-classification.md | Retained in `docs/feature/canvas-pan-zoom-navigation/{slices,discuss,design,devops,distill}/` |
+| Artifact                                                               | Location                                                                                                                          |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Architecture brief (Application Architecture section)                  | `docs/product/architecture/brief.md`                                                                                              |
+| ADR-003 (pan-vs-click discrimination)                                  | `docs/product/architecture/adr-003-pan-drag-vs-click-discrimination.md`                                                           |
+| ADR-004 (viewport transform mechanism)                                 | `docs/product/architecture/adr-004-viewport-transform-mechanism.md`                                                               |
+| ADR-005 (Reset View zoom-floor decoupling)                             | `docs/product/architecture/adr-005-reset-view-zoom-floor-decoupled.md`                                                            |
+| DR (mutation-testing scope)                                            | `docs/decisions/DR--20260724--process--mutation-testing-scope.md`                                                                 |
+| Job story + journey                                                    | `docs/product/jobs.yaml`, `docs/product/journeys/canvas-pan-zoom-navigation.yaml`                                                 |
+| KPI contracts (KPI-07/08/09)                                           | `docs/product/kpi-contracts.yaml`                                                                                                 |
+| Gherkin scenario SSOT                                                  | `docs/scenarios/canvas-pan-zoom-navigation/acceptance.feature`                                                                    |
+| Full wave narrative (all 5 waves)                                      | `docs/feature/canvas-pan-zoom-navigation/feature-delta.md` (retained in place — feature directory preserved per finalize Phase C) |
+| Slice briefs, wave-decisions, environments.yaml, red-classification.md | Retained in `docs/feature/canvas-pan-zoom-navigation/{slices,discuss,design,devops,distill}/`                                     |

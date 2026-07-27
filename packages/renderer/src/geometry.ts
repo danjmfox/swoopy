@@ -215,7 +215,12 @@ function unionAll(boxes: ReadonlyArray<BoundingBox>): BoundingBox | null {
 
 /** Square box centered on a point, padded by `padding` in every direction. */
 function pointBox(x: number, y: number, padding: number): BoundingBox {
-  return { minX: x - padding, maxX: x + padding, minY: y - padding, maxY: y + padding };
+  return {
+    minX: x - padding,
+    maxX: x + padding,
+    minY: y - padding,
+    maxY: y + padding,
+  };
 }
 
 /**

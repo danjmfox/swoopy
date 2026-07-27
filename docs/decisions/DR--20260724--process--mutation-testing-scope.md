@@ -32,11 +32,11 @@ scoping gap rather than silently deciding it.
 
 ## ⚖️ Options Considered
 
-| Option | Description | Outcome | Rationale |
-| --- | --- | --- | --- |
-| A | Literal reading: mutation testing stays `packages/engine`-only; `geometry.ts` never mutated | Rejected | Contradicts existing precedent (`url-encoding.ts` already mutated); would leave the highest-risk new pure logic (viewport transform math, whose correctness gates hit-testing accuracy) unverified |
-| B | Blanket-include all of `packages/renderer` | Rejected | Renderer also contains browser-coupled, non-pure code (`LoopyRenderer.ts`'s RAF loop, live `ctx` drawing) — mutating it is the same kind of noise the original policy excluded `packages/app`'s React components for |
-| C | **(Chosen)** Scope by module characteristic — pure, side-effect-free logic files, wherever they live — not by package boundary | **Accepted** | Matches actual practice already in place; closes the ambiguity without inventing a new rule, just naming the rule already being followed |
+| Option | Description                                                                                                                    | Outcome      | Rationale                                                                                                                                                                                                            |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A      | Literal reading: mutation testing stays `packages/engine`-only; `geometry.ts` never mutated                                    | Rejected     | Contradicts existing precedent (`url-encoding.ts` already mutated); would leave the highest-risk new pure logic (viewport transform math, whose correctness gates hit-testing accuracy) unverified                   |
+| B      | Blanket-include all of `packages/renderer`                                                                                     | Rejected     | Renderer also contains browser-coupled, non-pure code (`LoopyRenderer.ts`'s RAF loop, live `ctx` drawing) — mutating it is the same kind of noise the original policy excluded `packages/app`'s React components for |
+| C      | **(Chosen)** Scope by module characteristic — pure, side-effect-free logic files, wherever they live — not by package boundary | **Accepted** | Matches actual practice already in place; closes the ambiguity without inventing a new rule, just naming the rule already being followed                                                                             |
 
 ## 🧠 Decision
 
@@ -49,7 +49,7 @@ excluded regardless of package, since mutating them produces noise rather than s
 quality.
 
 Kill rate gate remains 80%, unchanged. Per-feature, on-demand invocation via `/nw-mutation-test`
-remains unchanged — this decision only resolves *which files* a feature's mutation run should
+remains unchanged — this decision only resolves _which files_ a feature's mutation run should
 target, not when or whether to run it.
 
 ## 🪶 Principles

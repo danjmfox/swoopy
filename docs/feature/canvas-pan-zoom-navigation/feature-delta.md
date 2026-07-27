@@ -57,8 +57,8 @@ URL on a laptop.
 
 ### [WHY] JTBD Full Analysis (pre-authorized expansion — Phase 1)
 
-*Rendered because the user explicitly selected "Full nWave DISCUSS" for JTBD on this feature —
-not because an `ask-intelligent` trigger fired. No other Tier-2 section is expanded.*
+_Rendered because the user explicitly selected "Full nWave DISCUSS" for JTBD on this feature —
+not because an `ask-intelligent` trigger fired. No other Tier-2 section is expanded._
 
 #### Job Story
 
@@ -71,27 +71,27 @@ Job ID: `navigate-diagram-viewport` (added to `docs/product/jobs.yaml`).
 
 #### Job Dimensions
 
-| Dimension | Description |
-|---|---|
-| **Functional** | Move the viewport and adjust zoom level to bring any node or region into view, without altering the underlying model data. |
-| **Emotional** | Feel in control and unhurried while manipulating the view in front of a live audience — never fumbling, never visibly "lost." |
-| **Social** | Appear fluent and competent to the group being facilitated. A facilitator who visibly struggles with the canvas ("hold on, let me reload...") undermines their own credibility mid-session. |
+| Dimension      | Description                                                                                                                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Functional** | Move the viewport and adjust zoom level to bring any node or region into view, without altering the underlying model data.                                                                  |
+| **Emotional**  | Feel in control and unhurried while manipulating the view in front of a live audience — never fumbling, never visibly "lost."                                                               |
+| **Social**     | Appear fluent and competent to the group being facilitated. A facilitator who visibly struggles with the canvas ("hold on, let me reload...") undermines their own credibility mid-session. |
 
 #### Four Forces
 
-| Force | Description |
-|---|---|
-| **Push** | The canvas has no camera today — it renders the full graph at a single fixed scale in a single fixed position. A diagram that grows past ~12 nodes, or a shared model built on a wider monitor, can place nodes outside the visible canvas with no way to reach them short of resizing the browser window or reloading. |
-| **Pull** | A smooth, familiar drag-to-pan / scroll-to-zoom interaction (Miro, Figma, Google Maps) that requires zero training and "just works" the first time, in real time, without breaking the facilitator's flow. |
-| **Anxiety** | "What if I pan or zoom too far and can't find my way back to a readable view?" — fear of getting the canvas into an unrecoverable, disoriented state in front of the group mid-session. |
-| **Habit** | Facilitators already carry Miro/Figma/Maps muscle memory — they will instinctively try dragging the background and scrolling the wheel before reading any instructions. The habit to honor is "this behaves like every other canvas tool I already know." The habit to *break* is today's silent no-op: dragging the background or scrolling currently does nothing at all. |
+| Force       | Description                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Push**    | The canvas has no camera today — it renders the full graph at a single fixed scale in a single fixed position. A diagram that grows past ~12 nodes, or a shared model built on a wider monitor, can place nodes outside the visible canvas with no way to reach them short of resizing the browser window or reloading.                                                     |
+| **Pull**    | A smooth, familiar drag-to-pan / scroll-to-zoom interaction (Miro, Figma, Google Maps) that requires zero training and "just works" the first time, in real time, without breaking the facilitator's flow.                                                                                                                                                                  |
+| **Anxiety** | "What if I pan or zoom too far and can't find my way back to a readable view?" — fear of getting the canvas into an unrecoverable, disoriented state in front of the group mid-session.                                                                                                                                                                                     |
+| **Habit**   | Facilitators already carry Miro/Figma/Maps muscle memory — they will instinctively try dragging the background and scrolling the wheel before reading any instructions. The habit to honor is "this behaves like every other canvas tool I already know." The habit to _break_ is today's silent no-op: dragging the background or scrolling currently does nothing at all. |
 
 #### One-Job Decision (opportunity scoring skipped)
 
-Pan, zoom, and reset-to-fit were evaluated as candidate *separate* jobs (per task framing) and
+Pan, zoom, and reset-to-fit were evaluated as candidate _separate_ jobs (per task framing) and
 judged to be **one job with three sub-motivations**, not three jobs: all three share the identical
 Push (no camera → unreachable content) and the identical desired outcome (stay oriented without
-interrupting the session). They differ only in *when* they're invoked (content off-screen → pan;
+interrupting the session). They differ only in _when_ they're invoked (content off-screen → pan;
 need more/less detail → zoom; feeling lost → reset), not in underlying motivation. Opportunity
 scoring (importance × satisfaction-gap ranking) is skipped because it requires **multiple**
 distinct jobs to rank against each other — with one job identified, the "opportunity" is simply:
@@ -99,14 +99,14 @@ maximal importance (blocks the primary `explore-system-dynamics` job at realisti
 × maximal satisfaction gap (0% — the capability does not exist today).
 
 This job does not replace or duplicate `explore-system-dynamics` (build-and-run-model journey) —
-it is an *enabling* capability for that job once diagrams grow past what fits in one viewport.
+it is an _enabling_ capability for that job once diagrams grow past what fits in one viewport.
 
 #### JTBD-to-Story Bridge
 
-| Sub-motivation | User Story | Job dimension emphasized |
-|---|---|---|
-| "I need to see content that's off-screen" | US-01 Pan the canvas | Functional |
-| "I need more/less detail without losing my place" | US-02 Zoom in/out | Functional + Emotional |
+| Sub-motivation                                          | User Story              | Job dimension emphasized                     |
+| ------------------------------------------------------- | ----------------------- | -------------------------------------------- |
+| "I need to see content that's off-screen"               | US-01 Pan the canvas    | Functional                                   |
+| "I need more/less detail without losing my place"       | US-02 Zoom in/out       | Functional + Emotional                       |
 | "I've lost my bearings — get me back to a working view" | US-03 Reset view to fit | Emotional (Anxiety force directly addressed) |
 
 ---
@@ -115,13 +115,13 @@ it is an *enabling* capability for that job once diagrams grow past what fits in
 
 Oversized-feature signals checked (any 2+ triggers the split gate):
 
-| Signal | Threshold | Actual | Triggered? |
-|---|---|---|---|
-| User stories | >10 | 3 | No |
-| Bounded contexts / modules | >3 | 2 (`packages/renderer`, `packages/app`) | No |
-| Walking skeleton integration points | >5 | 0 (no separate WS phase — see below) | No |
-| Estimated effort | >2 weeks | ~3 days (3 slices × ~1 day) | No |
-| Independently shippable outcomes | multiple | 0 — zoom and reset both depend on pan's shared transform; none of the three ships value alone as a separate product decision | No |
+| Signal                              | Threshold | Actual                                                                                                                       | Triggered? |
+| ----------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| User stories                        | >10       | 3                                                                                                                            | No         |
+| Bounded contexts / modules          | >3        | 2 (`packages/renderer`, `packages/app`)                                                                                      | No         |
+| Walking skeleton integration points | >5        | 0 (no separate WS phase — see below)                                                                                         | No         |
+| Estimated effort                    | >2 weeks  | ~3 days (3 slices × ~1 day)                                                                                                  | No         |
+| Independently shippable outcomes    | multiple  | 0 — zoom and reset both depend on pan's shared transform; none of the three ships value alone as a separate product decision | No         |
 
 **Scope Assessment: PASS — 3 stories, 2 bounded contexts, estimated 3 days.** No split proposed.
 
@@ -147,8 +147,8 @@ this feature carries.
    reset (slice 3) writes to the same viewport state via a bounding-box calculation. Neither
    introduces a new integration surface.
 3. `packages/renderer` and `packages/app/src/store.ts` are mature, tested, brownfield code (per
-   `docs/product/architecture/brief.md`) — the risk this feature adds is confined to *threading a
-   new transform through proven code*, not *proving new architectural layers connect at all* (the
+   `docs/product/architecture/brief.md`) — the risk this feature adds is confined to _threading a
+   new transform through proven code_, not _proving new architectural layers connect at all_ (the
    purpose a Walking Skeleton exists to serve). This matches the option "isolated enough to build
    directly" from the feature brief.
 4. **This is a flagged deviation, not a silent skip** (per project standing orders: "flag rather
@@ -167,12 +167,12 @@ Locked as **[D3]** in `discuss/wave-decisions.md`.
 per Discovery Methodology Phase 2): Priya expects the canvas background to behave like every other
 infinite-canvas tool she's used — drag empty space to move the "camera," scroll or pinch to zoom,
 and some standard way to "zoom to fit" everything back into frame. She does not expect dragging a
-*node* to pan the view (that already moves the node), and she does not expect clicking blank space
+_node_ to pan the view (that already moves the node), and she does not expect clicking blank space
 in "add node" mode to suddenly pan instead of placing a node.
 
 **Happy path (ASCII flow with emotional annotations):**
 
-```
+```text
 [Trigger]                  [Step 1: Pan]              [Step 2: Zoom]             [Step 3: Reset]            [Goal]
 Diagram grows past    -->  Drag empty canvas     -->  Scroll/pinch to        --> Click "Reset View"    --> Session continues
 visible viewport            background                adjust detail level                                  uninterrupted
@@ -204,10 +204,10 @@ section lean; see [REF] User Stories).
 
 ### [REF] Shared Artifacts Registry
 
-| Artifact | Source of truth | Consumers | Owner | Integration risk |
-|---|---|---|---|---|
-| `viewport` (`panX`, `panY`, `zoom`) | `packages/app/src/store.ts` (new state slice, exact shape a DESIGN decision) | Renderer `LoopyRenderer.draw()` (applies transform before drawing); `Canvas.tsx` pointer handlers (`onPointerDown/Move/Up`, wheel) — must convert screen→graph coordinates using current viewport before every existing `hitTest()` call; a new Reset View control (reads/writes) | `packages/app/src/store.ts` | **HIGH** — if the renderer's draw-time transform and Canvas.tsx's hit-test coordinate conversion ever diverge (e.g. one applies zoom, the other doesn't), every click hits the wrong node. This is the single most important integration point in the feature. Validated by: US-01 scenario 5, US-02 scenario 5 ("hit-testing remains accurate after panning / at any zoom level"). |
-| Node coordinates (`x`, `y` in graph/model space) | `Graph.nodes[].x/y` in `packages/engine` (unchanged by this feature) | Renderer draw (via transform), `hitTest` (via inverse transform), existing store mutations (`moveNode`, `nudgeNode` — unchanged) | `packages/engine` (`Graph` model) | **MEDIUM** — this feature must never write pan/zoom-adjusted coordinates back into `node.x/y`. Protected by AC-01b, AC-02e, AC-03d ("panning/zooming/reset never changes stored coordinates"). |
+| Artifact                                         | Source of truth                                                              | Consumers                                                                                                                                                                                                                                                                         | Owner                             | Integration risk                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `viewport` (`panX`, `panY`, `zoom`)              | `packages/app/src/store.ts` (new state slice, exact shape a DESIGN decision) | Renderer `LoopyRenderer.draw()` (applies transform before drawing); `Canvas.tsx` pointer handlers (`onPointerDown/Move/Up`, wheel) — must convert screen→graph coordinates using current viewport before every existing `hitTest()` call; a new Reset View control (reads/writes) | `packages/app/src/store.ts`       | **HIGH** — if the renderer's draw-time transform and Canvas.tsx's hit-test coordinate conversion ever diverge (e.g. one applies zoom, the other doesn't), every click hits the wrong node. This is the single most important integration point in the feature. Validated by: US-01 scenario 5, US-02 scenario 5 ("hit-testing remains accurate after panning / at any zoom level"). |
+| Node coordinates (`x`, `y` in graph/model space) | `Graph.nodes[].x/y` in `packages/engine` (unchanged by this feature)         | Renderer draw (via transform), `hitTest` (via inverse transform), existing store mutations (`moveNode`, `nudgeNode` — unchanged)                                                                                                                                                  | `packages/engine` (`Graph` model) | **MEDIUM** — this feature must never write pan/zoom-adjusted coordinates back into `node.x/y`. Protected by AC-01b, AC-02e, AC-03d ("panning/zooming/reset never changes stored coordinates").                                                                                                                                                                                      |
 
 Every `${variable}` above has one documented source and one owner — no artifact lacks a source.
 
@@ -235,29 +235,29 @@ rationale above).
 
 **Backbone** (3 activities, matching the JTBD sub-motivations):
 
-| Activity 1: See more of the diagram (Pan) | Activity 2: Adjust detail level (Zoom) | Activity 3: Recover a known-good view (Reset) |
-|---|---|---|
-| Drag empty background to shift viewport | Scroll/pinch to zoom, centered on cursor | Click/press Reset View to fit whole diagram |
+| Activity 1: See more of the diagram (Pan) | Activity 2: Adjust detail level (Zoom)   | Activity 3: Recover a known-good view (Reset) |
+| ----------------------------------------- | ---------------------------------------- | --------------------------------------------- |
+| Drag empty background to shift viewport   | Scroll/pinch to zoom, centered on cursor | Click/press Reset View to fit whole diagram   |
 
 **Walking skeleton**: none separate — see Walking Skeleton Decision above. Slice 1 (Pan) is the
 thin end-to-end proof; slices 2–3 build additively on the same viewport-state/transform.
 
 **Release 1 (only release — feature ships as one coherent increment):**
 Slice 01 (pan) → Slice 02 (zoom) → Slice 03 (reset). All three ship together as one feature
-release; splitting into separate *shipped* releases isn't meaningful here because pan alone
+release; splitting into separate _shipped_ releases isn't meaningful here because pan alone
 without zoom/reset leaves the Anxiety force (getting lost) unaddressed, and zoom alone without
-pan doesn't solve the off-screen-node problem. Sequencing below is about *build and learning*
+pan doesn't solve the off-screen-node problem. Sequencing below is about _build and learning_
 order, not staged release.
 
 ---
 
 ### [REF] Priority Rationale
 
-| Priority | Slice | Rationale |
-|---|---|---|
-| 1st | Slice 01 — Pan | Highest learning leverage: proves the shared transform threads through the mature render/hit-test stack (the one real architectural risk in this feature). If this fails cheaply here, every later slice is cheaper to fix. Also the most severe unaddressed pain today (off-screen content is completely unreachable). |
-| 2nd | Slice 02 — Zoom | Depends on slice 01's transform; second-highest value (lets Priya move between big-picture and detail view) and second-highest risk (zoom-toward-cursor math extends the transform). |
-| 3rd | Slice 03 — Reset | Lowest effort (no new gesture handling, reuses slices 01–02's viewport state) but addresses the strongest emotional force (Anxiety) — sequenced last only because it depends on the other two, not because it matters least. |
+| Priority | Slice            | Rationale                                                                                                                                                                                                                                                                                                               |
+| -------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1st      | Slice 01 — Pan   | Highest learning leverage: proves the shared transform threads through the mature render/hit-test stack (the one real architectural risk in this feature). If this fails cheaply here, every later slice is cheaper to fix. Also the most severe unaddressed pain today (off-screen content is completely unreachable). |
+| 2nd      | Slice 02 — Zoom  | Depends on slice 01's transform; second-highest value (lets Priya move between big-picture and detail view) and second-highest risk (zoom-toward-cursor math extends the transform).                                                                                                                                    |
+| 3rd      | Slice 03 — Reset | Lowest effort (no new gesture handling, reuses slices 01–02's viewport state) but addresses the strongest emotional force (Anxiety) — sequenced last only because it depends on the other two, not because it matters least.                                                                                            |
 
 Tie-breaking rule applied: Walking Skeleton > Riskiest Assumption > Highest Value — slice 01 wins
 on both riskiest-assumption and (in the absence of a separate skeleton) walking-skeleton grounds.
@@ -271,20 +271,24 @@ Every story below has `job_id: navigate-diagram-viewport`.
 #### US-01: Pan the canvas by dragging
 
 ##### Problem
+
 Priya Raman is a facilitator who is 15 minutes into a live systems-thinking session; her diagram
 has grown to 14 nodes and 3 of them now sit past the right edge of her visible canvas. She finds
 it impossible to reach those nodes — the canvas has no way to move the view, so her only
 workaround today is resizing her browser window, which disrupts her screen-share layout mid-call.
 
 ##### Who
+
 - Facilitator/coach running a live session with a growing diagram | Screen-sharing to a remote
   group | Motivated by never having to pause the conversation to fight the UI
 
 ##### Solution
+
 Dragging on an empty area of the canvas background shifts the visible viewport, bringing
 off-screen content into view, without moving any node in the underlying model.
 
 ##### Domain Examples
+
 1. **Happy path** — Priya Raman, mid-session with a 14-node diagram in "select" mode, has 3 nodes
    positioned right of her visible canvas. She presses and drags on empty background; the whole
    diagram shifts left under her cursor and the 3 hidden nodes come into view.
@@ -295,6 +299,7 @@ off-screen content into view, without moving any node in the underlying model.
    must pan the view without also creating an unwanted node as a side effect of the gesture.
 
 ##### Elevator Pitch
+
 Before: Priya cannot see nodes that have drifted past the edge of her screen — the canvas has no
 way to move the view, so an off-screen node is only reachable by resizing her browser window or
 reloading with a smaller diagram.
@@ -341,6 +346,7 @@ Scenario: Hit-testing remains accurate after panning
 ```
 
 ##### Acceptance Criteria
+
 - [ ] AC-01a: Dragging on empty canvas background moves the visible viewport in the drag
       direction; all nodes/edges/annotations shift together.
 - [ ] AC-01b: Panning never changes any node's, edge's, or annotation's stored coordinates in the
@@ -352,6 +358,7 @@ Scenario: Hit-testing remains accurate after panning
       each mode's existing click/drag behaviour.
 
 ##### Outcome KPIs
+
 - **Who**: facilitators running diagrams that exceed one screen (12+ nodes)
 - **Does what**: locate and interact with an off-screen node without reloading the page
 - **By how much**: 100% success rate (0% today — currently impossible without a page reload or
@@ -362,6 +369,7 @@ Scenario: Hit-testing remains accurate after panning
   today short of resizing the window
 
 ##### Technical Notes (Optional)
+
 - Viewport state lives in `packages/app/src/store.ts` (existing "all app state in store.ts"
   convention); coordinate transform math lives in `packages/renderer` (existing DR--20260327
   CSS-pixel-geometry ownership) — app must not duplicate transform math.
@@ -376,20 +384,24 @@ Scenario: Hit-testing remains accurate after panning
 #### US-02: Zoom in and out with wheel or pinch
 
 ##### Problem
+
 Priya Raman cannot see more or less detail on her canvas — it always renders at one fixed scale.
 A 14-node diagram either overflows her screen, or if she zooms her whole browser to compensate,
 every label becomes too small to read on a screen-share.
 
 ##### Who
+
 - Facilitator/coach who needs to move between a big-picture recap for the group and detailed
   editing of a dense cluster | Motivated by staying at a legible zoom level throughout a live
   session
 
 ##### Solution
+
 Scrolling the mouse wheel, or pinching on a trackpad, changes the zoom level centered on the
 cursor position, within clamped minimum/maximum bounds.
 
 ##### Domain Examples
+
 1. **Happy path** — Priya scrolls the wheel up while hovering over a cluster of 4 nodes; the view
    zooms in on that cluster without it drifting off-screen.
 2. **Edge case** — Devon pinches out on his trackpad to see the "big picture" of a 20-node diagram
@@ -398,6 +410,7 @@ cursor position, within clamped minimum/maximum bounds.
    continuing into unreadable or visually broken rendering.
 
 ##### Elevator Pitch
+
 Before: Priya cannot see more or less detail — the canvas always renders at a single fixed scale,
 so a 14-node diagram either overflows the screen or, if she zooms her whole browser, makes every
 label unreadably small.
@@ -442,6 +455,7 @@ Scenario: Hit-testing remains accurate at any zoom level
 ```
 
 ##### Acceptance Criteria
+
 - [ ] AC-02a: Scroll wheel / trackpad pinch changes zoom level, centered on cursor position.
 - [ ] AC-02b: Zoom is clamped to a minimum and maximum level; input beyond bounds has no further
       effect.
@@ -450,6 +464,7 @@ Scenario: Hit-testing remains accurate at any zoom level
 - [ ] AC-02e: Zooming never changes any node's, edge's, or annotation's stored coordinates.
 
 ##### Outcome KPIs
+
 - **Who**: facilitators working with dense diagrams (15+ nodes)
 - **Does what**: adjust zoom level to move between a big-picture recap and detailed editing within
   the same session
@@ -459,10 +474,11 @@ Scenario: Hit-testing remains accurate at any zoom level
 - **Baseline**: N/A — zoom does not exist today
 
 ##### Technical Notes (Optional)
+
 - Extends slice 01's transform helper with a scale factor — see slice learning hypothesis in
   `slices/slice-02-wheel-pinch-zoom.md`.
 - Zoom-toward-cursor requires converting the cursor's screen position to graph space using the
-  *current* (pre-zoom) transform, then re-deriving pan so that graph point stays fixed under the
+  _current_ (pre-zoom) transform, then re-deriving pan so that graph point stays fixed under the
   cursor after the scale changes — flagged as a known non-trivial formula for DESIGN, not
   prescribed here.
 - Open question forwarded to DESIGN: exact numeric zoom min/max bounds and per-wheel-tick
@@ -473,19 +489,23 @@ Scenario: Hit-testing remains accurate at any zoom level
 #### US-03: Reset view to fit the whole diagram
 
 ##### Problem
+
 Once Priya has panned or zoomed away from a readable view, her only way back to a known-good view
 of the whole diagram is trial-and-error dragging and scrolling, or reloading the page — which for
 a transient (shared-URL) model risks losing unsaved work.
 
 ##### Who
+
 - Facilitator/coach who has lost their bearings mid-session (zoomed too far out, or panned away
   chasing a node) | Motivated by recovering instantly, without pausing the group's conversation
 
 ##### Solution
+
 A single, always-visible "Reset View" control snaps the viewport to a view containing every node
 in the current diagram, fully visible and legible.
 
 ##### Domain Examples
+
 1. **Happy path** — Priya has zoomed out so far that all 14 nodes appear as unreadable dots; she
    clicks Reset View and the canvas snaps to a view where every node is fully visible and legible.
 2. **Edge case** — Devon panned far away chasing an off-screen node and lost track of where the
@@ -495,6 +515,7 @@ in the current diagram, fully visible and legible.
    breaks; the view returns to a sensible default rather than erroring.
 
 ##### Elevator Pitch
+
 Before: Once Priya has panned or zoomed away from a readable view, her only way back is
 trial-and-error dragging/scrolling, or reloading the page (which risks losing unsaved work on a
 transient shared model).
@@ -535,6 +556,7 @@ Scenario: Reset View is discoverable without prior instruction
 ```
 
 ##### Acceptance Criteria
+
 - [ ] AC-03a: Activating Reset View sets the viewport so every node is fully visible with legible
       labels (fit-to-content).
 - [ ] AC-03b: Reset View is always available (button and/or keyboard shortcut) regardless of
@@ -546,6 +568,7 @@ Scenario: Reset View is discoverable without prior instruction
       requiring documentation.
 
 ##### Outcome KPIs
+
 - **Who**: facilitators who have panned/zoomed away from a readable view (self-reported "lost"
   state during usability sessions)
 - **Does what**: recover to a fully-visible, readable view
@@ -557,6 +580,7 @@ Scenario: Reset View is discoverable without prior instruction
   (shared-URL) models
 
 ##### Technical Notes (Optional)
+
 - Fit-to-content requires a bounding box over all node positions (+ radius) and annotations;
   empty-diagram edge case needs a defined default (no bounding box possible) — left as a DESIGN
   decision (e.g. zoom = 1, pan = 0,0 when 0 nodes).
@@ -568,11 +592,11 @@ Scenario: Reset View is discoverable without prior instruction
 
 Per KPI-granularity rule (1–3 stories → one table suffices):
 
-| # | Who | Does What | By How Much | Baseline | Measured By | Type |
-|---|---|---|---|---|---|---|
-| 1 | Facilitators with diagrams >12 nodes | Locate/interact with an off-screen node without reloading | 100% success (0% today) | 0% — impossible today | Acceptance tests + usability session | Leading |
-| 2 | Facilitators with dense diagrams (15+ nodes) | Move between big-picture and detail zoom within a session | ≥2 zoom actions/session, 0 hit-test errors | N/A — zoom doesn't exist today | Acceptance tests + usability observation | Leading |
-| 3 | Facilitators who've lost orientation | Recover to a fully-visible view | 1 action, 100% success | Page reload only (risks state loss) | Acceptance tests + usability timing | Leading |
+| #   | Who                                          | Does What                                                 | By How Much                                | Baseline                            | Measured By                              | Type    |
+| --- | -------------------------------------------- | --------------------------------------------------------- | ------------------------------------------ | ----------------------------------- | ---------------------------------------- | ------- |
+| 1   | Facilitators with diagrams >12 nodes         | Locate/interact with an off-screen node without reloading | 100% success (0% today)                    | 0% — impossible today               | Acceptance tests + usability session     | Leading |
+| 2   | Facilitators with dense diagrams (15+ nodes) | Move between big-picture and detail zoom within a session | ≥2 zoom actions/session, 0 hit-test errors | N/A — zoom doesn't exist today      | Acceptance tests + usability observation | Leading |
+| 3   | Facilitators who've lost orientation         | Recover to a fully-visible view                           | 1 action, 100% success                     | Page reload only (risks state loss) | Acceptance tests + usability timing      | Leading |
 
 **North Star**: Facilitators can bring any node into a readable view in ≤2 pan/zoom/reset actions,
 regardless of diagram size or current viewport state.
@@ -602,51 +626,51 @@ size tested.
 
 #### Story: US-01 — Pan the canvas by dragging
 
-| DoR Item | Status | Evidence/Issue |
-|---|---|---|
-| Problem statement clear, domain language | PASS | "Priya Raman... 3 nodes now sit past the right edge... impossible to reach" |
-| User/persona with specific characteristics | PASS | Priya Raman, facilitator, 15 min into a live session, 14-node diagram |
-| 3+ domain examples with real data | PASS | Priya (happy path), Devon (edge case), Priya in add-node mode (boundary) |
-| UAT in Given/When/Then (3-7 scenarios) | PASS | 5 scenarios |
-| AC derived from UAT | PASS | AC-01a–e map 1:1 to scenario outcomes |
-| Right-sized (1-3 days, 3-7 scenarios) | PASS | 1 day estimate, 5 scenarios |
-| Technical notes: constraints/dependencies | PASS | Store/renderer boundary, mock convention, input-binding open question tracked |
-| Dependencies resolved or tracked | PASS | Depends on existing mature renderer/hitTest/store patterns (available); input-binding open question tracked, owner = DESIGN |
-| Outcome KPIs defined with measurable targets | PASS | 100% success target, 0% baseline, acceptance test + usability method |
+| DoR Item                                     | Status | Evidence/Issue                                                                                                              |
+| -------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Problem statement clear, domain language     | PASS   | "Priya Raman... 3 nodes now sit past the right edge... impossible to reach"                                                 |
+| User/persona with specific characteristics   | PASS   | Priya Raman, facilitator, 15 min into a live session, 14-node diagram                                                       |
+| 3+ domain examples with real data            | PASS   | Priya (happy path), Devon (edge case), Priya in add-node mode (boundary)                                                    |
+| UAT in Given/When/Then (3-7 scenarios)       | PASS   | 5 scenarios                                                                                                                 |
+| AC derived from UAT                          | PASS   | AC-01a–e map 1:1 to scenario outcomes                                                                                       |
+| Right-sized (1-3 days, 3-7 scenarios)        | PASS   | 1 day estimate, 5 scenarios                                                                                                 |
+| Technical notes: constraints/dependencies    | PASS   | Store/renderer boundary, mock convention, input-binding open question tracked                                               |
+| Dependencies resolved or tracked             | PASS   | Depends on existing mature renderer/hitTest/store patterns (available); input-binding open question tracked, owner = DESIGN |
+| Outcome KPIs defined with measurable targets | PASS   | 100% success target, 0% baseline, acceptance test + usability method                                                        |
 
-**DoR Status: PASSED**
+**DoR Status: PASSED.**
 
 #### Story: US-02 — Zoom in and out with wheel or pinch
 
-| DoR Item | Status | Evidence/Issue |
-|---|---|---|
-| Problem statement clear, domain language | PASS | "Priya cannot see more or less detail... every label unreadably small" |
-| User/persona with specific characteristics | PASS | Priya Raman, needs big-picture vs. detail view mid-session |
-| 3+ domain examples with real data | PASS | Priya (happy path), Devon (edge case), Priya at max zoom (boundary) |
-| UAT in Given/When/Then (3-7 scenarios) | PASS | 5 scenarios |
-| AC derived from UAT | PASS | AC-02a–e map 1:1 to scenario outcomes |
-| Right-sized (1-3 days, 3-7 scenarios) | PASS | 1 day estimate, 5 scenarios |
-| Technical notes: constraints/dependencies | PASS | Zoom-toward-cursor formula flagged, bounds open question tracked |
-| Dependencies resolved or tracked | PASS | Depends on slice 01 (tracked, sequenced first); zoom-bounds open question owned by DESIGN |
-| Outcome KPIs defined with measurable targets | PASS | ≥2 actions/session target, N/A baseline (feature doesn't exist), method defined |
+| DoR Item                                     | Status | Evidence/Issue                                                                            |
+| -------------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
+| Problem statement clear, domain language     | PASS   | "Priya cannot see more or less detail... every label unreadably small"                    |
+| User/persona with specific characteristics   | PASS   | Priya Raman, needs big-picture vs. detail view mid-session                                |
+| 3+ domain examples with real data            | PASS   | Priya (happy path), Devon (edge case), Priya at max zoom (boundary)                       |
+| UAT in Given/When/Then (3-7 scenarios)       | PASS   | 5 scenarios                                                                               |
+| AC derived from UAT                          | PASS   | AC-02a–e map 1:1 to scenario outcomes                                                     |
+| Right-sized (1-3 days, 3-7 scenarios)        | PASS   | 1 day estimate, 5 scenarios                                                               |
+| Technical notes: constraints/dependencies    | PASS   | Zoom-toward-cursor formula flagged, bounds open question tracked                          |
+| Dependencies resolved or tracked             | PASS   | Depends on slice 01 (tracked, sequenced first); zoom-bounds open question owned by DESIGN |
+| Outcome KPIs defined with measurable targets | PASS   | ≥2 actions/session target, N/A baseline (feature doesn't exist), method defined           |
 
-**DoR Status: PASSED**
+**DoR Status: PASSED.**
 
 #### Story: US-03 — Reset view to fit the whole diagram
 
-| DoR Item | Status | Evidence/Issue |
-|---|---|---|
-| Problem statement clear, domain language | PASS | "Priya's only way back... is trial-and-error... or reloading the page" |
-| User/persona with specific characteristics | PASS | Priya Raman, lost bearings mid-session |
-| 3+ domain examples with real data | PASS | Priya (happy path zoomed-out recovery), Devon (edge case panned-off recovery), Priya empty-diagram (boundary) |
-| UAT in Given/When/Then (3-7 scenarios) | PASS | 5 scenarios |
-| AC derived from UAT | PASS | AC-03a–e map 1:1 to scenario outcomes |
-| Right-sized (1-3 days, 3-7 scenarios) | PASS | 0.5–1 day estimate, 5 scenarios |
-| Technical notes: constraints/dependencies | PASS | Bounding-box calculation, empty-diagram default flagged as DESIGN decision |
-| Dependencies resolved or tracked | PASS | Depends on slices 01–02 (tracked, sequenced last); empty-diagram default open question owned by DESIGN |
-| Outcome KPIs defined with measurable targets | PASS | 1-action/100%-success target, page-reload baseline, method defined |
+| DoR Item                                     | Status | Evidence/Issue                                                                                                |
+| -------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| Problem statement clear, domain language     | PASS   | "Priya's only way back... is trial-and-error... or reloading the page"                                        |
+| User/persona with specific characteristics   | PASS   | Priya Raman, lost bearings mid-session                                                                        |
+| 3+ domain examples with real data            | PASS   | Priya (happy path zoomed-out recovery), Devon (edge case panned-off recovery), Priya empty-diagram (boundary) |
+| UAT in Given/When/Then (3-7 scenarios)       | PASS   | 5 scenarios                                                                                                   |
+| AC derived from UAT                          | PASS   | AC-03a–e map 1:1 to scenario outcomes                                                                         |
+| Right-sized (1-3 days, 3-7 scenarios)        | PASS   | 0.5–1 day estimate, 5 scenarios                                                                               |
+| Technical notes: constraints/dependencies    | PASS   | Bounding-box calculation, empty-diagram default flagged as DESIGN decision                                    |
+| Dependencies resolved or tracked             | PASS   | Depends on slices 01–02 (tracked, sequenced last); empty-diagram default open question owned by DESIGN        |
+| Outcome KPIs defined with measurable targets | PASS   | 1-action/100%-success target, page-reload baseline, method defined                                            |
 
-**DoR Status: PASSED**
+**DoR Status: PASSED.**
 
 **All 3 stories PASSED. No remediation required. Cleared for DESIGN wave handoff.**
 
@@ -767,14 +791,14 @@ Full summary lives in `docs/feature/canvas-pan-zoom-navigation/discuss/wave-deci
 
 ### [REF] Reuse Analysis
 
-| Existing Component | File | Overlap | Decision | Justification |
-| --- | --- | --- | --- | --- |
-| `geometry.ts` pure functions | `packages/renderer/src/geometry.ts` | Same "pure CSS-pixel geometry, renderer-owned" pattern | EXTEND | Add `screenToGraph`, `graphToScreen`, `clampZoom`, `zoomAtCursor`, `computeFitViewport`, `Viewport` type — same file, same ownership convention (D2) |
-| `hitTest(graph, x, y)` | `packages/renderer/src/hitTest.ts` | Consumes graph-space x/y, currently assumed equal to screen | NO CHANGE (fix at call site) | Callers convert via `screenToGraph` before calling; `hitTest` stays viewport-agnostic — smaller diff, no churn to an already-tested pure function |
-| `LoopyRenderer.draw()` | `packages/renderer/src/LoopyRenderer.ts` | Draws graph coordinates directly, DPR-only transform today | EXTEND | One `ctx.translate`/`ctx.scale` insertion after the DPR transform, before existing `drawXxx()` calls — zero changes to ~15 private draw methods (ADR-004) |
-| Ephemeral store-state pattern (`dragPosition`, `hoveredEdgeRegion`) | `packages/app/src/store.ts` | Precedent for non-persisted, non-undo-tracked state | EXTEND | Add `viewport` slice + `setViewportPan`/`zoomAt`/`resetViewport` actions, same pattern |
-| Pointer-handler drag-vs-click state machine (`hasDragged`, committed at `pointerup`) | `packages/app/src/Canvas.tsx` | Precedent for deferred-commit gesture discrimination | EXTEND | Extend the pattern to background gestures (ADR-003); add a genuinely new `wheel` listener (no prior precedent) |
-| Toolbar mode-button row | `packages/app/src/Toolbar.tsx` | Existing button/title/shortcut styling | EXTEND | Add a "Reset View" control, same `btn` style convention |
+| Existing Component                                                                   | File                                     | Overlap                                                     | Decision                     | Justification                                                                                                                                             |
+| ------------------------------------------------------------------------------------ | ---------------------------------------- | ----------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `geometry.ts` pure functions                                                         | `packages/renderer/src/geometry.ts`      | Same "pure CSS-pixel geometry, renderer-owned" pattern      | EXTEND                       | Add `screenToGraph`, `graphToScreen`, `clampZoom`, `zoomAtCursor`, `computeFitViewport`, `Viewport` type — same file, same ownership convention (D2)      |
+| `hitTest(graph, x, y)`                                                               | `packages/renderer/src/hitTest.ts`       | Consumes graph-space x/y, currently assumed equal to screen | NO CHANGE (fix at call site) | Callers convert via `screenToGraph` before calling; `hitTest` stays viewport-agnostic — smaller diff, no churn to an already-tested pure function         |
+| `LoopyRenderer.draw()`                                                               | `packages/renderer/src/LoopyRenderer.ts` | Draws graph coordinates directly, DPR-only transform today  | EXTEND                       | One `ctx.translate`/`ctx.scale` insertion after the DPR transform, before existing `drawXxx()` calls — zero changes to ~15 private draw methods (ADR-004) |
+| Ephemeral store-state pattern (`dragPosition`, `hoveredEdgeRegion`)                  | `packages/app/src/store.ts`              | Precedent for non-persisted, non-undo-tracked state         | EXTEND                       | Add `viewport` slice + `setViewportPan`/`zoomAt`/`resetViewport` actions, same pattern                                                                    |
+| Pointer-handler drag-vs-click state machine (`hasDragged`, committed at `pointerup`) | `packages/app/src/Canvas.tsx`            | Precedent for deferred-commit gesture discrimination        | EXTEND                       | Extend the pattern to background gestures (ADR-003); add a genuinely new `wheel` listener (no prior precedent)                                            |
+| Toolbar mode-button row                                                              | `packages/app/src/Toolbar.tsx`           | Existing button/title/shortcut styling                      | EXTEND                       | Add a "Reset View" control, same `btn` style convention                                                                                                   |
 
 No new file or module created. Full table with rationale also in
 `docs/feature/canvas-pan-zoom-navigation/design/wave-decisions.md`.
@@ -814,13 +838,13 @@ decomposable subsystem.
 Extends `docs/product/architecture/brief.md`'s driving-ports tables — full port table (signatures,
 contract shapes) lives there under the new `## Application Architecture` section. Summary:
 
-| Port | Owner | Contract shape |
-| --- | --- | --- |
-| `screenToGraph`, `graphToScreen`, `clampZoom`, `zoomAtCursor`, `computeFitViewport` | `packages/renderer/src/geometry.ts` | pure-function (return-only) |
-| `LoopyRenderer.draw(state)` — `RendererStore.viewport` (new read-only field) | `packages/renderer/src/LoopyRenderer.ts` | bounded-change (canvas pixels only; renderer stays write-free on the store) |
-| `hitTest(graph, x, y)` | `packages/renderer/src/hitTest.ts` | pure-function (return-only) — **unchanged signature** |
-| `viewport` state, `setViewportPan`, `zoomAt`, `resetViewport` | `packages/app/src/store.ts` | bounded-change: writes only `viewport`, never `graph.nodes[].x/y`; bypasses undo/persist entirely (D5) |
-| Pointer/wheel handlers, Reset View control | `packages/app/src/Canvas.tsx`, `Toolbar.tsx` | Driving surfaces — dispatch the above actions |
+| Port                                                                                | Owner                                        | Contract shape                                                                                         |
+| ----------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `screenToGraph`, `graphToScreen`, `clampZoom`, `zoomAtCursor`, `computeFitViewport` | `packages/renderer/src/geometry.ts`          | pure-function (return-only)                                                                            |
+| `LoopyRenderer.draw(state)` — `RendererStore.viewport` (new read-only field)        | `packages/renderer/src/LoopyRenderer.ts`     | bounded-change (canvas pixels only; renderer stays write-free on the store)                            |
+| `hitTest(graph, x, y)`                                                              | `packages/renderer/src/hitTest.ts`           | pure-function (return-only) — **unchanged signature**                                                  |
+| `viewport` state, `setViewportPan`, `zoomAt`, `resetViewport`                       | `packages/app/src/store.ts`                  | bounded-change: writes only `viewport`, never `graph.nodes[].x/y`; bypasses undo/persist entirely (D5) |
+| Pointer/wheel handlers, Reset View control                                          | `packages/app/src/Canvas.tsx`, `Toolbar.tsx` | Driving surfaces — dispatch the above actions                                                          |
 
 Driving port for zoom/pan is deliberately **not** exposed as a single read-write port: `zoomAt`
 and `setViewportPan` are separate write actions from any read access to `viewport` (plain state
@@ -895,7 +919,7 @@ end of DISTILL per project convention.
   `deploy` (main-only, `actions/deploy-pages`).
 - ⊘ `docs/feature/canvas-pan-zoom-navigation/discuss/outcome-kpis.md` as a standalone file — not
   found; the 3 outcome KPIs live inline in this file's `## Wave: DISCUSS` → `[REF] Outcome KPIs
-  (consolidated)` section instead. Read from there.
+(consolidated)` section instead. Read from there.
 
 No contradictions found between DESIGN architecture and DEVOPS infrastructure reality — this
 feature's brownfield, no-new-dependency, no-new-package posture (DESIGN's Technology Choices
@@ -924,7 +948,7 @@ Out of Scope list — not a silent omission.
 
 - `test` (matrix `[engine, renderer, app]`): once acceptance-designer/software-crafter write
   `geometry.test.ts` (new pure functions), the `renderer` leg (`pnpm --filter ./packages/renderer
-  test --coverage`) exercises them automatically — no new matrix entry needed, `packages/renderer`
+test --coverage`) exercises them automatically — no new matrix entry needed, `packages/renderer`
   is already a matrix member. Similarly, new/updated `Canvas.test.tsx`, `store.test.ts`,
   `Toolbar.test.tsx` assertions are picked up by the existing `app` leg.
 - Coverage upload (`actions/upload-artifact`, per-package `coverage-${{ matrix.package }}`):
@@ -972,6 +996,7 @@ undesirable) recovery path in US-03's own error-path design. Zero risk of state 
 failed deploy.
 
 **Rejected alternatives** (per Simplest Solution Check, principle 4):
+
 - **Canary/blue-green via a third-party static-hosting proxy or feature-flag service** — rejected:
   would be genuinely new tooling for a feature whose actual blast radius (a client-only pan/zoom
   transform, session-only state, guarded by existing acceptance tests) does not warrant it. No
@@ -1083,8 +1108,8 @@ review fires at end of DISTILL per project convention.
   exact mechanism decisions.
 - ⊘ No DISCOVER, SPIKE, or pre-existing walking skeleton — none found, no promotion to reconcile.
 - ✓ `packages/renderer/src/{geometry.ts,geometry.test.ts,hitTest.ts,LoopyRenderer.ts,
-  nodeLabelFont.ts}`, `packages/app/src/{store.ts,Canvas.tsx,Canvas.test.tsx,Toolbar.tsx,
-  Toolbar.test.tsx,seed.ts}` — read directly to ground scaffolds/tests in the real codebase
+nodeLabelFont.ts}`, `packages/app/src/{store.ts,Canvas.tsx,Canvas.test.tsx,Toolbar.tsx,
+Toolbar.test.tsx,seed.ts}` — read directly to ground scaffolds/tests in the real codebase
   (not designed in the abstract).
 
 ### [REF] Wave-Decision Reconciliation
@@ -1106,13 +1131,13 @@ boundary. Per the Architecture of Reference, every port in scope is either a **d
 adapter: direct, in-process function/store calls — no Testcontainers, no fakes needed, since
 nothing here is external or non-deterministic).
 
-| Port | Class | Treatment | Mechanism |
-|---|---|---|---|
-| Canvas `pointerdown/move/up`, `wheel` events | Driving | Real adapter | jsdom `fireEvent` on the rendered `<Canvas />` (`@testing-library/react`) |
-| "Reset View" click | Driving | Real adapter | jsdom `fireEvent.click` on the rendered `<Toolbar />` |
-| `screenToGraph`/`graphToScreen`/`clampZoom`/`zoomAtCursor`/`computeFitViewport` | Driven internal | Real adapter | Direct in-process function call (`packages/renderer/src/geometry.ts`) |
-| `viewport` state / `setViewportPan`/`zoomAt`/`resetViewport` | Driven internal | Real adapter | Direct in-process Zustand store call (`useStore.getState()`) — the store IS this app's composition root |
-| `LoopyRenderer.draw()` | Driven internal | Real adapter (not exercised by new tests — no new draw-path assertions in this DISTILL session; existing `LoopyRenderer.test.ts` unaffected, 50/50 passing) | n/a |
+| Port                                                                            | Class           | Treatment                                                                                                                                                   | Mechanism                                                                                               |
+| ------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Canvas `pointerdown/move/up`, `wheel` events                                    | Driving         | Real adapter                                                                                                                                                | jsdom `fireEvent` on the rendered `<Canvas />` (`@testing-library/react`)                               |
+| "Reset View" click                                                              | Driving         | Real adapter                                                                                                                                                | jsdom `fireEvent.click` on the rendered `<Toolbar />`                                                   |
+| `screenToGraph`/`graphToScreen`/`clampZoom`/`zoomAtCursor`/`computeFitViewport` | Driven internal | Real adapter                                                                                                                                                | Direct in-process function call (`packages/renderer/src/geometry.ts`)                                   |
+| `viewport` state / `setViewportPan`/`zoomAt`/`resetViewport`                    | Driven internal | Real adapter                                                                                                                                                | Direct in-process Zustand store call (`useStore.getState()`) — the store IS this app's composition root |
+| `LoopyRenderer.draw()`                                                          | Driven internal | Real adapter (not exercised by new tests — no new draw-path assertions in this DISTILL session; existing `LoopyRenderer.test.ts` unaffected, 50/50 passing) | n/a                                                                                                     |
 
 No port in this feature qualifies as "driven external / non-deterministic" (no clock, network,
 LLM, payment, or third-party API) — so no fake/stub mechanism is needed anywhere, and no entry
@@ -1122,15 +1147,15 @@ non-deterministic ports across its entire history — flagged, not silently skip
 
 ### [REF] Adapter coverage table (Mandate 6)
 
-| Adapter | `@real-io` scenario | Covered by |
-|---|---|---|
-| `screenToGraph`/`graphToScreen` | YES | `geometry.test.ts` — identity + roundtrip property |
-| `clampZoom` | YES | `geometry.test.ts` — 5 boundary examples + 2 property tests |
-| `zoomAtCursor` | YES | `geometry.test.ts` — cursor-fixed-point + clamp-bounds properties |
-| `computeFitViewport` | YES | `geometry.test.ts` — 0/1/N-node examples + 2 property tests |
-| `useStore` viewport actions (`setViewportPan`/`zoomAt`/`resetViewport`) | YES | `canvas-pan-zoom.acceptance.test.tsx` — direct store-driving-port calls |
-| Canvas pointer/wheel driving port | YES | `canvas-pan-zoom.acceptance.test.tsx` — real jsdom `fireEvent` on rendered `<Canvas />` |
-| Toolbar Reset View driving port | YES | `canvas-pan-zoom.acceptance.test.tsx` — real jsdom render of `<Toolbar />` |
+| Adapter                                                                 | `@real-io` scenario | Covered by                                                                              |
+| ----------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------- |
+| `screenToGraph`/`graphToScreen`                                         | YES                 | `geometry.test.ts` — identity + roundtrip property                                      |
+| `clampZoom`                                                             | YES                 | `geometry.test.ts` — 5 boundary examples + 2 property tests                             |
+| `zoomAtCursor`                                                          | YES                 | `geometry.test.ts` — cursor-fixed-point + clamp-bounds properties                       |
+| `computeFitViewport`                                                    | YES                 | `geometry.test.ts` — 0/1/N-node examples + 2 property tests                             |
+| `useStore` viewport actions (`setViewportPan`/`zoomAt`/`resetViewport`) | YES                 | `canvas-pan-zoom.acceptance.test.tsx` — direct store-driving-port calls                 |
+| Canvas pointer/wheel driving port                                       | YES                 | `canvas-pan-zoom.acceptance.test.tsx` — real jsdom `fireEvent` on rendered `<Canvas />` |
+| Toolbar Reset View driving port                                         | YES                 | `canvas-pan-zoom.acceptance.test.tsx` — real jsdom render of `<Toolbar />`              |
 
 Zero "NO — MISSING" rows: every driven adapter in this feature's scope has at least one
 `@real-io` scenario.
@@ -1142,26 +1167,26 @@ DISCUSS-authored UAT + 3 pure-function property scenarios). 1 walking skeleton (
 instruction — exactly one). Tier A only (no Tier B — 3 short chained journeys, not ≥3-scenario
 domain-rich input space per Mandate 10's skip condition).
 
-| # | Scenario | Tags |
-|---|---|---|
-| 1 | Panning reveals nodes that were off-screen | `@walking_skeleton @real-io @US-01 @contract-shape:bounded-change @kpi` |
-| 2 | Panning does not alter the model | `@real-io @US-01 @contract-shape:unbounded-preservation` |
-| 3 | Node dragging still works after panning | `@real-io @US-01 @contract-shape:bounded-change` |
-| 4 | Panning does not trigger mode-specific background actions | `@real-io @US-01 @contract-shape:bounded-change` |
-| 5 | Hit-testing remains accurate after panning | `@real-io @US-01 @contract-shape:bounded-change @kpi` |
-| 6 | Zooming in centers on the cursor | `@real-io @US-02 @contract-shape:bounded-change @kpi` |
-| 7 | Zooming out reveals the whole structure | `@real-io @US-02 @contract-shape:bounded-change` |
-| 8 | Zoom has a maximum limit | `@real-io @US-02 @contract-shape:bounded-change @property` |
-| 9 | Zoom has a minimum limit | `@real-io @US-02 @contract-shape:bounded-change @property` |
-| 10 | Hit-testing remains accurate at any zoom level | `@real-io @US-02 @contract-shape:bounded-change @kpi` |
-| 11 | Reset View recovers from zooming out too far | `@real-io @US-03 @contract-shape:bounded-change @kpi` |
-| 12 | Reset View recovers a node panned off-screen | `@real-io @US-03 @contract-shape:bounded-change @kpi` |
-| 13 | Reset View works on an empty diagram | `@real-io @US-03 @contract-shape:bounded-change` |
-| 14 | Reset View works with a single node | `@real-io @US-03 @contract-shape:bounded-change` |
-| 15 | Reset View is discoverable without prior instruction | `@real-io @US-03 @contract-shape:bounded-change` |
-| 16 | Screen-to-graph/graph-to-screen coordinate transforms round-trip | `@real-io @property @contract-shape:pure-function` |
-| 17 | Zoom is always clamped within the supported range | `@real-io @property @contract-shape:pure-function` |
-| 18 | Fit-to-content always produces a finite, in-bounds viewport | `@real-io @property @contract-shape:pure-function` |
+| #   | Scenario                                                         | Tags                                                                    |
+| --- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1   | Panning reveals nodes that were off-screen                       | `@walking_skeleton @real-io @US-01 @contract-shape:bounded-change @kpi` |
+| 2   | Panning does not alter the model                                 | `@real-io @US-01 @contract-shape:unbounded-preservation`                |
+| 3   | Node dragging still works after panning                          | `@real-io @US-01 @contract-shape:bounded-change`                        |
+| 4   | Panning does not trigger mode-specific background actions        | `@real-io @US-01 @contract-shape:bounded-change`                        |
+| 5   | Hit-testing remains accurate after panning                       | `@real-io @US-01 @contract-shape:bounded-change @kpi`                   |
+| 6   | Zooming in centers on the cursor                                 | `@real-io @US-02 @contract-shape:bounded-change @kpi`                   |
+| 7   | Zooming out reveals the whole structure                          | `@real-io @US-02 @contract-shape:bounded-change`                        |
+| 8   | Zoom has a maximum limit                                         | `@real-io @US-02 @contract-shape:bounded-change @property`              |
+| 9   | Zoom has a minimum limit                                         | `@real-io @US-02 @contract-shape:bounded-change @property`              |
+| 10  | Hit-testing remains accurate at any zoom level                   | `@real-io @US-02 @contract-shape:bounded-change @kpi`                   |
+| 11  | Reset View recovers from zooming out too far                     | `@real-io @US-03 @contract-shape:bounded-change @kpi`                   |
+| 12  | Reset View recovers a node panned off-screen                     | `@real-io @US-03 @contract-shape:bounded-change @kpi`                   |
+| 13  | Reset View works on an empty diagram                             | `@real-io @US-03 @contract-shape:bounded-change`                        |
+| 14  | Reset View works with a single node                              | `@real-io @US-03 @contract-shape:bounded-change`                        |
+| 15  | Reset View is discoverable without prior instruction             | `@real-io @US-03 @contract-shape:bounded-change`                        |
+| 16  | Screen-to-graph/graph-to-screen coordinate transforms round-trip | `@real-io @property @contract-shape:pure-function`                      |
+| 17  | Zoom is always clamped within the supported range                | `@real-io @property @contract-shape:pure-function`                      |
+| 18  | Fit-to-content always produces a finite, in-bounds viewport      | `@real-io @property @contract-shape:pure-function`                      |
 
 Error/edge/boundary count: 7/18 ≈ 39% (scenarios 2–4, 8–9, 13–14) — close to the 40% target;
 this feature's shape (geometry + clamping, not CRUD/validation) naturally skews happy-path-heavy,
@@ -1207,12 +1232,12 @@ All 4 fixed tests, plus the other 85 tests in the file (89 total), pass — zero
 
 ### [REF] Scaffolds (Mandate 7 — RED-ready)
 
-| File | Scaffold marker | Contents |
-|---|---|---|
-| `packages/renderer/src/geometry.ts` | `__SCAFFOLD_VIEWPORT__ = true` | `Viewport` type, `ZOOM_MIN`/`ZOOM_MAX` constants, `screenToGraph`, `graphToScreen`, `clampZoom`, `zoomAtCursor`, `computeFitViewport` — all throw `Error("Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)")` |
-| `packages/renderer/src/index.ts` | n/a (export wiring only) | Re-exports the 5 scaffold functions + `Viewport` type + `ZOOM_MIN`/`ZOOM_MAX`, so `@swoopy/app` can import them |
-| `packages/app/src/store.ts` | `// __SCAFFOLD_VIEWPORT__` comment | `viewport` state (real default `{panX:0,panY:0,zoom:1}` — data, not scaffolded logic); `setViewportPan`/`zoomAt`/`resetViewport` actions all throw the same scaffold Error |
-| `packages/app/src/Toolbar.tsx` | `// __SCAFFOLD_VIEWPORT__` comment | Minimal "Reset View" button wired to `resetViewport()` (throws on click); canvas-dimension lookup via `document.querySelector("canvas")` is a scaffold placeholder flagged for the crafter to revisit properly (Toolbar has no canvas ref today) |
+| File                                | Scaffold marker                    | Contents                                                                                                                                                                                                                                         |
+| ----------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/renderer/src/geometry.ts` | `__SCAFFOLD_VIEWPORT__ = true`     | `Viewport` type, `ZOOM_MIN`/`ZOOM_MAX` constants, `screenToGraph`, `graphToScreen`, `clampZoom`, `zoomAtCursor`, `computeFitViewport` — all throw `Error("Not yet implemented — RED scaffold (__SCAFFOLD_VIEWPORT__)")`                          |
+| `packages/renderer/src/index.ts`    | n/a (export wiring only)           | Re-exports the 5 scaffold functions + `Viewport` type + `ZOOM_MIN`/`ZOOM_MAX`, so `@swoopy/app` can import them                                                                                                                                  |
+| `packages/app/src/store.ts`         | `// __SCAFFOLD_VIEWPORT__` comment | `viewport` state (real default `{panX:0,panY:0,zoom:1}` — data, not scaffolded logic); `setViewportPan`/`zoomAt`/`resetViewport` actions all throw the same scaffold Error                                                                       |
+| `packages/app/src/Toolbar.tsx`      | `// __SCAFFOLD_VIEWPORT__` comment | Minimal "Reset View" button wired to `resetViewport()` (throws on click); canvas-dimension lookup via `document.querySelector("canvas")` is a scaffold placeholder flagged for the crafter to revisit properly (Toolbar has no canvas ref today) |
 
 Verified RED (not BROKEN) — see `docs/feature/canvas-pan-zoom-navigation/distill/red-classification.md`.
 
@@ -1231,7 +1256,7 @@ exercising it via its real protocol (jsdom `fireEvent`, not a bypassed service c
 ### [REF] Pre-requisites
 
 - DESIGN's driving/driven ports table (`docs/product/architecture/brief.md` `## Application
-  Architecture`) and DEVOPS's `environments.yaml` are the two upstream artifacts these scenarios
+Architecture`) and DEVOPS's `environments.yaml` are the two upstream artifacts these scenarios
   depend on; both read in full (see Prior-wave reading above).
 - `docs/architecture/atdd-infrastructure-policy.md` does not exist and was not bootstrapped —
   flagged as a deliberate scope decision (zero external/non-deterministic ports in this project's
@@ -1274,7 +1299,7 @@ Attempted `nwave-ai outcomes register` for 4 new typed contract surfaces (viewpo
 transform, zoom clamping/cursor-centered zoom, fit-to-content calculation, viewport store
 actions). All 4 attempts failed with the same tool-internal error:
 
-```
+```text
 FileNotFoundError: [Errno 2] No such file or directory:
   '.../site-packages/docs/product/outcomes/schema.json'
 ```
@@ -1318,14 +1343,15 @@ upstream re-entry needed.
 Run by the orchestrator, 4 reviewers dispatched in parallel against this full feature-delta.md
 (full 4-reviewer gate — user's explicit choice over the Sentinel-only lean default):
 
-| Reviewer | Scope | Verdict | Blockers | High | Low |
-|---|---|---|---|---|---|
-| Eclipse (`nw-product-owner-reviewer`) | DISCUSS | **APPROVED** | 0 | 0 | 0 |
-| Architect (`nw-solution-architect-reviewer`) | DESIGN | **APPROVED** | 0 | 0 | 0 |
-| Forge (`nw-platform-architect-reviewer`) | DEVOPS | **CONDITIONALLY_APPROVED** | 0 | 0 | 2 |
-| Sentinel (`nw-acceptance-designer-reviewer`) | DISTILL | **APPROVED** | 0 | 0 | 0 |
+| Reviewer                                     | Scope   | Verdict                    | Blockers | High | Low |
+| -------------------------------------------- | ------- | -------------------------- | -------- | ---- | --- |
+| Eclipse (`nw-product-owner-reviewer`)        | DISCUSS | **APPROVED**               | 0        | 0    | 0   |
+| Architect (`nw-solution-architect-reviewer`) | DESIGN  | **APPROVED**               | 0        | 0    | 0   |
+| Forge (`nw-platform-architect-reviewer`)     | DEVOPS  | **CONDITIONALLY_APPROVED** | 0        | 0    | 2   |
+| Sentinel (`nw-acceptance-designer-reviewer`) | DISTILL | **APPROVED**               | 0        | 0    | 0   |
 
 Forge's 2 low-severity findings and their disposition:
+
 1. "CI/CD test-discovery relies on convention, not verified" — **closed**: the orchestrator
    independently ran `pnpm test --run` after DISTILL completed and confirmed the existing `test`
    matrix (`[engine, renderer, app]`) auto-discovered all new test files with zero CI config
@@ -1385,17 +1411,17 @@ clean. Zero regressions in the pre-existing 601-test baseline. Timestamp: 2026-0
 
 ### [REF] DoD Check
 
-| DISCUSS DoD item | Status |
-|---|---|
-| Problem statement clear, domain language | PASS (unchanged from DISCUSS) |
-| Persona with specific characteristics | PASS |
-| 3+ domain examples per story | PASS |
-| UAT in Given/When/Then | PASS — all implemented, all green |
-| AC derived from UAT | PASS — all 15 AC verified by passing tests |
-| Right-sized | PASS — 3 steps, ~3 days estimated vs actual (3 crafter dispatches + 1 escalation cycle) |
-| Technical constraints/dependencies | PASS — both DISCUSS-forwarded open questions resolved at DESIGN; one new architecture question (zoom floor) surfaced and resolved at DELIVER |
-| Dependencies resolved or tracked | PASS |
-| Outcome KPIs defined with measurable targets | PASS — KPI-07/08/09 in `kpi-contracts.yaml`, measured manually per DEVOPS Decision 5 (deferred instrumentation) |
+| DISCUSS DoD item                             | Status                                                                                                                                       |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Problem statement clear, domain language     | PASS (unchanged from DISCUSS)                                                                                                                |
+| Persona with specific characteristics        | PASS                                                                                                                                         |
+| 3+ domain examples per story                 | PASS                                                                                                                                         |
+| UAT in Given/When/Then                       | PASS — all implemented, all green                                                                                                            |
+| AC derived from UAT                          | PASS — all 15 AC verified by passing tests                                                                                                   |
+| Right-sized                                  | PASS — 3 steps, ~3 days estimated vs actual (3 crafter dispatches + 1 escalation cycle)                                                      |
+| Technical constraints/dependencies           | PASS — both DISCUSS-forwarded open questions resolved at DESIGN; one new architecture question (zoom floor) surfaced and resolved at DELIVER |
+| Dependencies resolved or tracked             | PASS                                                                                                                                         |
+| Outcome KPIs defined with measurable targets | PASS — KPI-07/08/09 in `kpi-contracts.yaml`, measured manually per DEVOPS Decision 5 (deferred instrumentation)                              |
 
 ### [REF] Demo Evidence — 2026-07-24
 
@@ -1426,15 +1452,15 @@ All demo commands produced visible, correct output. Gate passes.
 
 ### [REF] Quality Gates
 
-| Phase | Outcome |
-|---|---|
-| Roadmap review | APPROVED (nw-acceptance-designer-reviewer, 0 blockers) |
-| Per-step TDD (01-01/02/03) | All COMMIT/PASS in execution-log.json; step 01-03 includes 2 honest GREEN/FAIL log entries during a genuine architecture-vs-test escalation, never fabricated |
-| Post-merge integration gate | PASS (this section) |
-| Refactoring (L1-L6) | pending — next |
-| Adversarial code review | pending — next (user chose full gate) |
-| Mutation testing | deferred — project rigor profile runs this on-demand via `/nw-mutation-test`, not as a DELIVER-blocking gate |
-| Integrity verification | pending — next |
+| Phase                       | Outcome                                                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Roadmap review              | APPROVED (nw-acceptance-designer-reviewer, 0 blockers)                                                                                                        |
+| Per-step TDD (01-01/02/03)  | All COMMIT/PASS in execution-log.json; step 01-03 includes 2 honest GREEN/FAIL log entries during a genuine architecture-vs-test escalation, never fabricated |
+| Post-merge integration gate | PASS (this section)                                                                                                                                           |
+| Refactoring (L1-L6)         | pending — next                                                                                                                                                |
+| Adversarial code review     | pending — next (user chose full gate)                                                                                                                         |
+| Mutation testing            | deferred — project rigor profile runs this on-demand via `/nw-mutation-test`, not as a DELIVER-blocking gate                                                  |
+| Integrity verification      | pending — next                                                                                                                                                |
 
 ### [REF] Pre-requisites
 

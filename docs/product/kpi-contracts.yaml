@@ -191,7 +191,7 @@ contracts:
       A facilitator working a dense diagram (15+ nodes) uses zoom at least
       twice per session on average, with zero hit-testing errors (clicks
       landing on the wrong node) at any zoom level in [0.5, 4].
-    threshold: >=2 zoom actions/session average; 0 hit-test errors (baseline N/A — zoom does not exist today)
+    threshold: ">=2 zoom actions/session average; 0 hit-test errors (baseline N/A — zoom does not exist today)"
     gate: soft
     measurement: >
       Acceptance-test suite (AC-02a–AC-02e, DISTILL wave) verifies zoom
@@ -225,7 +225,7 @@ contracts:
       exactly one action (single click/keypress on Reset View), with no
       page reload and no risk of state loss for transient (shared-URL)
       models.
-    threshold: 1 action, 100% success (baseline: page reload only, risks state loss for transient models)
+    threshold: "1 action, 100% success (baseline: page reload only, risks state loss for transient models)"
     gate: soft
     measurement: >
       Acceptance-test suite (AC-03a–AC-03e, DISTILL wave) verifies

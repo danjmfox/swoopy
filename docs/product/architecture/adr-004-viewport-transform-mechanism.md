@@ -1,19 +1,22 @@
 # ADR-004: Viewport pan/zoom applied as a single canvas-matrix transform in draw(), not per-shape coordinate rewriting
 
 ## Status
+
 Accepted
 
 ## Context
+
 `packages/renderer/src/LoopyRenderer.ts` currently draws ~15 private methods (`drawNodes`,
 `drawCausalEdges`, `drawConstraintEdges`, `drawAnnotations`, `drawModulators`, `drawGhostNode`,
 `drawAffordanceDots`, `drawSignalParticles`, `drawPendingModulatorHint`, ...) directly from raw
 `node.x/y` graph coordinates, after only a DPR (device-pixel-ratio) `ctx.setTransform`. There is no
 pan/zoom transform anywhere in the stack today (confirmed in DISCUSS). D2 already locks that the
 screen↔graph transform is a pure function pair owned by `packages/renderer`; this ADR decides
-*how that transform is applied to the draw path* — the highest-leverage mechanism decision in the
+_how that transform is applied to the draw path_ — the highest-leverage mechanism decision in the
 feature, since it determines how much of the mature, tested draw code must change.
 
 ## Decision
+
 Apply the viewport as a single canvas transform matrix — `ctx.translate(panX, panY)` then
 `ctx.scale(zoom, zoom)` — **once per frame**, composed after the existing DPR `ctx.setTransform`
 call, before any `drawXxx()` method runs. Every existing draw method continues to receive and use
@@ -22,15 +25,16 @@ the canvas matrix does the screen-space translation for free, including font/str
 scaling (`nodeLabelFont.ts` and friends need no zoom-awareness — the matrix scales whatever they
 draw).
 
-Screen→graph conversion needed *outside* the draw path (pointer/wheel event handling in
+Screen→graph conversion needed _outside_ the draw path (pointer/wheel event handling in
 `Canvas.tsx`, which must hit-test in graph space) is a **separate, explicit pure function pair** —
 `screenToGraph`/`graphToScreen` in `geometry.ts` — not derived from reading the canvas's live
 transform matrix. This keeps the transform's mathematical definition in exactly one place
-(`geometry.ts`) even though it is *applied* through two different mechanisms (the `ctx` API for
+(`geometry.ts`) even though it is _applied_ through two different mechanisms (the `ctx` API for
 drawing, explicit function calls for hit-testing), and keeps `hitTest.ts` itself completely
 unchanged (it still only ever sees graph-space coordinates, converted by its caller).
 
 ## Alternatives Considered
+
 1. **Pre-transform every coordinate before it reaches each `drawXxx()` method** (call
    `graphToScreen()` on every node/edge/annotation coordinate before passing it into the existing
    draw methods; no `ctx.translate/scale` at all). Rejected: requires touching all ~15 existing,
@@ -50,6 +54,7 @@ unchanged (it still only ever sees graph-space coordinates, converted by its cal
    everything downstream unaware of it").
 
 ## Consequences
+
 **Positive:** ~15 existing draw methods require zero changes; text/stroke/arrowhead scaling is
 correct for free via the canvas matrix; the transform's math is defined exactly once
 (`geometry.ts`), reused by both the draw-time matrix values and the explicit hit-test conversion;
@@ -62,6 +67,7 @@ one place a future maintainer needs to read to understand the math, regardless o
 applies it.
 
 ## Enforcement
+
 No new automated architecture-rule tooling is warranted beyond what already exists — this ADR does
 not introduce a new module boundary (renderer already owns geometry per D2; this ADR only decides
 which mechanism within the renderer applies it). Existing `packages/renderer/src/hitTest.test.ts`
