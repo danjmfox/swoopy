@@ -10,7 +10,7 @@
     "@swoopy/engine": "workspace:*"
   },
   "devDependencies": {
-    "fast-check": "^4.9.0",
+    "fast-check": "^4.10.2",
     "jsdom": "^26.0.0"
   }
 }
